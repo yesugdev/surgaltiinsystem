@@ -1,0 +1,44 @@
+# learn.yesuvd.tech — Сургалтын систем (/opt/surgalt).
+#
+# 80 портын шилжүүлэг ба ACME-ийн шалгалт нь default.conf доторх нийтлэг
+# блокт байдаг тул энд зөвхөн 443 хэрэгтэй.
+# Нэвтрэлтийн хязгаарыг апп өөрөө (нэвтрэх нэр бүрээр) хийдэг — сургуулийн нэг
+# сүлжээнээс олон сурагч зэрэг нэвтэрдэг тул энд IP-ээр хязгаарлахгүй.
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name learn.yesuvd.tech;
+
+    ssl_certificate     /etc/letsencrypt/live/learn.yesuvd.tech/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/learn.yesuvd.tech/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Даалгаврын файл: 5 файл × 25MB
+    client_max_body_size 150m;
+    client_body_timeout  300s;
+
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    # Апп унтарсан үед ч nginx (бусад сайтууд) асаж чадахаар нэрийг ажиллах үед нь шийднэ
+    resolver 127.0.0.11 valid=30s;
+    set $learn_upstream http://learn-app:3000;
+
+    location / {
+        proxy_request_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_pass $learn_upstream;
+    }
+}

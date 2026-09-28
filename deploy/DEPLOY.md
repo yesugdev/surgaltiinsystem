@@ -18,13 +18,13 @@
    curl -fsSL https://get.docker.com | sh
    ```
 
-## 2. Кодыг серверт хуулах
+## 2. Кодыг серверт татах
 
-Компьютерээсээ (`node_modules`-гүйгээр):
 ```bash
-scp -r Dockerfile .dockerignore package.json package-lock.json src views public scripts deploy user@SERVER_IP:/opt/surgalt/
+sudo git clone https://github.com/yesugdev/surgaltiinsystem.git /opt/surgalt
+sudo chown -R $USER:$USER /opt/surgalt
+chmod +x /opt/surgalt/deploy/*.sh
 ```
-Эсвэл Git ашиглавал: `git clone <repo> /opt/surgalt`.
 
 ## 3. Тохиргоо
 
@@ -57,6 +57,7 @@ docker compose logs -f caddy   # сертификат авсан эсэх ("cert
 ```bash
 # Компьютер дээр (MongoDB ажиллаж байхад):
 docker run --rm mongo:8 mongodump --uri "mongodb://host.docker.internal:27017/surgaltiin_system" --archive --gzip > surgalt-local.archive.gz
+ssh user@SERVER_IP "mkdir -p /opt/surgalt/deploy/backups"
 scp surgalt-local.archive.gz user@SERVER_IP:/opt/surgalt/deploy/backups/
 
 # Сервер дээр:
@@ -77,10 +78,11 @@ crontab -e                                    # өдөр бүр 03:00-д авт�
 
 ## 7. Шинэчлэх (код өөрчлөгдсөн үед)
 
+Компьютер дээрээ `git push` хийсний дараа сервер дээр:
 ```bash
-# шинэ кодоо /opt/surgalt руу хуулсны дараа:
 cd /opt/surgalt/deploy
 ./backup.sh
+git pull
 docker compose up -d --build app
 ```
 Өгөгдөл (`mongo_data` volume) болон сертификат (`caddy_data`) хэвээр үлдэнэ.
@@ -94,6 +96,15 @@ docker compose restart app        # аппыг дахин асаах
 docker compose down               # зогсоох (өгөгдөл устахгүй)
 ```
 > **Анхаар:** `docker compose down -v` нь өгөгдлийн санг **бүр мөсөн устгана**.
+
+## Серверт 80/443-ыг өөр nginx контейнер (`edge` сүлжээ) эзэмшдэг бол — yesuvd.tech сервер
+
+Энэ серверт `fx-nginx-1` (`/opt/fx`) бүх домэйны HTTPS-ийг хариуцдаг. Caddy-г унтрааж, апп-ыг `edge` сүлжээнд
+`learn-app` нэрээр нэгтгэнэ:
+
+- `edge/docker-compose.override.yml` → `deploy/docker-compose.override.yml` болгож хуулна (Caddy унтарч, апп edge-д нэгдэнэ).
+- `edge/learn.conf.template` → `/opt/fx/nginx/templates/`-д хуулж, fx-ийн compose-д mount нэмнэ.
+- Сертификатыг fx-ийн certbot volume-д авна (`certbot certonly --webroot -w /var/www/certbot -d learn.yesuvd.tech`).
 
 ## Серверт өөр сайт (nginx г.м.) 80/443 портыг эзэлсэн бол
 

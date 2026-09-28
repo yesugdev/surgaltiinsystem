@@ -1,0 +1,18 @@
+# Серверт 80/443-ыг өөр nginx (fx-nginx-1, `edge` сүлжээ) эзэмшдэг үед хэрэглэнэ.
+# deploy/ хавтас руу хуулахад docker compose автоматаар уншина:
+#   cp edge/docker-compose.override.yml docker-compose.override.yml
+services:
+  # HTTPS-ийг fx-nginx хариуцах тул Caddy асахгүй
+  caddy:
+    profiles: ["disabled"]
+
+  # Апп-ыг edge сүлжээнд `learn-app` нэрээр нэгтгэнэ (nginx → http://learn-app:3000)
+  app:
+    networks:
+      default:
+      edge:
+        aliases: [learn-app]
+
+networks:
+  edge:
+    external: true
