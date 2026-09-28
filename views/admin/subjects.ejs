@@ -1,0 +1,43 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Хичээлийн төрөл</h1>
+    <p class="muted">Математик, Физик гэх мэт. Багш зөвхөн өөрт оноогдсон төрлөөр хичээл, шалгалт бэлдэнэ.</p>
+  </div>
+</div>
+
+<div class="grid-side">
+  <section class="card">
+    <% if (!subjects.length) { %>
+      <div class="empty"><p class="muted">Одоогоор хичээл бүртгэгдээгүй байна. Баруун талын маягтаар эхний хичээлээ нэмнэ үү.</p></div>
+    <% } else { %>
+      <table class="table">
+        <thead><tr><th>Төрөл</th><th>Код</th><th class="num">Багш</th><th class="num">Шалгалт</th><th>Төлөв</th><th></th></tr></thead>
+        <tbody>
+        <% subjects.forEach(function (s) { %>
+          <tr class="<%= s.active ? '' : 'inactive' %>">
+            <td><a href="/admin/subjects/<%= s._id %>"><strong><%= s.name %></strong></a>
+              <% if (s.description) { %><div class="muted small"><%= s.description %></div><% } %></td>
+            <td><%= s.code || '—' %></td>
+            <td class="num"><%= s.teacherCount %></td>
+            <td class="num"><%= s.examCount %></td>
+            <td><% if (s.active) { %><span class="badge badge-green">Идэвхтэй</span><% } else { %><span class="badge">Архивласан</span><% } %></td>
+            <td class="actions"><a class="btn btn-sm" href="/admin/subjects/<%= s._id %>">Нээх</a></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+  <section class="card">
+    <h2>Шинэ төрөл</h2>
+    <form method="post" action="/admin/subjects" class="form">
+      <label>Хичээлийн нэр <input name="name" placeholder="жишээ: Математик" required maxlength="100"></label>
+      <label>Код <input name="code" placeholder="жишээ: MATH" maxlength="20"></label>
+      <label>Тайлбар <textarea name="description" rows="2" maxlength="2000"></textarea></label>
+      <button class="btn btn-primary">Нэмэх</button>
+    </form>
+  </section>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<% const isSelf = String(target._id) === String(user._id); %>
+<div class="page-head">
+  <div>
+    <a href="/admin/users?role=<%= target.role %>" class="back">← Хэрэглэгчид</a>
+    <h1><%= target.fullName %></h1>
+    <p class="muted"><%= ROLE_LABELS[target.role] %> · <code><%= target.username %></code></p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Мэдээлэл</h2>
+    <form method="post" action="/admin/users/<%= target._id %>" class="form">
+      <label>Овог нэр <input name="fullName" value="<%= target.fullName %>" required maxlength="150"></label>
+      <label>Нэвтрэх нэр <input name="username" value="<%= target.username %>" required maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" autocapitalize="none"></label>
+      <label>Эрх
+        <select name="role" <%= isSelf ? 'disabled' : '' %> id="role-select">
+          <% ['student', 'teacher', 'admin'].forEach(function (r) { %>
+            <option value="<%= r %>" <%= target.role === r ? 'selected' : '' %>><%= ROLE_LABELS[r] %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label id="class-field">Анги
+        <select name="classId">
+          <option value="">— ангигүй —</option>
+          <% classes.forEach(function (c) { %>
+            <option value="<%= c._id %>" <%= String(c._id) === String(target.classId) ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      </label>
+      <fieldset id="subjects-field">
+        <legend>Заадаг хичээлийн төрөл</legend>
+        <% const mine = (target.subjectIds || []).map(String); %>
+        <% if (!subjects.length) { %>
+          <p class="muted small">Хичээл бүртгэгдээгүй байна. <a href="/admin/subjects">Хичээл нэмэх</a></p>
+        <% } else { %>
+          <div class="checks">
+            <% subjects.forEach(function (s) { %>
+              <% if (s.active || mine.includes(String(s._id))) { %>
+                <label class="check"><input type="checkbox" name="subjectIds" value="<%= s._id %>" <%= mine.includes(String(s._id)) ? 'checked' : '' %>> <%= s.name %><%= s.active ? '' : ' (архивласан)' %></label>
+              <% } %>
+            <% }) %>
+          </div>
+          <p class="muted small">Багш зөвхөн эдгээр хичээлээр шалгалт бэлдэнэ.</p>
+        <% } %>
+      </fieldset>
+      <label class="check"><input type="checkbox" name="active" <%= target.active ? 'checked' : '' %> <%= isSelf ? 'disabled' : '' %>> Идэвхтэй (нэвтрэх боломжтой)</label>
+      <button class="btn btn-primary">Хадгалах</button>
+    </form>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Нууц үг шинэчлэх</h2>
+      <form method="post" action="/admin/users/<%= target._id %>/reset-password" class="form">
+        <label>Шинэ нууц үг <input name="password" placeholder="хоосон бол автомат үүсгэнэ" maxlength="64"></label>
+        <button class="btn">Шинэчлэх</button>
+      </form>
+    </section>
+    <% if (!isSelf) { %>
+    <section class="card danger-zone">
+      <h2>Устгах</h2>
+      <p class="muted small">Хэрэглэгч болон түүний өгсөн бүх шалгалтын хариулт устгагдана. Үүнийг буцаах боломжгүй. Түр хаах бол «Идэвхтэй» сонголтыг арилгана уу.</p>
+      <form method="post" action="/admin/users/<%= target._id %>/delete" data-confirm="<%= target.fullName %>-г бүр мөсөн устгах уу?">
+        <button class="btn btn-danger">Устгах</button>
+      </form>
+    </section>
+    <% } %>
+  </div>
+</div>
+<script>
+  (function () {
+    var sel = document.getElementById('role-select');
+    var field = document.getElementById('class-field');
+    var subjects = document.getElementById('subjects-field');
+    function sync() {
+      field.style.display = sel.value === 'student' ? '' : 'none';
+      subjects.style.display = sel.value === 'teacher' ? '' : 'none';
+    }
+    sel.addEventListener('change', sync); sync();
+  })();
+</script>
+<%- include('../partials/footer') %>

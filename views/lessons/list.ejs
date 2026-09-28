@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Хичээл</h1>
+    <p class="muted">Онол болон даалгавраас бүрдсэн хичээлүүд. Нэг хичээлийг олон ангид оноож болно.</p>
+  </div>
+  <% if (canCreate) { %><a href="/lessons/new<%= subjectFilter ? '?subject=' + subjectFilter : '' %>" class="btn btn-primary">+ Шинэ хичээл</a><% } %>
+</div>
+
+<% if (!canCreate) { %>
+  <div class="flash flash-warn">
+    <% if (user.role === 'admin') { %>Идэвхтэй хичээлийн төрөл алга байна. Эхлээд <a href="/admin/subjects">хичээлийн төрөл нэмнэ үү</a>.
+    <% } else { %>Танд хичээлийн төрөл оноогоогүй тул хичээл үүсгэх боломжгүй. Админд хандана уу.<% } %>
+  </div>
+<% } %>
+
+<% if (subjects.length > 1 || subjectFilter) { %>
+  <div class="tabs">
+    <a href="/lessons" class="<%= !subjectFilter ? 'active' : '' %>">Бүгд</a>
+    <% subjects.forEach(function (s) { %>
+      <a href="/lessons?subject=<%= s._id %>" class="<%= subjectFilter === String(s._id) ? 'active' : '' %>"><%= s.name %></a>
+    <% }) %>
+  </div>
+<% } %>
+
+<% if (!lessons.length) { %>
+  <div class="card empty">
+    <p>Одоогоор хичээл алга байна.</p>
+    <% if (canCreate) { %><a href="/lessons/new" class="btn btn-primary">Эхний хичээлээ үүсгэх</a><% } %>
+  </div>
+<% } else { %>
+  <section class="card">
+    <table class="table">
+      <thead><tr><th>Хичээл</th><th>Төрөл</th><th>Анги</th><th>Агуулга</th><th>Төлөв</th><th class="num">Илгээсэн</th><th></th></tr></thead>
+      <tbody>
+      <% lessons.forEach(function (l) { %>
+        <tr>
+          <td><a href="/lessons/<%= l._id %>"><strong><%= l.title %></strong></a>
+            <% if (user.role === 'admin') { %><div class="muted small"><%= l.creatorName %></div><% } %></td>
+          <td><%= l.subjectName || '—' %></td>
+          <td><%= l.classNames.join(', ') || '—' %></td>
+          <td class="small"><%= l.quizCount %> тест · <%= l.assignmentCount %> даалгавар<% if (l.attachments.length) { %> · <%= l.attachments.length %> файл<% } %></td>
+          <td><% if (l.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber" title="Сурагчдад харагдахгүй">Ноорог</span><% } %></td>
+          <td class="num"><%= l.submitted %><% if (l.pending) { %> <span class="badge badge-amber" title="Дүгнэх шаардлагатай"><%= l.pending %></span><% } %></td>
+          <td class="actions">
+            <a class="btn btn-sm" href="/lessons/<%= l._id %>">Нээх</a>
+            <a class="btn btn-sm" href="/lessons/<%= l._id %>/grades">Дүн</a>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+<% } %>
+<%- include('../partials/footer') %>

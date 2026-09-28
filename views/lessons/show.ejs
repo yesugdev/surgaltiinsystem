@@ -1,0 +1,140 @@
+<%- include('../partials/header') %>
+<% const b = '/lessons/' + lesson._id; %>
+<div class="page-head">
+  <div>
+    <a href="/lessons" class="back">← Хичээл</a>
+    <h1><%= lesson.title %>
+      <% if (lesson.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber">Ноорог</span><% } %>
+    </h1>
+    <p class="muted">
+      <% if (subject) { %><span class="badge badge-blue"><%= subject.name %></span><% } %>
+      Анги: <%= classes.map(function (c) { return c.name; }).join(', ') || 'сонгоогүй' %>
+    </p>
+    <% if (lesson.description) { %><p class="muted small"><%= lesson.description %></p><% } %>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-primary" href="<%= b %>/import">✨ AI-аар оруулах</a>
+    <a class="btn" href="<%= b %>/edit">Тохиргоо</a>
+    <a class="btn" href="<%= b %>/grades">Дүн</a>
+    <form method="post" action="<%= b %>/publish"
+          <% if (lesson.published) { %>data-confirm="Нийтлэлээс буцаавал сурагчид хичээлийг харахгүй болно. Үргэлжлүүлэх үү?"<% } %>>
+      <button class="btn"><%= lesson.published ? 'Нийтлэлээс буцаах' : 'Нийтлэх' %></button>
+    </form>
+  </div>
+</div>
+
+<% if (!lesson.published) { %>
+  <div class="flash flash-warn">Энэ хичээл ноорог төлөвтэй тул сурагчдад харагдахгүй. Агуулгаа оруулаад «Нийтлэх» товчийг дарна уу.</div>
+<% } %>
+
+<% if (!lesson.theory.trim() && !lesson.tasks.length) { %>
+  <section class="card empty-hero">
+    <h2>Агуулгаа оруулъя</h2>
+    <p class="muted">AI prompt ашиглаад онол, тест, даалгаврыг <strong>нэг дор</strong> бэлтгэж буулгах нь хамгийн хурдан. Эсвэл гараар нэг нэгээр нэмж болно.</p>
+    <div class="btn-group center">
+      <a class="btn btn-primary btn-lg" href="<%= b %>/import">✨ AI-аар онол, даалгавар оруулах</a>
+      <a class="btn" href="<%= b %>/theory">Онол бичих</a>
+      <a class="btn" href="<%= b %>/tasks/new?type=quiz">+ Тест</a>
+      <a class="btn" href="<%= b %>/tasks/new?type=assignment">+ Даалгавар</a>
+    </div>
+  </section>
+<% } %>
+
+<!-- Онол -->
+<section class="card">
+  <div class="section-head section-head-card">
+    <h2>📖 Онол</h2>
+    <a class="btn btn-sm" href="<%= b %>/theory"><%= lesson.theory.trim() ? 'Засах' : 'Бичих' %></a>
+  </div>
+  <% if (lesson.theory.trim()) { %>
+    <div class="markdown theory-collapsed" id="theory-box"><%- theoryHtml %></div>
+    <button type="button" class="btn btn-sm btn-ghost" onclick="document.getElementById('theory-box').classList.toggle('theory-collapsed'); this.textContent = this.textContent === 'Бүтнээр харах ↓' ? 'Хураах ↑' : 'Бүтнээр харах ↓';">Бүтнээр харах ↓</button>
+  <% } else { %>
+    <p class="muted">Онол оруулаагүй байна.</p>
+  <% } %>
+</section>
+
+<% const decks = lesson.attachments.filter(function (a) { return viewKind(a.contentType) === 'pptx'; }); %>
+<% decks.forEach(function (a) { %>
+  <section class="card slide-card">
+    <h2>🖥 <%= a.name.replace(/\.pptx$/i, '') %> <span class="muted small">— сурагчдад онолын доор ингэж харагдана</span></h2>
+    <div class="pptx-viewer" data-src="/files/<%= a.fileId %>"></div>
+  </section>
+<% }) %>
+
+<!-- Хавсралт -->
+<section class="card" id="attachments">
+  <h2>📁 Хавсралт файл</h2>
+  <p class="muted small">PowerPoint (.pptx) хавсаргавал онолын доор слайд болж тоглогдоно. PDF, зураг, Word-ийг сурагчид хөтөч дээрээ нээж үзнэ.</p>
+  <% if (lesson.attachments.length) { %>
+    <ul class="file-list">
+      <% lesson.attachments.forEach(function (a) { %>
+        <li>
+          <span class="file-icon"><%= viewKind(a.contentType) === 'image' ? '🖼' : viewKind(a.contentType) === 'pdf' ? '📄' : '📎' %></span>
+          <a href="/files/<%= a.fileId %>/view?back=<%= encodeURIComponent(b) %>"><%= a.name %></a>
+          <span class="muted small"><%= fmtSize(a.size) %></span>
+          <span class="spacer"></span>
+          <% if (viewKind(a.contentType) === 'image') { %>
+            <textarea class="visually-hidden" id="snip-<%= a.fileId %>">![<%= a.name %>](/files/<%= a.fileId %>)</textarea>
+            <button type="button" class="btn btn-sm btn-ghost" data-copy="#snip-<%= a.fileId %>" title="Онол дотор зураг болгож оруулах markdown код">Онолд оруулах код</button>
+          <% } %>
+          <a class="btn btn-sm btn-ghost" href="/files/<%= a.fileId %>?download=1">Татах</a>
+          <form method="post" action="<%= b %>/attachments/<%= a.fileId %>/delete" data-confirm="«<%= a.name %>» файлыг устгах уу?"><button class="btn btn-sm btn-danger-ghost">Устгах</button></form>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+  <form method="post" action="<%= b %>/attachments" enctype="multipart/form-data" class="upload-row">
+    <input type="file" name="files" multiple required>
+    <button class="btn btn-sm">Хавсаргах</button>
+  </form>
+</section>
+
+<!-- Даалгаврууд -->
+<section class="card" id="tasks">
+  <div class="section-head section-head-card">
+    <h2>✅ Даалгаврууд</h2>
+    <div class="btn-group">
+      <a class="btn btn-sm" href="<%= b %>/tasks/new?type=quiz">+ Тест</a>
+      <a class="btn btn-sm" href="<%= b %>/tasks/new?type=assignment">+ Даалгавар (файл)</a>
+    </div>
+  </div>
+  <% if (!lesson.tasks.length) { %>
+    <p class="muted">Даалгавар нэмээгүй байна.</p>
+  <% } else { %>
+    <div class="task-list">
+      <% lesson.tasks.forEach(function (t, i) {
+           const c = countMap.get(String(t._id)) || { n: 0, pending: 0 };
+           const total = t.type === 'quiz' ? t.questions.reduce(function (s, q) { return s + q.points; }, 0) : t.maxPoints; %>
+        <div class="task-row">
+          <span class="task-icon"><%= t.type === 'quiz' ? '📝' : '📎' %></span>
+          <div class="task-main">
+            <a href="<%= b %>/tasks/<%= t._id %>"><strong><%= t.title %></strong></a>
+            <div class="muted small">
+              <%= t.type === 'quiz' ? 'Тест · ' + t.questions.length + ' асуулт' : 'Файл илгээх даалгавар' %> · <%= fmtScore(total) %> оноо
+              <% if (t.type === 'assignment' && t.dueAt) { %> · Хугацаа: <%= fmtDate(t.dueAt) %><% } %>
+            </div>
+          </div>
+          <span class="small"><%= c.n %> илгээсэн</span>
+          <% if (c.pending) { %><a class="badge badge-amber" href="<%= b %>/tasks/<%= t._id %>?status=pending"><%= c.pending %> дүгнэх</a><% } %>
+          <div class="btn-group">
+            <form method="post" action="<%= b %>/tasks/<%= t._id %>/move"><input type="hidden" name="dir" value="up"><button class="btn btn-sm btn-ghost" <%= i === 0 ? 'disabled' : '' %> title="Дээш">↑</button></form>
+            <form method="post" action="<%= b %>/tasks/<%= t._id %>/move"><input type="hidden" name="dir" value="down"><button class="btn btn-sm btn-ghost" <%= i === lesson.tasks.length - 1 ? 'disabled' : '' %> title="Доош">↓</button></form>
+            <a class="btn btn-sm" href="<%= b %>/tasks/<%= t._id %>">Гүйцэтгэл</a>
+            <a class="btn btn-sm" href="<%= b %>/tasks/<%= t._id %>/edit">Засах</a>
+            <form method="post" action="<%= b %>/tasks/<%= t._id %>/delete" data-confirm="«<%= t.title %>» болон сурагчдын бүх гүйцэтгэлийг устгах уу?"><button class="btn btn-sm btn-danger-ghost">Устгах</button></form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="card danger-zone">
+  <h2>Хичээл устгах</h2>
+  <p class="muted small">Онол, хавсралт, даалгавар болон сурагчдын бүх гүйцэтгэл, файл бүр мөсөн устгагдана.</p>
+  <form method="post" action="<%= b %>/delete" data-confirm="Энэ хичээл болон бүх гүйцэтгэлийг устгах уу? Буцаах боломжгүй.">
+    <button class="btn btn-danger">Устгах</button>
+  </form>
+</section>
+<%- include('../partials/footer', { scripts: decks.length ? ['/preview.js', '/vendor/jszip.js', '/vendor/pptx-preview.js', '/pptx-viewer.js'] : ['/preview.js'] }) %>

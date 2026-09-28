@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <a href="/admin/classes" class="back">← Анги, бүлэг</a>
+    <h1><%= cls.name %></h1>
+    <p class="muted"><%= cls.schoolYear || '' %> · <%= students.length %> сурагч</p>
+  </div>
+  <form method="post" action="/admin/classes/<%= cls._id %>/delete"
+        data-confirm="«<%= cls.name %>» ангийг устгах уу? Сурагчид устахгүй, харин ангигүй болно.">
+    <button class="btn btn-danger">Анги устгах</button>
+  </form>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Сурагч нэмэх</h2>
+    <form method="post" action="/admin/classes/<%= cls._id %>/students" class="form">
+      <label>Овог нэр <input name="fullName" required maxlength="150"></label>
+      <div class="row">
+        <label>Нэвтрэх нэр <input name="username" placeholder="хоосон бол автомат" maxlength="32" autocapitalize="none"></label>
+        <label>Нууц үг <input name="password" placeholder="хоосон бол автомат" maxlength="64"></label>
+      </div>
+      <input type="hidden" name="prefix" value="<%= bulkPrefix %>">
+      <button class="btn btn-primary">Нэмэх</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Ангийн мэдээлэл</h2>
+    <form method="post" action="/admin/classes/<%= cls._id %>" class="form">
+      <div class="row">
+        <label>Нэр <input name="name" value="<%= cls.name %>" required maxlength="100"></label>
+        <label>Хичээлийн жил <input name="schoolYear" value="<%= cls.schoolYear || '' %>" maxlength="20"></label>
+      </div>
+      <label>Тайлбар <textarea name="description" rows="2" maxlength="2000"><%= cls.description || '' %></textarea></label>
+      <button class="btn">Хадгалах</button>
+    </form>
+  </section>
+</div>
+
+<section class="card" id="bulk">
+  <h2>Олон сурагч нэг дор нэмэх</h2>
+  <p class="muted small">Мөр бүрт нэг сурагч. Формат: <code>Овог нэр</code>, эсвэл <code>Овог нэр, нэвтрэх нэр</code>, эсвэл <code>Овог нэр, нэвтрэх нэр, нууц үг</code>.
+    Excel-ээс хуулж буулгаж болно. Нэвтрэх нэр, нууц үгийг хоосон орхивол систем үүсгэнэ.</p>
+  <% if (bulkErrors.length) { %>
+    <div class="flash flash-error">
+      <strong>Нэг ч сурагч нэмэгдсэнгүй. Дараах алдааг засна уу:</strong>
+      <ul><% bulkErrors.forEach(function (e) { %><li><%= e %></li><% }) %></ul>
+    </div>
+  <% } %>
+  <form method="post" action="/admin/classes/<%= cls._id %>/students/bulk" class="form">
+    <textarea name="lines" rows="8" placeholder="Бат Болд&#10;Дорж Сарнай, sarnai10a&#10;Ганбаатар Тэмүүлэн, temuulen, nuuts123"><%= bulkText %></textarea>
+    <div class="row row-end">
+      <label>Автомат нэвтрэх нэрийн угтвар
+        <input name="prefix" value="<%= bulkPrefix %>" maxlength="16" autocapitalize="none">
+        <small class="muted">жишээ: <code>10a</code> → 10a001, 10a002…</small>
+      </label>
+      <button class="btn btn-primary">Бүгдийг нэмэх</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Сурагчид (<%= students.length %>)</h2>
+  <% if (!students.length) { %>
+    <p class="muted">Энэ ангид сурагч бүртгэгдээгүй байна.</p>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th class="num">#</th><th>Овог нэр</th><th>Нэвтрэх нэр</th><th>Төлөв</th><th></th></tr></thead>
+      <tbody>
+      <% students.forEach(function (s, i) { %>
+        <tr class="<%= s.active ? '' : 'inactive' %>">
+          <td class="num muted"><%= i + 1 %></td>
+          <td><%= s.fullName %></td>
+          <td><code><%= s.username %></code></td>
+          <td><% if (s.active) { %><span class="badge badge-green">Идэвхтэй</span><% } else { %><span class="badge">Идэвхгүй</span><% } %></td>
+          <td class="actions"><a class="btn btn-sm" href="/admin/users/<%= s._id %>">Засах</a></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

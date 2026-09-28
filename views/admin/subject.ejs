@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<% const assigned = teachers.map(function (t) { return String(t._id); }); %>
+<div class="page-head">
+  <div>
+    <a href="/admin/subjects" class="back">← Хичээлийн төрөл</a>
+    <h1><%= subject.name %>
+      <% if (!subject.active) { %><span class="badge">Архивласан</span><% } %>
+    </h1>
+    <p class="muted"><%= subject.code ? subject.code + ' · ' : '' %><%= teachers.length %> багш · <%= examCount %> шалгалт/хичээл</p>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="/lessons?subject=<%= subject._id %>">Хичээлүүд</a>
+    <a class="btn" href="/exams?subject=<%= subject._id %>">Шалгалтууд</a>
+    <% if (subject.active) { %><a class="btn btn-primary" href="/exams/new?subject=<%= subject._id %>">+ Шалгалт үүсгэх</a><% } %>
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Заах багш нар</h2>
+    <% if (!allTeachers.length) { %>
+      <p class="muted">Багш бүртгэгдээгүй байна. <a href="/admin/users?role=teacher">Багш бүртгэх</a></p>
+    <% } else { %>
+      <form method="post" action="/admin/subjects/<%= subject._id %>/teachers" class="form">
+        <p class="muted small">Сонгосон багш нар энэ төрлөөр хичээл, шалгалт бэлдэх эрхтэй болно.</p>
+        <div class="checks checks-col">
+          <% allTeachers.forEach(function (t) { %>
+            <label class="check"><input type="checkbox" name="teacherIds" value="<%= t._id %>" <%= assigned.includes(String(t._id)) ? 'checked' : '' %>> <%= t.fullName %> <span class="muted small"><%= t.username %></span></label>
+          <% }) %>
+        </div>
+        <button class="btn btn-primary">Хадгалах</button>
+      </form>
+    <% } %>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Мэдээлэл</h2>
+      <form method="post" action="/admin/subjects/<%= subject._id %>" class="form">
+        <div class="row">
+          <label>Нэр <input name="name" value="<%= subject.name %>" required maxlength="100"></label>
+          <label>Код <input name="code" value="<%= subject.code || '' %>" maxlength="20"></label>
+        </div>
+        <label>Тайлбар <textarea name="description" rows="2" maxlength="2000"><%= subject.description || '' %></textarea></label>
+        <button class="btn">Хадгалах</button>
+      </form>
+    </section>
+
+    <section class="card danger-zone">
+      <h2><%= subject.active ? 'Архивлах / устгах' : 'Сэргээх / устгах' %></h2>
+      <p class="muted small">
+        Архивласан хичээлээр шинэ шалгалт үүсгэх боломжгүй, харин хуучин шалгалт, үр дүн хэвээр үлдэнэ.
+        Шалгалтгүй хичээлийг бүр мөсөн устгаж болно.
+      </p>
+      <div class="btn-group">
+        <form method="post" action="/admin/subjects/<%= subject._id %>/toggle"
+              <% if (subject.active) { %>data-confirm="«<%= subject.name %>» хичээлийг архивлах уу?"<% } %>>
+          <button class="btn"><%= subject.active ? 'Архивлах' : 'Идэвхжүүлэх' %></button>
+        </form>
+        <form method="post" action="/admin/subjects/<%= subject._id %>/delete" data-confirm="«<%= subject.name %>» хичээлийг бүр мөсөн устгах уу?">
+          <button class="btn btn-danger" <%= examCount ? 'disabled title="Шалгалттай хичээлийг устгах боломжгүй"' : '' %>>Устгах</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+<%- include('../partials/footer') %>

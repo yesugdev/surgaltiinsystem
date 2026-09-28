@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+<% const pct = function (v) { return v == null ? '—' : fmtScore(v) + '%'; }; %>
+<div class="page-head">
+  <div>
+    <a href="/exams/<%= exam._id %>" class="back">← <%= exam.title %></a>
+    <h1>Үр дүн</h1>
+    <p class="muted"><%= exam.title %></p>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="/exams/<%= exam._id %>/results">Шинэчлэх</a>
+    <a class="btn btn-primary" href="/exams/<%= exam._id %>/results.csv">Excel (CSV) татах</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat card"><span class="stat-value"><%= stats.submitted %> / <%= stats.total %></span><span class="stat-label">Илгээсэн</span></div>
+  <div class="stat card"><span class="stat-value"><%= stats.inProgress %></span><span class="stat-label">Одоо өгч байна</span></div>
+  <div class="stat card"><span class="stat-value"><%= pct(stats.avg) %></span><span class="stat-label">Дундаж</span></div>
+  <div class="stat card"><span class="stat-value"><%= pct(stats.max) %></span><span class="stat-label">Хамгийн өндөр</span></div>
+  <div class="stat card"><span class="stat-value"><%= pct(stats.min) %></span><span class="stat-label">Хамгийн бага</span></div>
+  <% if (stats.review) { %><div class="stat card stat-warn"><span class="stat-value"><%= stats.review %></span><span class="stat-label">Гараар дүгнэх</span></div><% } %>
+</div>
+
+<section class="card">
+  <h2>Сурагчид</h2>
+  <% if (!rows.length) { %>
+    <p class="muted">Шалгалтад оноогдсон ангид сурагч алга.</p>
+  <% } else { %>
+  <table class="table">
+    <thead><tr><th>Анги</th><th>Сурагч</th><th>Төлөв</th><th class="num">Оноо</th><th class="num">Хувь</th><th>Илгээсэн</th><th></th></tr></thead>
+    <tbody>
+    <% rows.forEach(function (r) { const a = r.attempt; %>
+      <tr>
+        <td><%= r.className %></td>
+        <td><%= r.student.fullName %> <span class="muted small"><%= r.student.username %></span></td>
+        <td><span class="badge <%= { submitted: 'badge-green', review: 'badge-amber', in_progress: 'badge-blue', not_started: '' }[r.status] %>"><%= STATUS_LABELS[r.status] %></span></td>
+        <td class="num"><%= a && a.submittedAt ? fmtScore(a.score) + ' / ' + fmtScore(a.maxScore) : '' %></td>
+        <td class="num"><%= a && a.submittedAt && a.maxScore ? pct(a.score / a.maxScore * 100) : '' %></td>
+        <td class="small"><%= a && a.submittedAt ? fmtDate(a.submittedAt) : (a ? 'Хугацаа: ' + fmtDate(a.deadlineAt) : '') %></td>
+        <td class="actions">
+          <% if (a) { %>
+            <a class="btn btn-sm" href="/exams/<%= exam._id %>/attempts/<%= a._id %>">Харах</a>
+            <form method="post" action="/exams/<%= exam._id %>/attempts/<%= a._id %>/delete" data-confirm="<%= r.student.fullName %>-ийн хариултыг устгаж, дахин өгөх боломжтой болгох уу?">
+              <button class="btn btn-sm btn-danger-ghost" title="Хариултыг устгаж дахин өгүүлэх">Дахин өгүүлэх</button>
+            </form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2>Асуулт тус бүрийн гүйцэтгэл</h2>
+  <table class="table">
+    <thead><tr><th class="num">#</th><th>Асуулт</th><th>Төрөл</th><th class="num">Зөв хариулсан</th><th style="width:30%"></th></tr></thead>
+    <tbody>
+    <% perQuestion.forEach(function (p) { %>
+      <tr>
+        <td class="num"><%= p.index %></td>
+        <td class="truncate"><%= p.question.text %></td>
+        <td class="small"><%= QUESTION_TYPE_LABELS[p.question.type] %></td>
+        <td class="num"><%= p.correct %> / <%= p.answered %></td>
+        <td><% if (p.rate != null) { %><div class="bar"><span style="width: <%= Math.round(p.rate) %>%" class="<%= p.rate < 40 ? 'low' : p.rate < 70 ? 'mid' : '' %>"></span></div><% } %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include('../partials/footer') %>

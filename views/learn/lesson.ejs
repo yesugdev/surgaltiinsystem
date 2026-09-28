@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+<%
+  const STATE = {
+    todo: ['Хийгээгүй', ''],
+    pending: ['Шалгагдаж байна', 'badge-amber'],
+    graded: ['Дүгнэгдсэн', 'badge-green'],
+    overdue: ['Хугацаа хэтэрсэн', 'badge-red'],
+    closed: ['Хаагдсан', ''],
+  };
+%>
+<div class="page-head">
+  <div>
+    <a href="/learn" class="back">← Хичээл</a>
+    <h1><%= lesson.title %></h1>
+    <p class="muted"><% if (subject) { %><span class="badge badge-blue"><%= subject.name %></span> <% } %><%= lesson.description || '' %></p>
+  </div>
+</div>
+
+<div class="lesson-layout">
+  <div class="lesson-main">
+    <% if (lesson.theory.trim()) { %>
+      <article class="card markdown theory"><%- theoryHtml %></article>
+    <% } %>
+
+    <% const decks = lesson.attachments.filter(function (a) { return viewKind(a.contentType) === 'pptx'; }); %>
+    <% decks.forEach(function (a) { %>
+      <section class="card slide-card">
+        <h2>🖥 <%= a.name.replace(/\.pptx$/i, '') %></h2>
+        <div class="pptx-viewer" data-src="/files/<%= a.fileId %>"></div>
+      </section>
+    <% }) %>
+
+    <% if (lesson.attachments.length) { %>
+      <section class="card">
+        <h2>📁 Материал</h2>
+        <ul class="file-list">
+          <% lesson.attachments.forEach(function (a) { %>
+            <li>
+              <span class="file-icon"><%= viewKind(a.contentType) === 'image' ? '🖼' : viewKind(a.contentType) === 'pdf' ? '📄' : '📎' %></span>
+              <a href="/files/<%= a.fileId %>/view?back=<%= encodeURIComponent('/learn/' + lesson._id) %>"><%= a.name %></a>
+              <span class="muted small"><%= fmtSize(a.size) %></span>
+              <span class="spacer"></span>
+              <a class="btn btn-sm btn-ghost" href="/files/<%= a.fileId %>?download=1">Татах</a>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+
+    <% if (tasks.length) { %>
+      <section class="card" id="tasks">
+        <h2>✅ Даалгаврууд</h2>
+        <div class="task-list">
+          <% tasks.forEach(function (x) { const t = x.task; %>
+            <a class="task-row task-link" href="/learn/<%= lesson._id %>/tasks/<%= t._id %>">
+              <span class="task-icon"><%= t.type === 'quiz' ? '📝' : '📎' %></span>
+              <div class="task-main">
+                <strong><%= t.title %></strong>
+                <div class="muted small">
+                  <%= t.type === 'quiz' ? 'Тест · ' + t.questions.length + ' асуулт' : 'Файл илгээх даалгавар' %>
+                  <% if (t.type === 'assignment' && t.dueAt) { %> · Хугацаа: <%= fmtDate(t.dueAt) %><% } %>
+                </div>
+              </div>
+              <% if (x.state === 'graded') { %><strong class="task-score"><%= fmtScore(x.sub.score) %> / <%= fmtScore(x.sub.maxScore) %></strong><% } %>
+              <span class="badge <%= STATE[x.state][1] %>"><%= STATE[x.state][0] %></span>
+            </a>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+  </div>
+
+  <% if (toc.length > 1 || tasks.length) { %>
+  <aside class="lesson-side">
+    <nav class="card sticky toc">
+      <% if (toc.length > 1) { %>
+        <div class="muted small">Агуулга</div>
+        <ul>
+          <% toc.forEach(function (h) { %><li class="toc-<%= h.level %>"><a href="#<%= h.id %>"><%= h.text %></a></li><% }) %>
+        </ul>
+      <% } %>
+      <% if (tasks.length) { %>
+        <a href="#tasks" class="btn btn-sm btn-block">✅ Даалгаврууд (<%= tasks.filter(function (x) { return x.sub && x.sub.submittedAt; }).length %>/<%= tasks.length %>)</a>
+      <% } %>
+    </nav>
+  </aside>
+  <% } %>
+</div>
+<%- include('../partials/footer', { scripts: decks.length ? ['/vendor/jszip.js', '/vendor/pptx-preview.js', '/pptx-viewer.js'] : [] }) %>

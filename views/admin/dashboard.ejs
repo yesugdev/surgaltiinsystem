@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Хянах самбар</h1>
+    <p class="muted">Сургалтын системийн ерөнхий мэдээлэл</p>
+  </div>
+</div>
+<div class="stats">
+  <a class="stat card" href="/admin/subjects"><span class="stat-value"><%= stats.subjects %></span><span class="stat-label">Хичээлийн төрөл</span></a>
+  <a class="stat card" href="/admin/classes"><span class="stat-value"><%= stats.classes %></span><span class="stat-label">Анги, бүлэг</span></a>
+  <a class="stat card" href="/admin/users?role=student"><span class="stat-value"><%= stats.students %></span><span class="stat-label">Сурагч</span></a>
+  <a class="stat card" href="/admin/users?role=teacher"><span class="stat-value"><%= stats.teachers %></span><span class="stat-label">Багш</span></a>
+  <a class="stat card" href="/exams"><span class="stat-value"><%= stats.exams %></span><span class="stat-label">Шалгалт</span></a>
+  <div class="stat card"><span class="stat-value"><%= stats.submitted %></span><span class="stat-label">Илгээсэн шалгалт</span></div>
+</div>
+
+<section class="card">
+  <h2>Эхлэх алхмууд</h2>
+  <ol class="steps">
+    <li><a href="/admin/subjects">Хичээлийн төрлүүдээ</a> бүртгэнэ (Математик, Физик…).</li>
+    <li><a href="/admin/classes">Анги, бүлгээ</a> бүртгэнэ.</li>
+    <li>Анги бүрт сурагчдаа нэмнэ — нэг бүрчлэн эсвэл жагсаалтаар олноор нь. Нэвтрэх нэр, нууц үгийг систем автоматаар үүсгэнэ.</li>
+    <li><a href="/admin/users?role=teacher">Багш нарыг</a> бүртгэж, заадаг хичээлийг нь онооно.</li>
+    <li>Багш өөрийн төрлөөр <a href="/lessons">хичээл</a> (онол + даалгавар) болон <a href="/exams">шалгалт</a> бэлдэж, ангиудад оноож нийтэлнэ. AI prompt ашиглан нэг дор оруулж болно.</li>
+    <li>Сурагчид өөрийн эрхээр нэвтэрч шалгалтаа өгнө. Үр дүн автоматаар гарна.</li>
+  </ol>
+</section>
+<%- include('../partials/footer') %>

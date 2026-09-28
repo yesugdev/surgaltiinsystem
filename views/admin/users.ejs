@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Хэрэглэгчид</h1>
+    <p class="muted"><%= users.length %> <%= ROLE_LABELS[role].toLowerCase() %></p>
+  </div>
+</div>
+
+<div class="tabs">
+  <a href="/admin/users?role=teacher" class="<%= role === 'teacher' ? 'active' : '' %>">Багш нар</a>
+  <a href="/admin/users?role=student" class="<%= role === 'student' ? 'active' : '' %>">Сурагчид</a>
+  <a href="/admin/users?role=admin" class="<%= role === 'admin' ? 'active' : '' %>">Админ</a>
+</div>
+
+<div class="grid-side">
+  <section class="card">
+    <form method="get" action="/admin/users" class="filters">
+      <input type="hidden" name="role" value="<%= role %>">
+      <input name="q" value="<%= q %>" placeholder="Нэр эсвэл нэвтрэх нэрээр хайх">
+      <% if (role === 'student') { %>
+        <select name="classId">
+          <option value="">Бүх анги</option>
+          <option value="none" <%= classFilter === 'none' ? 'selected' : '' %>>Ангигүй</option>
+          <% classes.forEach(function (c) { %>
+            <option value="<%= c._id %>" <%= String(c._id) === classFilter ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      <% } %>
+      <button class="btn">Шүүх</button>
+    </form>
+
+    <% if (!users.length) { %>
+      <p class="muted">Хэрэглэгч олдсонгүй.</p>
+    <% } else { %>
+      <table class="table">
+        <thead><tr><th>Овог нэр</th><th>Нэвтрэх нэр</th><% if (role === 'student') { %><th>Анги</th><% } %><% if (role === 'teacher') { %><th>Хичээлийн төрөл</th><% } %><th>Төлөв</th><th></th></tr></thead>
+        <tbody>
+        <% users.forEach(function (u) { %>
+          <tr class="<%= u.active ? '' : 'inactive' %>">
+            <td><%= u.fullName %></td>
+            <td><code><%= u.username %></code></td>
+            <% if (role === 'student') { %><td><%= u.className || '—' %></td><% } %>
+            <% if (role === 'teacher') { %><td><% if (u.subjectNames.length) { %><%= u.subjectNames.join(', ') %><% } else { %><span class="badge badge-amber">Оноогоогүй</span><% } %></td><% } %>
+            <td><% if (u.active) { %><span class="badge badge-green">Идэвхтэй</span><% } else { %><span class="badge">Идэвхгүй</span><% } %></td>
+            <td class="actions"><a class="btn btn-sm" href="/admin/users/<%= u._id %>">Засах</a></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+  <section class="card">
+    <h2><%= role === 'teacher' ? 'Багш бүртгэх' : role === 'student' ? 'Сурагч бүртгэх' : 'Админ бүртгэх' %></h2>
+    <% if (role === 'student') { %>
+      <p class="muted small">Олон сурагчийг <a href="/admin/classes">ангийн хуудаснаас</a> жагсаалтаар нэг дор нэмэх нь илүү хялбар.</p>
+    <% } %>
+    <form method="post" action="/admin/users" class="form">
+      <input type="hidden" name="role" value="<%= role %>">
+      <label>Овог нэр <input name="fullName" required maxlength="150"></label>
+      <label>Нэвтрэх нэр <input name="username" required maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" autocapitalize="none" title="3–32 тэмдэгт: латин үсэг, тоо, . _ -"></label>
+      <label>Нууц үг <input name="password" placeholder="хоосон бол автомат" maxlength="64"></label>
+      <% if (role === 'student') { %>
+        <label>Анги
+          <select name="classId">
+            <option value="">— сонгох —</option>
+            <% classes.forEach(function (c) { %><option value="<%= c._id %>"><%= c.name %></option><% }) %>
+          </select>
+        </label>
+      <% } %>
+      <% if (role === 'teacher') { %>
+        <fieldset>
+          <legend>Заадаг хичээлийн төрөл</legend>
+          <% if (!subjects.length) { %>
+            <p class="muted small">Хичээл бүртгэгдээгүй байна. <a href="/admin/subjects">Хичээл нэмэх</a></p>
+          <% } else { %>
+            <div class="checks">
+              <% subjects.forEach(function (s) { %>
+                <label class="check"><input type="checkbox" name="subjectIds" value="<%= s._id %>"> <%= s.name %></label>
+              <% }) %>
+            </div>
+          <% } %>
+        </fieldset>
+      <% } %>
+      <button class="btn btn-primary">Бүртгэх</button>
+    </form>
+  </section>
+</div>
+<%- include('../partials/footer') %>

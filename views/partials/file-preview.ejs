@@ -1,0 +1,19 @@
+<%# Нэг файлыг төрлөөр нь хуудсан дотор харуулна. Хэрэглээ: include('file-preview', { f: { fileId, name, contentType } }) %>
+<% const kind = viewKind(f.contentType); const src = '/files/' + f.fileId; %>
+<% if (kind === 'image') { %>
+  <a href="<%= src %>" target="_blank" class="preview-img-link"><img src="<%= src %>" alt="<%= f.name %>" class="preview-img" loading="lazy"></a>
+<% } else if (kind === 'pdf') { %>
+  <iframe src="<%= src %>#view=FitH" class="preview-frame" title="<%= f.name %>" loading="lazy"></iframe>
+<% } else if (kind === 'pptx') { %>
+  <div class="pptx-viewer" data-src="<%= src %>"></div>
+<% } else if (kind === 'docx' || kind === 'text') { %>
+  <iframe src="<%= src %>/view?embed=1" class="preview-frame" title="<%= f.name %>" loading="lazy"></iframe>
+<% } else if (kind === 'video') { %>
+  <video src="<%= src %>" controls class="viewer-media" preload="metadata"></video>
+<% } else if (kind === 'audio') { %>
+  <audio src="<%= src %>" controls preload="metadata"></audio>
+<% } else if (kind === 'ppt') { %>
+  <div class="flash flash-info small">Хуучин <strong>.ppt</strong> форматыг хөтөч дээр харуулах боломжгүй. PowerPoint-оор нээгээд «Save As → .pptx» болгож хадгалбал шууд харагдана. <a href="<%= src %>?download=1">Татах</a></div>
+<% } else { %>
+  <div class="flash flash-info small">Энэ төрлийн файлыг хөтөч дээр харуулах боломжгүй. <a href="<%= src %>?download=1">Татаж аваад нээх</a></div>
+<% } %>

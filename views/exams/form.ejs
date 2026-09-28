@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+<% const isNew = !exam._id; const selected = (exam.classIds || []).map(String); %>
+<div class="narrow">
+  <a href="<%= isNew ? '/exams' : '/exams/' + exam._id %>" class="back">← Буцах</a>
+  <h1><%= isNew ? 'Шинэ шалгалт' : 'Шалгалтын тохиргоо' %></h1>
+
+  <% if (errors.length) { %>
+    <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+  <% } %>
+
+  <form method="post" action="<%= isNew ? '/exams' : '/exams/' + exam._id %>" class="card form">
+    <label>Хичээлийн төрөл
+      <select name="subject" required>
+        <option value="">— сонгох —</option>
+        <% subjects.forEach(function (s) { %>
+          <option value="<%= s._id %>" <%= String(s._id) === String(exam.subject) ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+      <% if (user.role === 'teacher') { %><small class="muted">Танд оноогдсон хичээлүүд л харагдана.</small><% } %>
+    </label>
+    <label>Шалгалтын нэр <input name="title" value="<%= exam.title || '' %>" required maxlength="200" placeholder="жишээ: Математик — 1-р улирлын шалгалт"></label>
+    <label>Заавар / тайлбар <textarea name="description" rows="3" maxlength="5000" placeholder="Сурагчдад харагдах заавар"><%= exam.description || '' %></textarea></label>
+
+    <div class="row">
+      <label>Үргэлжлэх хугацаа (минут)
+        <input name="durationMinutes" type="number" min="1" max="600" value="<%= exam.durationMinutes %>" required>
+      </label>
+      <label>Нээгдэх цаг <input name="startAt" type="datetime-local" value="<%= toInputDate(exam.startAt) %>"></label>
+      <label>Хаагдах цаг <input name="endAt" type="datetime-local" value="<%= toInputDate(exam.endAt) %>"></label>
+    </div>
+    <p class="muted small">Нээгдэх/хаагдах цагийг хоосон орхивол нийтэлсэн даруйд нээгдэж, хязгааргүй нээлттэй байна. Хаагдах цаг ойртсон үед эхэлсэн сурагчийн хугацаа хаагдах цагаар дуусна.</p>
+
+    <fieldset>
+      <legend>Шалгалт өгөх анги, бүлэг</legend>
+      <% if (!classes.length) { %>
+        <p class="muted small">Анги бүртгэгдээгүй байна. Админ эхлээд анги бүртгэх шаардлагатай.</p>
+      <% } else { %>
+        <div class="checks">
+          <% classes.forEach(function (c) { %>
+            <label class="check"><input type="checkbox" name="classIds" value="<%= c._id %>" <%= selected.includes(String(c._id)) ? 'checked' : '' %>> <%= c.name %></label>
+          <% }) %>
+        </div>
+      <% } %>
+    </fieldset>
+
+    <fieldset>
+      <legend>Нэмэлт тохиргоо</legend>
+      <label class="check"><input type="checkbox" name="shuffleQuestions" <%= exam.shuffleQuestions ? 'checked' : '' %>> Асуултын дарааллыг сурагч бүрт холих</label>
+      <label class="check"><input type="checkbox" name="showResults" <%= exam.showResults ? 'checked' : '' %>> Илгээсний дараа сурагчид оноог нь харуулах</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Зөв хариултыг сурагчид харуулах</legend>
+      <% const sa = exam.showAnswers || 'never'; %>
+      <label class="check"><input type="radio" name="showAnswers" value="never" <%= sa === 'never' ? 'checked' : '' %>> <span><strong>Харуулахгүй</strong></span></label>
+      <label class="check"><input type="radio" name="showAnswers" value="after_close" <%= sa === 'after_close' ? 'checked' : '' %>>
+        <span><strong>Шалгалт хаагдсаны дараа</strong> <span class="muted small">— хаагдах цаг болоход бүх сурагчид нэг зэрэг харагдана. Зөвлөмж: бусад сурагчид хариулт тарахгүй.</span></span></label>
+      <label class="check"><input type="radio" name="showAnswers" value="after_submit" <%= sa === 'after_submit' ? 'checked' : '' %>>
+        <span><strong>Илгээсний дараа шууд</strong> <span class="muted small">— бусад сурагч шалгалт өгч байхад хариулт тарах эрсдэлтэй.</span></span></label>
+      <p class="muted small">«Хаагдсаны дараа» сонгосон бол дээр хаагдах цагийг заавал тавина уу. Хаагдах цаггүй бол хариулт харагдахгүй.</p>
+    </fieldset>
+
+    <button class="btn btn-primary"><%= isNew ? 'Үүсгээд асуулт нэмэх →' : 'Хадгалах' %></button>
+  </form>
+</div>
+<%- include('../partials/footer') %>

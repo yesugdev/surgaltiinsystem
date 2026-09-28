@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+<% const url = '/learn/' + lesson._id + '/tasks/' + task._id;
+   const graded = sub && sub.score != null;
+   const canSubmit = !graded && state !== 'closed'; %>
+<div class="narrow">
+  <a href="/learn/<%= lesson._id %>#tasks" class="back">← <%= lesson.title %></a>
+  <h1>📎 <%= task.title %></h1>
+  <p class="muted"><%= fmtScore(total) %> оноо
+    <% if (task.dueAt) { %> · Хугацаа: <strong><%= fmtDate(task.dueAt) %></strong><% } %>
+    <% if (state === 'overdue') { %> <span class="badge badge-red">Хугацаа хэтэрсэн</span><% } %>
+    <% if (state === 'closed') { %> <span class="badge">Хаагдсан</span><% } %>
+  </p>
+
+  <article class="card markdown"><%- instructionsHtml %></article>
+
+  <% if (graded) { %>
+    <div class="card result-card">
+      <div class="big-score"><%= fmtScore(sub.score) %><small> / <%= fmtScore(sub.maxScore) %></small></div>
+      <div class="muted">Дүгнэгдсэн · <%= fmtDate(sub.gradedAt) %></div>
+      <% if (sub.feedback) { %><div class="feedback"><strong>Багшийн сэтгэгдэл:</strong> <span class="prewrap"><%= sub.feedback %></span></div><% } %>
+    </div>
+  <% } %>
+
+  <% if (sub && sub.submittedAt) { %>
+    <section class="card">
+      <h2>Таны илгээсэн</h2>
+      <p class="muted small">Илгээсэн: <%= fmtDate(sub.submittedAt) %><% if (sub.late) { %> <span class="badge badge-red">Хоцорсон</span><% } %>
+        <% if (!graded) { %> · <span class="badge badge-amber">Багш шалгаж байна</span><% } %></p>
+      <% if (sub.files.length) { %>
+        <ul class="file-list">
+          <% sub.files.forEach(function (f) { %>
+            <li><span class="file-icon">📎</span><a href="/files/<%= f.fileId %>/view?back=<%= encodeURIComponent(url) %>"><%= f.name %></a><span class="muted small"><%= fmtSize(f.size) %></span></li>
+          <% }) %>
+        </ul>
+      <% } %>
+      <% if (sub.text) { %><div class="text-answer prewrap"><%= sub.text %></div><% } %>
+    </section>
+  <% } %>
+
+  <% if (canSubmit) { %>
+    <form method="post" action="<%= url %>/assignment" enctype="multipart/form-data" class="card form" id="assignment-form">
+      <h2><%= sub && sub.submittedAt ? 'Дахин илгээх' : 'Даалгавар илгээх' %></h2>
+      <% if (sub && sub.submittedAt) { %><p class="muted small">Шинэ файл сонговол өмнөх файлууд солигдоно. Файл сонгохгүй бол зөвхөн бичсэн хариулт шинэчлэгдэнэ.</p><% } %>
+      <label class="dropzone" id="dropzone">
+        <input type="file" name="files" multiple accept="<%= ACCEPT %>" id="file-input">
+        <span class="dropzone-text">📤 Файлаа энд чирж оруулах эсвэл <u>сонгох</u><br><small class="muted">Word, PDF, зураг, PowerPoint, Excel, zip, код… (нэг файл <%= MAX_FILE_MB %>MB хүртэл, 5 хүртэл файл)</small></span>
+        <span class="dropzone-files" id="file-names"></span>
+      </label>
+      <label>Тайлбар / хариулт <small class="muted">(заавал биш)</small>
+        <textarea name="text" rows="4" maxlength="20000" placeholder="Багшид хэлэх зүйл эсвэл хариултаа энд бичиж болно"><%= sub ? sub.text : '' %></textarea>
+      </label>
+      <button class="btn btn-primary btn-lg" id="assignment-submit">Илгээх</button>
+    </form>
+    <script>
+      (function () {
+        var input = document.getElementById('file-input');
+        var names = document.getElementById('file-names');
+        var zone = document.getElementById('dropzone');
+        function show() {
+          names.textContent = Array.prototype.map.call(input.files, function (f) {
+            return f.name + ' (' + (f.size < 1048576 ? Math.max(1, Math.round(f.size / 1024)) + ' KB' : (f.size / 1048576).toFixed(1) + ' MB') + ')';
+          }).join(', ');
+          zone.classList.toggle('has-files', input.files.length > 0);
+        }
+        input.addEventListener('change', show);
+        ['dragenter', 'dragover'].forEach(function (ev) { zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add('drag'); }); });
+        ['dragleave', 'drop'].forEach(function (ev) { zone.addEventListener(ev, function () { zone.classList.remove('drag'); }); });
+        zone.addEventListener('drop', function (e) { e.preventDefault(); input.files = e.dataTransfer.files; show(); });
+        document.getElementById('assignment-form').addEventListener('submit', function () {
+          var b = document.getElementById('assignment-submit'); b.disabled = true; b.textContent = 'Илгээж байна…';
+        });
+      })();
+    </script>
+  <% } else if (!graded && state === 'closed') { %>
+    <div class="flash flash-warn">Даалгаврын хугацаа дууссан тул илгээх боломжгүй.</div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

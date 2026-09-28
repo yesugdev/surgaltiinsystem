@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<% const isNew = !lesson._id; const selected = (lesson.classIds || []).map(String); %>
+<div class="narrow">
+  <a href="<%= isNew ? '/lessons' : '/lessons/' + lesson._id %>" class="back">← Буцах</a>
+  <h1><%= isNew ? 'Шинэ хичээл' : 'Хичээлийн тохиргоо' %></h1>
+
+  <% if (errors.length) { %>
+    <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+  <% } %>
+
+  <form method="post" action="<%= isNew ? '/lessons' : '/lessons/' + lesson._id %>" class="card form">
+    <div class="row">
+      <label>Хичээлийн төрөл
+        <select name="subject" required>
+          <option value="">— сонгох —</option>
+          <% subjects.forEach(function (s) { %>
+            <option value="<%= s._id %>" <%= String(s._id) === String(lesson.subject) ? 'selected' : '' %>><%= s.name %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Хичээлийн сэдэв <input name="title" value="<%= lesson.title || '' %>" required maxlength="200" placeholder="жишээ: Квадрат тэгшитгэл"></label>
+    </div>
+    <label>Товч тайлбар <textarea name="description" rows="2" maxlength="2000" placeholder="Сурагчдад жагсаалтад харагдана"><%= lesson.description || '' %></textarea></label>
+
+    <fieldset>
+      <legend>Үзэх анги, бүлэг <small class="muted">(олныг сонгож болно)</small></legend>
+      <% if (!classes.length) { %>
+        <p class="muted small">Анги бүртгэгдээгүй байна.</p>
+      <% } else { %>
+        <div class="checks">
+          <% classes.forEach(function (c) { %>
+            <label class="check"><input type="checkbox" name="classIds" value="<%= c._id %>" <%= selected.includes(String(c._id)) ? 'checked' : '' %>> <%= c.name %></label>
+          <% }) %>
+        </div>
+      <% } %>
+    </fieldset>
+
+    <button class="btn btn-primary"><%= isNew ? 'Үүсгээд агуулга оруулах →' : 'Хадгалах' %></button>
+  </form>
+</div>
+<%- include('../partials/footer') %>

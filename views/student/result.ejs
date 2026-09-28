@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+<div class="narrow">
+  <a href="/student" class="back">← Миний шалгалтууд</a>
+  <div class="card result-card">
+    <h1><%= exam.title %></h1>
+    <p class="muted">Илгээсэн: <%= fmtDate(attempt.submittedAt) %></p>
+    <% if (!exam.showResults) { %>
+      <p class="result-msg">Таны хариулт амжилттай илгээгдлээ. Дүнг багш тань мэдэгдэнэ.</p>
+    <% } else if (attempt.needsReview) { %>
+      <p class="result-msg">Таны хариулт илгээгдлээ. Зарим асуултыг багш шалгаж байгаа тул эцсийн дүн дараа гарна.</p>
+      <p class="muted">Одоогийн оноо: <%= fmtScore(attempt.score) %> / <%= fmtScore(attempt.maxScore) %></p>
+    <% } else { %>
+      <div class="big-score"><%= fmtScore(attempt.score) %><small> / <%= fmtScore(attempt.maxScore) %></small></div>
+      <div class="muted"><%= attempt.maxScore ? fmtScore(attempt.score / attempt.maxScore * 100) + '%' : '' %></div>
+    <% } %>
+  </div>
+
+  <% if (answers.opensAt) { %>
+    <div class="flash flash-info">Зөв хариултууд <strong><%= fmtDate(answers.opensAt) %></strong>-д шалгалт хаагдсаны дараа энд харагдана.</div>
+  <% } %>
+
+  <% if (answers.visible) { %>
+    <h2>Зөв хариултууд</h2>
+    <p class="muted small">✓ — зөв хариулт · <span class="legend-picked">тодоор</span> — таны сонголт</p>
+    <% questions.forEach(function (q, i) {
+         const a = answerMap.get(String(q._id));
+         const sel = a ? a.selectedOptions.map(String) : [];
+         const state = !a ? 'none' : a.isCorrect === null ? 'review' : a.isCorrect ? 'ok' : 'bad'; %>
+      <article class="card question answer-<%= state %>">
+        <div class="question-head">
+          <span class="qnum"><%= i + 1 %></span>
+          <span class="badge"><%= QUESTION_TYPE_LABELS[q.type] %></span>
+          <div class="spacer"></div>
+          <% if (exam.showResults) { %>
+            <span class="result-state"><%= state === 'ok' ? '✓ Зөв' : state === 'bad' ? '✗ Буруу' : state === 'review' ? 'Шалгагдаж байна' : '' %>
+              <span class="muted small"><%= a ? fmtScore(a.points) : 0 %>/<%= fmtScore(q.points) %></span></span>
+          <% } %>
+        </div>
+        <div class="question-text prewrap"><%= q.text %></div>
+        <% if (q.type === 'text') { %>
+          <div class="muted small">Таны хариулт:</div>
+          <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
+          <% if (q.acceptedAnswers.length) { %>
+            <div class="small">Зөв хариулт: <strong><%= q.acceptedAnswers.join(' / ') %></strong></div>
+          <% } else { %>
+            <div class="muted small">Энэ асуултыг багш дүгнэнэ.</div>
+          <% } %>
+        <% } else { %>
+          <ul class="options">
+            <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); %>
+              <li class="<%= o.isCorrect ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && !o.isCorrect ? 'wrong' : '' %>">
+                <span class="opt-mark"><%= o.isCorrect ? '✓' : (picked ? '✗' : '') %></span><%= o.text %>
+                <% if (picked) { %><span class="muted small">— таны сонголт</span><% } %>
+              </li>
+            <% }) %>
+          </ul>
+          <% if (!sel.length) { %><div class="muted small">Та хариулаагүй.</div><% } %>
+        <% } %>
+      </article>
+    <% }) %>
+  <% } else if (exam.showResults) { %>
+    <h2>Асуулт тус бүрээр</h2>
+    <div class="result-list">
+      <% questions.forEach(function (q, i) { const a = answerMap.get(String(q._id)); const state = !a ? 'none' : a.isCorrect === null ? 'review' : a.isCorrect ? 'ok' : 'bad'; %>
+        <div class="card result-row answer-<%= state %>">
+          <span class="qnum"><%= i + 1 %></span>
+          <span class="truncate"><%= q.text %></span>
+          <span class="result-state">
+            <%= state === 'ok' ? '✓ Зөв' : state === 'bad' ? '✗ Буруу' : state === 'review' ? 'Шалгагдаж байна' : '—' %>
+            <span class="muted small"><%= a ? fmtScore(a.points) : 0 %>/<%= fmtScore(q.points) %></span>
+          </span>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

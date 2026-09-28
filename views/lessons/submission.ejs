@@ -1,0 +1,119 @@
+<%- include('../partials/header') %>
+<% const b = '/lessons/' + lesson._id + '/tasks/' + task._id; const isQuiz = task.type === 'quiz'; %>
+<div class="page-head">
+  <div>
+    <a href="<%= b %>" class="back">← <%= task.title %></a>
+    <h1><%= student ? student.fullName : 'Устгагдсан сурагч' %></h1>
+    <p class="muted"><%= cls ? cls.name + ' · ' : '' %>Илгээсэн: <%= fmtDate(sub.submittedAt) %>
+      <% if (sub.late) { %> <span class="badge badge-red">Хоцорсон</span><% } %>
+      <% if (sub.attemptCount > 1) { %> · <%= sub.attemptCount %> дахь илгээлт<% } %></p>
+  </div>
+  <div class="score-box">
+    <% if (sub.score != null && !sub.needsReview) { %>
+      <div class="score-value"><%= fmtScore(sub.score) %><small> / <%= fmtScore(sub.maxScore) %></small></div>
+      <div class="muted small">Дүгнэсэн</div>
+    <% } else { %>
+      <span class="badge badge-amber">Дүгнэх шаардлагатай</span>
+    <% } %>
+  </div>
+</div>
+
+<% if (!isQuiz) { %>
+<div class="review-layout">
+  <section class="card review-main">
+    <h2>Илгээсэн файл <span class="muted small">(<%= sub.files.length %>)</span></h2>
+    <% if (!sub.files.length) { %>
+      <p class="muted">Файл хавсаргаагүй.</p>
+    <% } %>
+    <% sub.files.forEach(function (f, i) { %>
+      <div class="file-block">
+        <div class="file-block-head">
+          <span class="file-icon">📎</span>
+          <strong class="file-block-name"><%= i + 1 %>. <%= f.name %></strong>
+          <span class="muted small"><%= fmtSize(f.size) %></span>
+          <span class="spacer"></span>
+          <a class="btn btn-sm btn-ghost" href="/files/<%= f.fileId %>/view" target="_blank">Шинэ цонхонд</a>
+          <a class="btn btn-sm btn-ghost" href="/files/<%= f.fileId %>?download=1">Татах</a>
+        </div>
+        <%- include('../partials/file-preview', { f: f }) %>
+      </div>
+    <% }) %>
+    <% if (sub.text) { %>
+      <h3>Сурагчийн бичсэн хариулт</h3>
+      <div class="text-answer prewrap"><%= sub.text %></div>
+    <% } %>
+  </section>
+
+  <aside class="review-side">
+    <form method="post" action="<%= b %>/submissions/<%= sub._id %>/grade" class="card form sticky">
+      <h2>Дүгнэх</h2>
+      <label>Оноо <small class="muted">(0 – <%= fmtScore(task.maxPoints) %>)</small>
+        <input type="number" name="score" min="0" max="<%= task.maxPoints %>" step="0.5" value="<%= sub.score != null ? sub.score : '' %>" required autofocus>
+      </label>
+      <label>Сэтгэгдэл <small class="muted">(сурагчид харагдана)</small>
+        <textarea name="feedback" rows="5" maxlength="5000" placeholder="Сайн хийсэн зүйл, засах зүйл..."><%= sub.feedback %></textarea>
+      </label>
+      <div class="btn-group">
+        <button class="btn btn-primary">Хадгалах</button>
+        <% if (nextId) { %><button class="btn" name="next" value="<%= nextId %>">Хадгалаад дараагийнх →</button><% } %>
+      </div>
+    </form>
+    <form method="post" action="<%= b %>/submissions/<%= sub._id %>/delete" data-confirm="Энэ гүйцэтгэл болон файлуудыг устгаж, сурагчид дахин илгээх боломж олгох уу?">
+      <button class="btn btn-sm btn-danger-ghost">Гүйцэтгэлийг устгах</button>
+    </form>
+  </aside>
+</div>
+
+<details class="card">
+  <summary><strong>Даалгаврын заавар</strong></summary>
+  <div class="markdown"><%- instructionsHtml %></div>
+</details>
+
+<% } else { %>
+  <% if (sub.needsReview) { %><div class="flash flash-warn">Нээлттэй асуултад гараар оноо өгөөд «Дүн хадгалах» дарна уу.</div><% } %>
+  <form method="post" action="<%= b %>/submissions/<%= sub._id %>/grade">
+    <% task.questions.forEach(function (q, i) {
+         const a = answerMap.get(String(q._id));
+         const sel = a ? a.selectedOptions.map(String) : [];
+         const state = !a ? 'none' : a.isCorrect === null ? 'review' : a.isCorrect ? 'ok' : 'bad'; %>
+      <article class="card question answer-<%= state %>">
+        <div class="question-head">
+          <span class="qnum"><%= i + 1 %></span>
+          <span class="badge"><%= QUESTION_TYPE_LABELS[q.type] %></span>
+          <div class="spacer"></div>
+          <label class="points-input">Оноо
+            <input type="number" name="points_<%= q._id %>" min="0" max="<%= q.points %>" step="0.5" value="<%= a ? a.points : 0 %>">
+            <span class="muted">/ <%= fmtScore(q.points) %></span>
+          </label>
+        </div>
+        <div class="question-text prewrap"><%= q.text %></div>
+        <% if (q.type === 'text') { %>
+          <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
+          <% if (q.acceptedAnswers.length) { %><div class="muted small">Зөв хариулт: <%= q.acceptedAnswers.join(' / ') %></div><% } %>
+        <% } else { %>
+          <ul class="options">
+            <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); %>
+              <li class="<%= o.isCorrect ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && !o.isCorrect ? 'wrong' : '' %>">
+                <span class="opt-mark"><%= picked ? (o.isCorrect ? '✓' : '✗') : (o.isCorrect ? '○' : '') %></span><%= o.text %>
+                <% if (picked) { %><span class="muted small">— сурагчийн сонголт</span><% } %>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </article>
+    <% }) %>
+    <section class="card form">
+      <label>Сэтгэгдэл <small class="muted">(сурагчид харагдана)</small>
+        <textarea name="feedback" rows="3" maxlength="5000"><%= sub.feedback %></textarea>
+      </label>
+    </section>
+    <div class="sticky-actions">
+      <% if (nextId) { %><button class="btn" name="next" value="<%= nextId %>">Хадгалаад дараагийнх →</button><% } %>
+      <button class="btn btn-primary">Дүн хадгалах</button>
+    </div>
+  </form>
+  <form method="post" action="<%= b %>/submissions/<%= sub._id %>/delete" data-confirm="Энэ гүйцэтгэлийг устгаж, сурагчид дахин өгөх боломж олгох уу?">
+    <button class="btn btn-sm btn-danger-ghost">Гүйцэтгэлийг устгах</button>
+  </form>
+<% } %>
+<%- include('../partials/footer', { scripts: ['/vendor/jszip.js', '/vendor/pptx-preview.js', '/pptx-viewer.js'] }) %>

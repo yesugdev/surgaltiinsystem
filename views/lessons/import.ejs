@@ -1,0 +1,87 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <a href="/lessons/<%= lesson._id %>" class="back">← <%= lesson.title %></a>
+    <h1>Онол, даалгавар нэг дор оруулах</h1>
+    <p class="muted">Онол, тест, файл илгээх даалгаврыг нэг текстээр буулгахад бүгд зэрэг орно.</p>
+  </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" data-open-dialog="#prompt-dialog">✨ AI prompt</button>
+  </div>
+</div>
+
+<ol class="howto card">
+  <li><strong>«AI prompt»</strong> товчийг дараад prompt-ыг хуулна.</li>
+  <li>ChatGPT, Claude, Gemini зэрэг AI-д буулгаж, доод талын <em>ДААЛГАВАР</em> хэсэгт анги, асуултын тоо, даалгаврын хэлбэрээ бичнэ. Өөрийн бэлтгэсэн материалыг хавсаргаж бас болно.</li>
+  <li>AI-ийн хариуг бүтнээр нь хуулж доор буулгана. Баруун талд онол, тест, даалгавар бүр хэрхэн харагдахыг шалгаад <strong>«Оруулах»</strong> дарна.</li>
+</ol>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error">
+    <strong>Юу ч ороогүй. Дараах алдааг засна уу:</strong>
+    <ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<form method="post" action="/lessons/<%= lesson._id %>/import" id="lesson-import-form" class="import-layout">
+  <section class="card import-input">
+    <div class="import-toolbar">
+      <h2>Агуулга</h2>
+      <div class="btn-group">
+        <button type="button" class="btn btn-sm" id="fill-example">Жишээ харах</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="clear-text">Цэвэрлэх</button>
+      </div>
+    </div>
+    <textarea name="text" id="import-text" rows="24" spellcheck="false"
+              placeholder="=== ОНОЛ ===&#10;## Гарчиг&#10;Онолын агуулга...&#10;&#10;=== ТЕСТ: Бататгах тест ===&#10;1. Асуулт&#10;A) ...&#10;*B) Зөв хариулт&#10;&#10;=== ДААЛГАВАР: Бие даалт ===&#10;Оноо: 10&#10;Даалгаврын заавар..."><%= text %></textarea>
+
+    <details class="format-help">
+      <summary>Форматын товч заавар</summary>
+      <table class="table small">
+        <tr><td><code>=== ОНОЛ ===</code></td><td>Онолын хэсэг. Доор нь Markdown (<code>## гарчиг</code>, жагсаалт, хүснэгт, код).</td></tr>
+        <tr><td><code>=== ТЕСТ: Нэр ===</code></td><td>Тест. Асуулт бүр <code>1.</code>, сонголт <code>A)</code>, зөв сонголтын өмнө <code>*</code>, нээлттэй асуултад <code>Хариулт: …</code>. Шалгалтын асуултын формат ижил.</td></tr>
+        <tr><td><code>=== ДААЛГАВАР: Нэр ===</code></td><td>Сурагч файлаар илгээх даалгавар. Эхний мөрөнд <code>Оноо: 10</code> (заавал биш), дараа нь заавар.</td></tr>
+      </table>
+      <p class="muted small">ТЕСТ, ДААЛГАВАР хэсэг хэд ч байж болно. Хугацаа, дахин өгөх зэрэг тохиргоог оруулсны дараа даалгавар бүрийн «Засах» хэсгээс өөрчилнө.</p>
+    </details>
+
+    <fieldset>
+      <legend>Оруулах арга</legend>
+      <label class="check"><input type="radio" name="mode" value="append" <%= mode !== 'replace' ? 'checked' : '' %>> Одоогийнх дээр нэмэх <span class="muted small">(онол төгсгөлд нь залгагдана, даалгавар нэмэгдэнэ)</span></label>
+      <% if (lesson.theory.trim() || lesson.tasks.length) { %>
+        <label class="check"><input type="radio" name="mode" value="replace" <%= mode === 'replace' ? 'checked' : '' %> <%= hasSubmissions ? 'disabled' : '' %>> Одоогийн онол, даалгаврыг шинээр солих
+          <% if (hasSubmissions) { %><span class="muted small">(сурагчид гүйцэтгэсэн тул боломжгүй)</span><% } %></label>
+      <% } %>
+    </fieldset>
+
+    <div class="btn-group">
+      <button class="btn btn-primary btn-lg" id="import-submit" disabled>Оруулах</button>
+      <a class="btn btn-ghost" href="/lessons/<%= lesson._id %>">Болих</a>
+    </div>
+  </section>
+
+  <section class="card import-preview">
+    <div class="import-toolbar">
+      <h2>Урьдчилан харах</h2>
+      <span class="muted small" id="preview-summary"></span>
+    </div>
+    <div id="preview-out"><p class="muted">Агуулгаа зүүн талд буулгахад энд харагдана.</p></div>
+  </section>
+</form>
+
+<dialog id="prompt-dialog" class="prompt-dialog">
+  <div class="prompt-dialog-head">
+    <h2>AI prompt — онол + даалгавар</h2>
+    <button type="button" class="btn btn-ghost btn-sm" data-close>✕</button>
+  </div>
+  <p class="muted small">Энэ prompt-ыг хуулж ChatGPT, Claude, Gemini зэрэг AI-д буулгана. Доод талын <strong>ДААЛГАВАР</strong> хэсгийг өөрийн хэрэгцээгээр засаарай. AI-ийн хариуг бүтнээр нь хуулж энэ хуудсанд буулгахад онол, тест, даалгавар бүгд зэрэг орно.</p>
+  <textarea id="prompt-text" rows="20" readonly spellcheck="false"><%= prompt %></textarea>
+  <div class="btn-group prompt-dialog-actions">
+    <button type="button" class="btn btn-primary" data-copy="#prompt-text">Хуулах</button>
+    <div class="spacer"></div>
+    <button type="button" class="btn" data-close>Хаах</button>
+  </div>
+</dialog>
+
+<script type="application/json" id="import-example"><%- JSON.stringify(example).replace(/</g, '\\u003c') %></script>
+<%- include('../partials/footer', { scripts: ['/question-parser.js', '/lesson-parser.js', '/preview.js', '/lesson-import.js'] }) %>

@@ -1,0 +1,7 @@
+</main>
+<script src="/app.js"></script>
+<% (locals.scripts || []).forEach(function (src) { %>
+<script src="<%= src %>"></script>
+<% }) %>
+</body>
+</html>

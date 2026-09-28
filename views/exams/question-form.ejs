@@ -1,0 +1,52 @@
+<%- include('../partials/header') %>
+<% const isNew = !question._id; const opts = question.options && question.options.length ? question.options : [{ text: '' }, { text: '' }]; %>
+<div class="narrow">
+  <a href="/exams/<%= exam._id %>" class="back">← <%= exam.title %></a>
+  <h1><%= isNew ? 'Асуулт нэмэх' : 'Асуулт засах' %></h1>
+
+  <% if (errors.length) { %>
+    <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+  <% } %>
+
+  <form method="post" action="/exams/<%= exam._id %>/questions<%= isNew ? '' : '/' + question._id %>" class="card form" id="question-form">
+    <div class="row">
+      <label>Асуултын төрөл
+        <select name="type" id="q-type">
+          <% ['single', 'multiple', 'text'].forEach(function (t) { %>
+            <option value="<%= t %>" <%= question.type === t ? 'selected' : '' %>><%= QUESTION_TYPE_LABELS[t] %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Оноо <input name="points" type="number" step="0.5" min="0.5" max="1000" value="<%= question.points %>" required></label>
+    </div>
+
+    <label>Асуулт <textarea name="text" rows="4" required maxlength="10000"><%= question.text %></textarea></label>
+
+    <fieldset id="options-block">
+      <legend>Хариултын сонголтууд <small class="muted" id="options-hint"></small></legend>
+      <div id="options">
+        <% opts.forEach(function (o, i) { %>
+          <div class="option-row">
+            <label class="check" title="Зөв хариулт"><input type="checkbox" name="optionCorrect" value="<%= i %>" <%= o.isCorrect ? 'checked' : '' %>> <span class="small">зөв</span></label>
+            <input name="optionText" value="<%= o.text %>" placeholder="Сонголт" maxlength="2000">
+            <button type="button" class="btn btn-sm btn-ghost remove-option" title="Хасах">✕</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" class="btn btn-sm" id="add-option">+ Сонголт нэмэх</button>
+    </fieldset>
+
+    <fieldset id="text-block">
+      <legend>Зөв хариулт(ууд)</legend>
+      <textarea name="acceptedAnswers" rows="3" placeholder="Мөр бүрт нэг зөв хариулт"><%= (question.acceptedAnswers || []).join('\n') %></textarea>
+      <p class="muted small">Том жижиг үсэг, илүү зай ялгахгүйгээр харьцуулна. Хоосон орхивол багш гараар дүгнэнэ (эссэ, тайлбар гэх мэт).</p>
+    </fieldset>
+
+    <div class="btn-group">
+      <button class="btn btn-primary">Хадгалах</button>
+      <% if (isNew) { %><button class="btn" name="next" value="new">Хадгалаад дараагийнхыг нэмэх</button><% } %>
+      <a class="btn btn-ghost" href="/exams/<%= exam._id %>">Болих</a>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer', { scripts: ['/question-form.js'] }) %>

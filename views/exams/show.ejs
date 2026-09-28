@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+<% const maxScore = exam.questions.reduce(function (s, q) { return s + q.points; }, 0); %>
+<div class="page-head">
+  <div>
+    <a href="/exams" class="back">← Шалгалтууд</a>
+    <h1><%= exam.title %>
+      <% if (exam.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge">Ноорог</span><% } %>
+    </h1>
+    <p class="muted">
+      <% if (subject) { %><span class="badge badge-blue"><%= subject.name %></span><% } else { %><span class="badge badge-amber">Хичээл сонгоогүй</span><% } %>
+      <%= exam.questions.length %> асуулт · <%= fmtScore(maxScore) %> оноо · <%= exam.durationMinutes %> минут
+      · Анги: <%= classes.map(function (c) { return c.name; }).join(', ') || 'сонгоогүй' %>
+    </p>
+    <% if (exam.startAt || exam.endAt) { %>
+      <p class="muted small">Нээгдэх: <%= fmtDate(exam.startAt) %> · Хаагдах: <%= fmtDate(exam.endAt) %></p>
+    <% } %>
+    <p class="muted small">Оноо харуулах: <%= exam.showResults ? 'Тийм' : 'Үгүй' %> · Зөв хариулт харуулах: <%= SHOW_ANSWERS_LABELS[exam.showAnswers || 'never'] %></p>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="/exams/<%= exam._id %>/edit">Тохиргоо</a>
+    <a class="btn" href="/exams/<%= exam._id %>/results">Үр дүн (<%= attemptCount %>)</a>
+    <form method="post" action="/exams/<%= exam._id %>/publish"
+          <% if (exam.published) { %>data-confirm="Нийтлэлээс буцаавал сурагчид шалгалтыг харахгүй болно. Үргэлжлүүлэх үү?"<% } %>>
+      <button class="btn <%= exam.published ? '' : 'btn-primary' %>"><%= exam.published ? 'Нийтлэлээс буцаах' : 'Нийтлэх' %></button>
+    </form>
+  </div>
+</div>
+
+<% if (!exam.published) { %>
+  <div class="flash flash-warn publish-banner">
+    <div>
+      <strong>Энэ шалгалт ноорог төлөвтэй тул сурагчдад харагдахгүй.</strong>
+      <% if (!exam.subject) { %>Эхлээд <a href="/exams/<%= exam._id %>/edit">тохиргооноос</a> хичээлээ сонгоно уу.
+      <% } else if (!exam.questions.length) { %>Эхлээд асуулт нэмнэ үү.
+      <% } else if (!exam.classIds.length) { %>Эхлээд <a href="/exams/<%= exam._id %>/edit">тохиргооноос</a> шалгалт өгөх ангиа сонгоно уу.
+      <% } else { %>Бэлэн болсон бол «Нийтлэх» товчийг дарна уу.<% } %>
+    </div>
+    <% if (exam.subject && exam.questions.length && exam.classIds.length) { %>
+      <form method="post" action="/exams/<%= exam._id %>/publish"><button class="btn btn-primary">Нийтлэх</button></form>
+    <% } %>
+  </div>
+<% } %>
+<% if (locked) { %>
+  <div class="flash flash-info">Сурагч шалгалт өгч эхэлсэн тул асуултыг нэмэх, засах, устгах боломжгүй (дарааллыг өөрчилж болно). Өөрчлөх шаардлагатай бол үр дүнгийн хуудаснаас оролдлогуудыг устгана уу.</div>
+<% } %>
+<% if (exam.description) { %>
+  <section class="card"><div class="prewrap"><%= exam.description %></div></section>
+<% } %>
+
+<div class="section-head">
+  <h2>Асуултууд</h2>
+  <% if (!locked) { %>
+    <div class="btn-group">
+      <a class="btn" href="/exams/<%= exam._id %>/questions/import">📋 Олноор оруулах</a>
+      <a class="btn btn-primary" href="/exams/<%= exam._id %>/questions/new">+ Асуулт нэмэх</a>
+    </div>
+  <% } %>
+</div>
+
+<% if (!exam.questions.length) { %>
+  <div class="card empty">
+    <p class="muted">Асуулт нэмээгүй байна.</p>
+    <% if (!locked) { %>
+      <p class="muted small">Олон асуултыг нэг дор буулгаж оруулах боломжтой. AI-аар форматжуулах prompt тэнд бий.</p>
+      <a class="btn btn-primary" href="/exams/<%= exam._id %>/questions/import">📋 Асуултуудаа олноор оруулах</a>
+    <% } %>
+  </div>
+<% } %>
+<% exam.questions.forEach(function (q, i) { %>
+  <article class="card question" id="q-<%= q._id %>">
+    <div class="question-head">
+      <span class="qnum"><%= i + 1 %></span>
+      <span class="badge"><%= QUESTION_TYPE_LABELS[q.type] %></span>
+      <span class="muted small"><%= fmtScore(q.points) %> оноо</span>
+      <div class="spacer"></div>
+      <form method="post" action="/exams/<%= exam._id %>/questions/<%= q._id %>/move"><input type="hidden" name="dir" value="up"><button class="btn btn-sm btn-ghost" title="Дээш" <%= i === 0 ? 'disabled' : '' %>>↑</button></form>
+      <form method="post" action="/exams/<%= exam._id %>/questions/<%= q._id %>/move"><input type="hidden" name="dir" value="down"><button class="btn btn-sm btn-ghost" title="Доош" <%= i === exam.questions.length - 1 ? 'disabled' : '' %>>↓</button></form>
+      <% if (!locked) { %>
+        <a class="btn btn-sm" href="/exams/<%= exam._id %>/questions/<%= q._id %>/edit">Засах</a>
+        <form method="post" action="/exams/<%= exam._id %>/questions/<%= q._id %>/delete" data-confirm="<%= i + 1 %>-р асуултыг устгах уу?"><button class="btn btn-sm btn-danger-ghost">Устгах</button></form>
+      <% } %>
+    </div>
+    <div class="question-text prewrap"><%= q.text %></div>
+    <% if (q.type === 'text') { %>
+      <div class="muted small">Зөв хариулт:
+        <% if (q.acceptedAnswers.length) { %><%= q.acceptedAnswers.join(' / ') %><% } else { %><em>багш гараар дүгнэнэ</em><% } %>
+      </div>
+    <% } else { %>
+      <ul class="options">
+        <% q.options.forEach(function (o) { %>
+          <li class="<%= o.isCorrect ? 'correct' : '' %>"><span class="opt-mark"><%= o.isCorrect ? '✓' : '' %></span><%= o.text %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </article>
+<% }) %>
+
+<section class="card danger-zone">
+  <h2>Шалгалт устгах</h2>
+  <p class="muted small">Шалгалт болон сурагчдын бүх хариулт бүр мөсөн устгагдана.</p>
+  <form method="post" action="/exams/<%= exam._id %>/delete" data-confirm="Энэ шалгалт болон бүх хариултыг устгах уу? Буцаах боломжгүй.">
+    <button class="btn btn-danger">Устгах</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>

@@ -1,0 +1,59 @@
+<%- include('../partials/header', { bodyClass: 'taking' }) %>
+<div class="take-layout">
+  <form method="post" action="/student/attempts/<%= attempt._id %>/submit" id="exam-form" class="take-main"
+        data-deadline="<%= attempt.deadlineAt.getTime() %>"
+        data-server-now="<%= serverNow %>"
+        data-save-url="/student/attempts/<%= attempt._id %>/save">
+    <div class="take-head">
+      <h1><%= exam.title %></h1>
+      <% if (exam.description) { %><div class="card prewrap small"><%= exam.description %></div><% } %>
+    </div>
+
+    <% questions.forEach(function (q, i) {
+         const key = String(q._id);
+         const saved = draft[key];
+         const sel = Array.isArray(saved) ? saved.map(String) : []; %>
+      <article class="card question" id="q-<%= key %>" data-qid="<%= key %>">
+        <div class="question-head">
+          <span class="qnum"><%= i + 1 %></span>
+          <span class="muted small"><%= fmtScore(q.points) %> оноо<% if (q.type === 'multiple') { %> · олон зөв хариулттай<% } %></span>
+        </div>
+        <div class="question-text prewrap"><%= q.text %></div>
+
+        <% if (q.type === 'text') { %>
+          <textarea name="q_<%= key %>" rows="4" maxlength="5000" placeholder="Хариултаа энд бичнэ үү"><%= typeof saved === 'string' ? saved : '' %></textarea>
+        <% } else { %>
+          <div class="choices">
+            <% q.options.forEach(function (o, j) { %>
+              <label class="choice">
+                <input type="<%= q.type === 'single' ? 'radio' : 'checkbox' %>" name="q_<%= key %>" value="<%= o._id %>" <%= sel.includes(String(o._id)) ? 'checked' : '' %>>
+                <span class="choice-letter"><%= String.fromCharCode(65 + j) %></span>
+                <span class="choice-text"><%= o.text %></span>
+              </label>
+            <% }) %>
+          </div>
+        <% } %>
+      </article>
+    <% }) %>
+
+    <div class="take-submit card">
+      <p class="muted small">Бүх асуултад хариулсан эсэхээ шалгаад илгээнэ үү. Хариулт автоматаар хадгалагдаж байгаа тул интернэт тасарсан ч алдагдахгүй.</p>
+      <button class="btn btn-primary btn-lg" id="submit-btn">Шалгалт илгээх</button>
+    </div>
+  </form>
+
+  <aside class="take-side">
+    <div class="card sticky">
+      <div class="timer-label muted small">Үлдсэн хугацаа</div>
+      <div class="timer" id="timer">--:--</div>
+      <div class="progress-text small"><span id="answered-count">0</span> / <%= questions.length %> хариулсан</div>
+      <div class="qnav" id="qnav">
+        <% questions.forEach(function (q, i) { %>
+          <a href="#q-<%= q._id %>" data-qid="<%= q._id %>"><%= i + 1 %></a>
+        <% }) %>
+      </div>
+      <div class="save-status small muted" id="save-status">Хариулт автоматаар хадгалагдана</div>
+    </div>
+  </aside>
+</div>
+<%- include('../partials/footer', { scripts: ['/exam.js'] }) %>

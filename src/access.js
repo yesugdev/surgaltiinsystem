@@ -1,0 +1,40 @@
+// Шалгалт, хичээл зэрэг хичээлийн төрөлд (Subject) харьяалагдах контентын эрхийн нийтлэг дүрэм
+const { Subject } = require('./models');
+
+/**
+ * Админ бүгдийг удирдана.
+ * Багш зөвхөн өөрийн үүсгэсэн, өөрт оноогдсон хичээлийн төрлийн контентыг удирдана
+ * (хичээлийн төрөл сонгоогүй хуучин контентыг ч харж, төрөл онооно).
+ */
+function ownerFilter(user) {
+  if (user.role === 'admin') return {};
+  return { createdBy: user._id, $or: [{ subject: { $in: user.subjectIds || [] } }, { subject: null }] };
+}
+
+/** Шинээр үүсгэхэд сонгож болох хичээлийн төрлүүд */
+function allowedSubjects(user) {
+  const filter = { active: true };
+  if (user.role !== 'admin') filter._id = { $in: user.subjectIds || [] };
+  return Subject.find(filter).collation({ locale: 'mn' }).sort({ name: 1 }).lean();
+}
+
+/** Маягтад харуулах төрлүүд: зөвшөөрөгдсөн + (засаж байгаа бол) одоогийн архивласан төрөл */
+async function formSubjects(user, currentSubjectId) {
+  const list = await allowedSubjects(user);
+  if (currentSubjectId && !list.some((s) => s._id.equals(currentSubjectId))) {
+    const cur = await Subject.findById(currentSubjectId).lean();
+    const teacherOwns = user.role === 'admin' || (user.subjectIds || []).some((id) => String(id) === String(currentSubjectId));
+    if (cur && teacherOwns) list.push({ ...cur, name: cur.name + ' (архивласан)' });
+  }
+  return list;
+}
+
+/** Хэрэглэгчид харагдах төрлүүд (жагсаалтын шүүлтүүрт) */
+function visibleSubjects(user) {
+  return Subject.find(user.role === 'admin' ? {} : { _id: { $in: user.subjectIds || [] } })
+    .collation({ locale: 'mn' })
+    .sort({ name: 1 })
+    .lean();
+}
+
+module.exports = { ownerFilter, allowedSubjects, formSubjects, visibleSubjects };

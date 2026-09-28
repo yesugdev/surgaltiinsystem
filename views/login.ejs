@@ -1,0 +1,17 @@
+<%- include('partials/header', { bodyClass: 'auth-page' }) %>
+<div class="auth-card card">
+  <div class="auth-logo">С</div>
+  <h1>Сургалтын систем</h1>
+  <p class="muted">Өөрийн нэвтрэх нэр, нууц үгээр нэвтэрнэ үү.</p>
+  <% if (error) { %><div class="flash flash-error"><%= error %></div><% } %>
+  <form method="post" action="/login" class="form">
+    <label>Нэвтрэх нэр
+      <input name="username" value="<%= username %>" autocomplete="username" autocapitalize="none" required autofocus>
+    </label>
+    <label>Нууц үг
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn btn-primary btn-block">Нэвтрэх</button>
+  </form>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+<% const url = '/learn/' + lesson._id + '/tasks/' + task._id; %>
+<div class="narrow">
+  <a href="/learn/<%= lesson._id %>#tasks" class="back">← <%= lesson.title %></a>
+  <h1>📝 <%= task.title %></h1>
+  <p class="muted"><%= task.questions.length %> асуулт · <%= fmtScore(total) %> оноо<%= task.allowRetry ? ' · дахин өгч болно' : '' %></p>
+  <% if (task.instructions.trim()) { %><div class="card markdown"><%- instructionsHtml %></div><% } %>
+
+  <% if (showForm) { %>
+    <form method="post" action="<%= url %>/quiz" data-confirm="Тестээ илгээх үү?">
+      <% questions.forEach(function (q, i) { const key = String(q._id); %>
+        <article class="card question">
+          <div class="question-head">
+            <span class="qnum"><%= i + 1 %></span>
+            <span class="muted small"><%= fmtScore(q.points) %> оноо<% if (q.type === 'multiple') { %> · олон зөв хариулттай<% } %></span>
+          </div>
+          <div class="question-text prewrap"><%= q.text %></div>
+          <% if (q.type === 'text') { %>
+            <textarea name="q_<%= key %>" rows="3" maxlength="5000" placeholder="Хариултаа бичнэ үү"></textarea>
+          <% } else { %>
+            <div class="choices">
+              <% q.options.forEach(function (o, j) { %>
+                <label class="choice">
+                  <input type="<%= q.type === 'single' ? 'radio' : 'checkbox' %>" name="q_<%= key %>" value="<%= o._id %>">
+                  <span class="choice-letter"><%= String.fromCharCode(65 + j) %></span>
+                  <span class="choice-text"><%= o.text %></span>
+                </label>
+              <% }) %>
+            </div>
+          <% } %>
+        </article>
+      <% }) %>
+      <div class="take-submit card"><button class="btn btn-primary btn-lg">Илгээх</button></div>
+    </form>
+  <% } else { %>
+    <div class="card result-card">
+      <% if (sub.needsReview) { %>
+        <p class="result-msg">Тест илгээгдлээ. Зарим асуултыг багш шалгаж байна.</p>
+        <p class="muted">Одоогийн оноо: <%= fmtScore(sub.score) %> / <%= fmtScore(sub.maxScore) %></p>
+      <% } else { %>
+        <div class="big-score"><%= fmtScore(sub.score) %><small> / <%= fmtScore(sub.maxScore) %></small></div>
+        <div class="muted"><%= sub.maxScore ? fmtScore(sub.score / sub.maxScore * 100) + '%' : '' %></div>
+      <% } %>
+      <p class="muted small">Илгээсэн: <%= fmtDate(sub.submittedAt) %><%= sub.attemptCount > 1 ? ' · ' + sub.attemptCount + ' дахь оролдлого' : '' %></p>
+      <% if (sub.feedback) { %><div class="feedback"><strong>Багшийн сэтгэгдэл:</strong> <span class="prewrap"><%= sub.feedback %></span></div><% } %>
+      <% if (task.allowRetry) { %><a class="btn" href="<%= url %>?retry=1">Дахин өгөх</a><% } %>
+    </div>
+
+    <% questions.forEach(function (q, i) {
+         const a = answerMap.get(String(q._id));
+         const sel = a ? a.selectedOptions.map(String) : [];
+         const state = !a ? 'none' : a.isCorrect === null ? 'review' : a.isCorrect ? 'ok' : 'bad'; %>
+      <article class="card question answer-<%= state %>">
+        <div class="question-head">
+          <span class="qnum"><%= i + 1 %></span>
+          <div class="spacer"></div>
+          <span class="result-state"><%= state === 'ok' ? '✓ Зөв' : state === 'bad' ? '✗ Буруу' : state === 'review' ? 'Шалгагдаж байна' : '' %>
+            <span class="muted small"><%= a ? fmtScore(a.points) : 0 %>/<%= fmtScore(q.points) %></span></span>
+        </div>
+        <div class="question-text prewrap"><%= q.text %></div>
+        <% if (q.type === 'text') { %>
+          <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
+          <% if (task.showAnswers && q.acceptedAnswers.length) { %><div class="small">Зөв хариулт: <strong><%= q.acceptedAnswers.join(' / ') %></strong></div><% } %>
+        <% } else { %>
+          <ul class="options">
+            <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); const correct = task.showAnswers && o.isCorrect; %>
+              <li class="<%= correct ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && task.showAnswers && !o.isCorrect ? 'wrong' : '' %>">
+                <span class="opt-mark"><%= correct ? '✓' : (picked && task.showAnswers ? '✗' : (picked ? '•' : '')) %></span><%= o.text %>
+                <% if (picked) { %><span class="muted small">— таны сонголт</span><% } %>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </article>
+    <% }) %>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

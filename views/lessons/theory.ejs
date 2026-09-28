@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <a href="/lessons/<%= lesson._id %>" class="back">← <%= lesson.title %></a>
+    <h1>Онол</h1>
+    <p class="muted">Markdown форматаар бичнэ. Баруун талд сурагчдад харагдах байдлаар шууд харагдана.</p>
+  </div>
+  <button type="button" class="btn" data-open-dialog="#md-help">Markdown заавар</button>
+</div>
+
+<form method="post" action="/lessons/<%= lesson._id %>/theory" class="editor-layout">
+  <section class="card editor-pane">
+    <textarea name="theory" id="theory-text" data-md-preview="#theory-preview" spellcheck="false"
+              placeholder="## Гарчиг&#10;&#10;Онолын агуулга...&#10;&#10;- жагсаалт&#10;- **тод** текст"><%= lesson.theory %></textarea>
+    <div class="btn-group">
+      <button class="btn btn-primary">Хадгалах</button>
+      <a class="btn btn-ghost" href="/lessons/<%= lesson._id %>">Болих</a>
+    </div>
+  </section>
+  <section class="card editor-pane">
+    <div class="muted small">Урьдчилан харах</div>
+    <div class="markdown" id="theory-preview"></div>
+  </section>
+</form>
+
+<%- include('partials/md-help') %>
+<%- include('../partials/footer', { scripts: ['/preview.js'] }) %>

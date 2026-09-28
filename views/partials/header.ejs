@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= locals.title ? title + ' · ' : '' %>Сургалтын систем</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="<%= locals.bodyClass || '' %>">
+<% const u = locals.user; const p = locals.currentPath || ''; const on = (prefix) => (p === prefix || p.startsWith(prefix + '/')) ? 'active' : ''; %>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/"><span class="brand-mark">С</span> Сургалтын систем</a>
+    <% if (u) { %>
+      <nav class="nav">
+        <% if (u.role === 'admin') { %>
+          <a href="/admin" class="<%= p === '/admin' ? 'active' : '' %>">Самбар</a>
+          <a href="/admin/subjects" class="<%= on('/admin/subjects') %>">Хичээлийн төрөл</a>
+          <a href="/admin/classes" class="<%= on('/admin/classes') %>">Анги, бүлэг</a>
+          <a href="/admin/users" class="<%= on('/admin/users') %>">Хэрэглэгчид</a>
+          <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
+          <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
+        <% } else if (u.role === 'teacher') { %>
+          <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
+          <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
+        <% } else { %>
+          <a href="/learn" class="<%= on('/learn') %>">Хичээл</a>
+          <a href="/student" class="<%= on('/student') %>">Шалгалт</a>
+        <% } %>
+      </nav>
+      <div class="userbox">
+        <span class="userbox-name"><%= u.fullName %> <small class="muted">· <%= ROLE_LABELS[u.role] %></small></span>
+        <a href="/password" class="btn btn-ghost btn-sm">Нууц үг</a>
+        <form method="post" action="/logout"><button class="btn btn-ghost btn-sm">Гарах</button></form>
+      </div>
+    <% } %>
+  </div>
+</header>
+<main class="container">
+<% if (locals.flash) { %>
+  <div class="flash flash-<%= flash.type %>" role="status"><%= flash.message %></div>
+<% } %>

@@ -1,0 +1,60 @@
+<% if (embed) { %>
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= file.filename %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="embed-body">
+<% } else { %>
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <% if (back) { %><a href="<%= back %>" class="back">← Буцах</a><% } else { %><a href="javascript:history.back()" class="back">← Буцах</a><% } %>
+    <h1 class="file-title"><%= file.filename %></h1>
+    <p class="muted small"><%= size %></p>
+  </div>
+  <div class="btn-group">
+    <% if (['pdf', 'image', 'text', 'video', 'audio'].includes(kind)) { %><a class="btn" href="/files/<%= file._id %>" target="_blank">Шинэ цонхонд нээх</a><% } %>
+    <a class="btn btn-primary" href="/files/<%= file._id %>?download=1">Татах</a>
+  </div>
+</div>
+<% } %>
+
+<div class="viewer viewer-<%= kind %>">
+  <% if (kind === 'pdf') { %>
+    <iframe src="/files/<%= file._id %>#view=FitH" class="viewer-pdf" title="<%= file.filename %>"></iframe>
+  <% } else if (kind === 'image') { %>
+    <img src="/files/<%= file._id %>" alt="<%= file.filename %>" class="viewer-img">
+  <% } else if (kind === 'video') { %>
+    <video src="/files/<%= file._id %>" controls class="viewer-media"></video>
+  <% } else if (kind === 'audio') { %>
+    <audio src="/files/<%= file._id %>" controls></audio>
+  <% } else if (kind === 'text') { %>
+    <iframe src="/files/<%= file._id %>" class="viewer-pdf viewer-text" title="<%= file.filename %>"></iframe>
+  <% } else if (kind === 'pptx') { %>
+    <div class="pptx-viewer" data-src="/files/<%= file._id %>"></div>
+  <% } else if (kind === 'ppt') { %>
+    <div class="card empty">
+      <p>Хуучин <strong>.ppt</strong> форматыг хөтөч дээр харуулах боломжгүй.<br>PowerPoint-оор нээгээд «Save As → PowerPoint Presentation (.pptx)» болгож хадгалбал шууд харагдана.</p>
+      <a class="btn btn-primary" href="/files/<%= file._id %>?download=1">Татаж аваад нээх</a>
+    </div>
+  <% } else if (kind === 'docx' && docxHtml !== null) { %>
+    <div class="docx-page markdown"><%- docxHtml %></div>
+  <% } else { %>
+    <div class="card empty">
+      <p>Энэ төрлийн файлыг хөтөч дээр шууд харах боломжгүй.</p>
+      <a class="btn btn-primary" href="/files/<%= file._id %>?download=1">Татаж аваад нээх</a>
+    </div>
+  <% } %>
+</div>
+
+<% if (embed) { %>
+<% if (kind === 'pptx') { %><script src="/vendor/jszip.js"></script><script src="/vendor/pptx-preview.js"></script><script src="/pptx-viewer.js"></script><% } %>
+</body>
+</html>
+<% } else { %>
+<%- include('../partials/footer', { scripts: kind === 'pptx' ? ['/vendor/jszip.js', '/vendor/pptx-preview.js', '/pptx-viewer.js'] : [] }) %>
+<% } %>

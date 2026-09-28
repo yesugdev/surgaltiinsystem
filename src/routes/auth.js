@@ -1,0 +1,102 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const { User } = require('../models');
+const { requireRole, homeFor, flash } = require('../middleware/auth');
+const { clean } = require('../helpers');
+
+const router = express.Router();
+
+router.get('/', (req, res) => {
+  if (!req.user) return res.redirect('/login');
+  res.redirect(homeFor(req.user.role));
+});
+
+router.get('/login', (req, res) => {
+  if (req.user) return res.redirect(homeFor(req.user.role));
+  res.render('login', { title: 'Нэвтрэх', error: null, username: '' });
+});
+
+// Нууц үг таах оролдлогыг хязгаарлана. Сургуулийн нэг сүлжээнээс (нэг IP) олон сурагч
+// нэвтэрдэг тул IP + нэвтрэх нэрээр нарийн, зөвхөн IP-ээр өргөн хязгаар тавина.
+const FAIL_WINDOW_MS = 15 * 60 * 1000;
+const MAX_FAILS_PER_USER = 10;
+const MAX_FAILS_PER_IP = 100;
+const failures = new Map(); // key → { count, resetAt }
+
+function failCount(key) {
+  const f = failures.get(key);
+  if (!f || f.resetAt < Date.now()) return 0;
+  return f.count;
+}
+
+function addFailure(key) {
+  const f = failures.get(key);
+  if (!f || f.resetAt < Date.now()) failures.set(key, { count: 1, resetAt: Date.now() + FAIL_WINDOW_MS });
+  else f.count++;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, f] of failures) if (f.resetAt < now) failures.delete(k);
+}, 60 * 1000).unref();
+
+router.post('/login', async (req, res, next) => {
+  const username = clean(req.body.username, 64).toLowerCase();
+  const password = String(req.body.password ?? '');
+  const userKey = 'u:' + req.ip + ':' + username;
+  const ipKey = 'ip:' + req.ip;
+
+  if (failCount(userKey) >= MAX_FAILS_PER_USER || failCount(ipKey) >= MAX_FAILS_PER_IP) {
+    return res.status(429).render('login', {
+      title: 'Нэвтрэх',
+      error: 'Хэт олон удаа буруу оролдлоо. 15 минутын дараа дахин оролдоно уу.',
+      username,
+    });
+  }
+
+  const user = await User.findOne({ username });
+  const ok = user && user.active && (await bcrypt.compare(password, user.passwordHash));
+  if (!ok) {
+    addFailure(userKey);
+    addFailure(ipKey);
+    return res.status(401).render('login', {
+      title: 'Нэвтрэх',
+      error: 'Нэвтрэх нэр эсвэл нууц үг буруу байна.',
+      username,
+    });
+  }
+  failures.delete(userKey);
+  req.session.regenerate((err) => {
+    if (err) return next(err);
+    req.session.userId = String(user._id);
+    res.redirect(homeFor(user.role));
+  });
+});
+
+router.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('connect.sid');
+    res.redirect('/login');
+  });
+});
+
+router.get('/password', requireRole(), (req, res) => {
+  res.render('password', { title: 'Нууц үг солих', error: null });
+});
+
+router.post('/password', requireRole(), async (req, res) => {
+  const { current = '', password = '', confirm = '' } = req.body;
+  const user = await User.findById(req.user._id);
+  const fail = (error) => res.status(400).render('password', { title: 'Нууц үг солих', error });
+
+  if (!(await bcrypt.compare(String(current), user.passwordHash))) return fail('Одоогийн нууц үг буруу байна.');
+  if (String(password).length < 6) return fail('Шинэ нууц үг хамгийн багадаа 6 тэмдэгт байна.');
+  if (password !== confirm) return fail('Шинэ нууц үгнүүд таарахгүй байна.');
+
+  user.passwordHash = await bcrypt.hash(String(password), 10);
+  await user.save();
+  flash(req, 'success', 'Нууц үг амжилттай солигдлоо.');
+  res.redirect(homeFor(user.role));
+});
+
+module.exports = router;

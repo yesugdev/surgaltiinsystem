@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+<% const b = '/lessons/' + lesson._id + '/tasks/' + task._id; const isQuiz = task.type === 'quiz';
+   const total = isQuiz ? task.questions.reduce(function (s, q) { return s + q.points; }, 0) : task.maxPoints; %>
+<div class="page-head">
+  <div>
+    <a href="/lessons/<%= lesson._id %>#tasks" class="back">← <%= lesson.title %></a>
+    <h1><%= isQuiz ? '📝' : '📎' %> <%= task.title %></h1>
+    <p class="muted"><%= isQuiz ? 'Тест · ' + task.questions.length + ' асуулт' : 'Файл илгээх даалгавар' %> · <%= fmtScore(total) %> оноо
+      <% if (!isQuiz && task.dueAt) { %> · Хугацаа: <%= fmtDate(task.dueAt) %><% } %></p>
+  </div>
+  <a class="btn" href="<%= b %>/edit">Засах</a>
+</div>
+
+<div class="stats">
+  <div class="stat card"><span class="stat-value"><%= stats.submitted %> / <%= stats.total %></span><span class="stat-label">Илгээсэн</span></div>
+  <div class="stat card <%= stats.pending ? 'stat-warn' : '' %>"><span class="stat-value"><%= stats.pending %></span><span class="stat-label">Дүгнэх шаардлагатай</span></div>
+</div>
+
+<div class="tabs">
+  <a href="<%= b %>" class="<%= !filter ? 'active' : '' %>">Бүгд</a>
+  <a href="<%= b %>?status=pending" class="<%= filter === 'pending' ? 'active' : '' %>">Дүгнэх</a>
+  <a href="<%= b %>?status=graded" class="<%= filter === 'graded' ? 'active' : '' %>">Дүгнэсэн</a>
+  <a href="<%= b %>?status=none" class="<%= filter === 'none' ? 'active' : '' %>">Илгээгээгүй</a>
+</div>
+
+<section class="card">
+  <% if (!rows.length) { %>
+    <p class="muted">Жагсаалт хоосон байна.</p>
+  <% } else { %>
+  <table class="table">
+    <thead><tr><th>Анги</th><th>Сурагч</th><th>Төлөв</th><th>Илгээсэн</th><% if (!isQuiz) { %><th>Файл</th><% } %><th class="num">Оноо</th><th></th></tr></thead>
+    <tbody>
+    <% rows.forEach(function (r) { const s = r.sub; %>
+      <tr>
+        <td><%= r.student.className %></td>
+        <td><%= r.student.fullName %> <span class="muted small"><%= r.student.username %></span></td>
+        <td>
+          <span class="badge <%= { none: '', pending: 'badge-amber', graded: 'badge-green' }[r.status] %>"><%= STATUS_LABELS[r.status] %></span>
+          <% if (s && s.late) { %><span class="badge badge-red">Хоцорсон</span><% } %>
+        </td>
+        <td class="small"><%= s && s.submittedAt ? fmtDate(s.submittedAt) : '' %><% if (isQuiz && s && s.attemptCount > 1) { %> <span class="muted">(<%= s.attemptCount %> дахь)</span><% } %></td>
+        <% if (!isQuiz) { %><td class="small"><%= s && s.files ? s.files.length + ' файл' : '' %></td><% } %>
+        <td class="num"><%= s && s.score != null ? fmtScore(s.score) + ' / ' + fmtScore(s.maxScore) : '' %></td>
+        <td class="actions">
+          <% if (s && s.submittedAt) { %>
+            <a class="btn btn-sm <%= r.status === 'pending' ? 'btn-primary' : '' %>" href="<%= b %>/submissions/<%= s._id %>"><%= r.status === 'pending' ? 'Дүгнэх' : 'Харах' %></a>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

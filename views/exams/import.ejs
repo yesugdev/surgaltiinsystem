@@ -1,0 +1,94 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <a href="/exams/<%= exam._id %>" class="back">← <%= exam.title %></a>
+    <h1>Асуулт олноор оруулах</h1>
+    <p class="muted">Асуултуудаа доорх форматаар буулгахад (paste) бүгд нэг дор орно. AI ашиглан форматжуулах бол «AI prompt» товчийг дарна уу.</p>
+  </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" id="open-prompt">✨ AI prompt</button>
+  </div>
+</div>
+
+<ol class="howto card">
+  <li><strong>«AI prompt»</strong> товчийг дараад prompt-ыг хуулна.</li>
+  <li>ChatGPT, Claude, Gemini зэрэг AI-д буулгаж, <em>ДААЛГАВАР</em> хэсэгт сэдэв, асуултын тоо эсвэл өөрийн бэлэн тестээ бичнэ.</li>
+  <li>AI-ийн хариуг бүтнээр нь хуулж доорх талбарт буулгана. Баруун талд урьдчилан харж шалгаад <strong>«Оруулах»</strong> дарна.</li>
+</ol>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error">
+    <strong>Нэг ч асуулт ороогүй. Дараах алдааг засна уу:</strong>
+    <ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<form method="post" action="/exams/<%= exam._id %>/questions/import" id="import-form" class="import-layout">
+  <section class="card import-input">
+    <div class="import-toolbar">
+      <h2>Асуултууд</h2>
+      <div class="btn-group">
+        <button type="button" class="btn btn-sm" id="fill-example">Жишээ харах</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="clear-text">Цэвэрлэх</button>
+      </div>
+    </div>
+    <textarea name="text" id="import-text" rows="22" spellcheck="false"
+              placeholder="1. Асуултын текст&#10;A) Сонголт&#10;*B) Зөв сонголт&#10;C) Сонголт&#10;&#10;2. Нээлттэй асуулт&#10;Хариулт: Зөв хариулт"><%= text %></textarea>
+
+    <details class="format-help">
+      <summary>Форматын товч заавар</summary>
+      <table class="table small">
+        <tr><td><code>1. Асуулт</code></td><td>Асуулт бүр дугаар + цэгээр эхэлнэ. Текст олон мөр байж болно.</td></tr>
+        <tr><td><code>A) Сонголт</code></td><td>Сонголт. <code>A.</code> эсвэл кирилл <code>А) Б) В)</code> ч болно.</td></tr>
+        <tr><td><code>*B) Зөв</code></td><td>Зөв сонголтын өмнө <code>*</code>. Хоёр ба түүнээс дээш <code>*</code> бол олон сонголттой асуулт.</td></tr>
+        <tr><td><code>Хариулт: B</code></td><td><code>*</code>-ын оронд зөв сонголтын үсгийг ингэж бичиж болно (олон бол <code>A, C</code>).</td></tr>
+        <tr><td><code>Хариулт: УБ | Улаанбаатар</code></td><td>Сонголтгүй бол нээлттэй асуулт. Зөв хувилбаруудыг <code>|</code>-ээр тусгаарлана.</td></tr>
+        <tr><td><code>Хариулт:</code></td><td>Хоосон бол эссэ — багш гараар дүгнэнэ.</td></tr>
+        <tr><td><code>Оноо: 2</code></td><td>Заавал биш, анхдагч нь 1.</td></tr>
+        <tr><td><code>Тайлбар: ...</code></td><td>Алгасагдана.</td></tr>
+      </table>
+    </details>
+
+    <fieldset>
+      <legend>Оруулах арга</legend>
+      <label class="check"><input type="radio" name="mode" value="append" <%= mode !== 'replace' ? 'checked' : '' %>> Одоо байгаа <%= exam.questions.length %> асуулт дээр нэмэх</label>
+      <% if (exam.questions.length) { %>
+        <label class="check"><input type="radio" name="mode" value="replace" <%= mode === 'replace' ? 'checked' : '' %>> Одоо байгаа <%= exam.questions.length %> асуултыг устгаж, шинээр солих</label>
+      <% } %>
+    </fieldset>
+
+    <div class="btn-group">
+      <button class="btn btn-primary btn-lg" id="import-submit" disabled>Оруулах</button>
+      <a class="btn btn-ghost" href="/exams/<%= exam._id %>">Болих</a>
+    </div>
+  </section>
+
+  <section class="card import-preview">
+    <div class="import-toolbar">
+      <h2>Урьдчилан харах</h2>
+      <span class="muted small" id="preview-summary"></span>
+    </div>
+    <div id="preview-errors"></div>
+    <div id="preview-list" class="preview-list">
+      <p class="muted">Асуултуудаа зүүн талд буулгахад энд харагдана.</p>
+    </div>
+  </section>
+</form>
+
+<dialog id="prompt-dialog" class="prompt-dialog">
+  <div class="prompt-dialog-head">
+    <h2>AI prompt</h2>
+    <button type="button" class="btn btn-ghost btn-sm" data-close>✕</button>
+  </div>
+  <p class="muted small">Энэ prompt-ыг хуулж ChatGPT, Claude, Gemini зэрэг AI-д буулгана. Доод талын <strong>ДААЛГАВАР</strong> хэсгийг өөрийн хэрэгцээгээр засаарай. AI-ийн гаргасан хариуг бүтнээр нь хуулж энэ хуудсанд буулгана.</p>
+  <textarea id="prompt-text" rows="18" readonly spellcheck="false"><%= prompt %></textarea>
+  <div class="btn-group prompt-dialog-actions">
+    <button type="button" class="btn btn-primary" id="copy-prompt">Хуулах</button>
+    <span class="muted small" id="copy-status"></span>
+    <div class="spacer"></div>
+    <button type="button" class="btn" data-close>Хаах</button>
+  </div>
+</dialog>
+
+<script type="application/json" id="import-example"><%- JSON.stringify(example).replace(/</g, '\\u003c') %></script>
+<%- include('../partials/footer', { scripts: ['/question-parser.js', '/import.js'] }) %>

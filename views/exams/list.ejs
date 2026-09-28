@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Шалгалтууд</h1>
+    <p class="muted">
+      <% if (user.role === 'admin') { %>Бүх хичээлийн шалгалт
+      <% } else if (subjects.length) { %>Таны хичээл: <%= subjects.map(function (s) { return s.name; }).join(', ') %>
+      <% } else { %>Танд хичээл оноогоогүй байна<% } %>
+    </p>
+  </div>
+  <% if (canCreate) { %><a href="/exams/new<%= subjectFilter && subjectFilter !== 'none' ? '?subject=' + subjectFilter : '' %>" class="btn btn-primary">+ Шинэ шалгалт</a><% } %>
+</div>
+
+<% if (!canCreate) { %>
+  <div class="flash flash-warn">
+    <% if (user.role === 'admin') { %>Идэвхтэй хичээл алга байна. Шалгалт үүсгэхийн тулд эхлээд <a href="/admin/subjects">хичээл нэмнэ үү</a>.
+    <% } else { %>Танд хичээл оноогоогүй тул шалгалт үүсгэх боломжгүй. Админд хандаж хичээлээ оноолгоно уу.<% } %>
+  </div>
+<% } %>
+
+<% if (subjects.length > 1 || subjectFilter) { %>
+  <div class="tabs">
+    <a href="/exams" class="<%= !subjectFilter ? 'active' : '' %>">Бүгд</a>
+    <% subjects.forEach(function (s) { %>
+      <a href="/exams?subject=<%= s._id %>" class="<%= subjectFilter === String(s._id) ? 'active' : '' %>"><%= s.name %></a>
+    <% }) %>
+    <% if (subjectFilter === 'none' || exams.some(function (e) { return !e.subject; })) { %>
+      <a href="/exams?subject=none" class="<%= subjectFilter === 'none' ? 'active' : '' %>">Хичээлгүй</a>
+    <% } %>
+  </div>
+<% } %>
+
+<% if (!exams.length) { %>
+  <div class="card empty">
+    <p>Одоогоор шалгалт алга байна.</p>
+    <% if (canCreate) { %><a href="/exams/new" class="btn btn-primary">Эхний шалгалтаа үүсгэх</a><% } %>
+  </div>
+<% } else { %>
+  <section class="card">
+    <table class="table">
+      <thead>
+        <tr><th>Шалгалт</th><th>Хичээл</th><th>Анги</th><th class="num">Асуулт</th><th>Хугацаа</th><th>Төлөв</th><th class="num">Илгээсэн</th><th></th></tr>
+      </thead>
+      <tbody>
+      <% exams.forEach(function (e) { %>
+        <tr>
+          <td><a href="/exams/<%= e._id %>"><strong><%= e.title %></strong></a>
+            <% if (user.role === 'admin') { %><div class="muted small"><%= e.creatorName %></div><% } %></td>
+          <td><% if (e.subjectName) { %><%= e.subjectName %><% } else { %><span class="badge badge-amber">Сонгоогүй</span><% } %></td>
+          <td><%= e.classNames.join(', ') || '—' %></td>
+          <td class="num"><%= e.questions.length %></td>
+          <td class="small">
+            <% if (e.startAt || e.endAt) { %><%= fmtDate(e.startAt) %> → <%= fmtDate(e.endAt) %><br><% } %>
+            <span class="muted"><%= e.durationMinutes %> мин</span>
+          </td>
+          <td><% if (e.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber" title="Сурагчдад харагдахгүй">Ноорог</span><% } %></td>
+          <td class="num"><%= e.submittedCount %></td>
+          <td class="actions">
+            <a class="btn btn-sm" href="/exams/<%= e._id %>">Нээх</a>
+            <a class="btn btn-sm" href="/exams/<%= e._id %>/results">Үр дүн</a>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+<% } %>
+<%- include('../partials/footer') %>

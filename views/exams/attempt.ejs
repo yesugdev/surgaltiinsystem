@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <a href="/exams/<%= exam._id %>/results" class="back">← Үр дүн</a>
+    <h1><%= student ? student.fullName : 'Устгагдсан сурагч' %></h1>
+    <p class="muted"><%= cls ? cls.name + ' · ' : '' %><%= exam.title %></p>
+    <p class="muted small">Эхэлсэн: <%= fmtDate(attempt.startedAt) %> · <%= attempt.submittedAt ? 'Илгээсэн: ' + fmtDate(attempt.submittedAt) : 'Дуусах: ' + fmtDate(attempt.deadlineAt) %></p>
+  </div>
+  <% if (attempt.submittedAt) { %>
+    <div class="score-box">
+      <div class="score-value"><%= fmtScore(attempt.score) %><small> / <%= fmtScore(attempt.maxScore) %></small></div>
+      <div class="muted small"><%= attempt.maxScore ? fmtScore(attempt.score / attempt.maxScore * 100) + '%' : '' %></div>
+    </div>
+  <% } %>
+</div>
+
+<% if (!attempt.submittedAt) { %>
+  <div class="flash flash-info">Сурагч шалгалтаа өгч байна. Илгээсний дараа хариулт энд харагдана.</div>
+<% } else { %>
+  <% if (attempt.needsReview) { %>
+    <div class="flash flash-warn">Нээлттэй асуултад гараар оноо өгөөд «Дүн хадгалах» товчийг дарна уу.</div>
+  <% } %>
+  <form method="post" action="/exams/<%= exam._id %>/attempts/<%= attempt._id %>/grade">
+    <% questions.forEach(function (q, i) {
+         const a = answerMap.get(String(q._id));
+         const sel = a ? a.selectedOptions.map(String) : [];
+         const state = !a ? 'none' : a.isCorrect === null ? 'review' : a.isCorrect ? 'ok' : 'bad'; %>
+      <article class="card question answer-<%= state %>">
+        <div class="question-head">
+          <span class="qnum"><%= i + 1 %></span>
+          <span class="badge"><%= QUESTION_TYPE_LABELS[q.type] %></span>
+          <div class="spacer"></div>
+          <label class="points-input">Оноо
+            <input type="number" name="points_<%= q._id %>" min="0" max="<%= q.points %>" step="0.5" value="<%= a ? a.points : 0 %>">
+            <span class="muted">/ <%= fmtScore(q.points) %></span>
+          </label>
+        </div>
+        <div class="question-text prewrap"><%= q.text %></div>
+        <% if (q.type === 'text') { %>
+          <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
+          <% if (q.acceptedAnswers.length) { %><div class="muted small">Зөв хариулт: <%= q.acceptedAnswers.join(' / ') %></div><% } %>
+        <% } else { %>
+          <ul class="options">
+            <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); %>
+              <li class="<%= o.isCorrect ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && !o.isCorrect ? 'wrong' : '' %>">
+                <span class="opt-mark"><%= picked ? (o.isCorrect ? '✓' : '✗') : (o.isCorrect ? '○' : '') %></span><%= o.text %>
+                <% if (picked) { %><span class="muted small">— сурагчийн сонголт</span><% } %>
+              </li>
+            <% }) %>
+          </ul>
+          <% if (!sel.length) { %><div class="muted small">Хариулаагүй</div><% } %>
+        <% } %>
+      </article>
+    <% }) %>
+    <div class="sticky-actions"><button class="btn btn-primary">Дүн хадгалах</button></div>
+  </form>
+<% } %>
+<%- include('../partials/footer') %>

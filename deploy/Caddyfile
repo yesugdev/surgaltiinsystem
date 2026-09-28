@@ -1,0 +1,36 @@
+# Caddy нь DOMAIN-д зориулж Let's Encrypt HTTPS сертификатыг автоматаар авч, сунгана.
+{
+	servers {
+		# Серверийн өөр nginx-ийн ард ажиллуулах үед түүний X-Forwarded-* толгойд итгэнэ.
+		# Интернэтээс шууд ирэх хэрэглэгчид private IP-гүй тул нөлөөлөхгүй.
+		trusted_proxies static private_ranges
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Даалгаврын файл: 5 файл × 25MB + маягт
+	request_body {
+		max_size 150MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	reverse_proxy app:3000 {
+		health_uri /healthz
+		health_interval 30s
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

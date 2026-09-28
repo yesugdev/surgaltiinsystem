@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+<% const b = '/lessons/' + lesson._id; %>
+<div class="page-head">
+  <div>
+    <a href="<%= b %>" class="back">← <%= lesson.title %></a>
+    <h1>Дүнгийн хүснэгт</h1>
+    <p class="muted"><%= rows.length %> сурагч · <%= tasks.length %> даалгавар · нийт <%= fmtScore(maxTotal) %> оноо</p>
+  </div>
+  <a class="btn btn-primary" href="<%= b %>/grades.csv">Excel (CSV) татах</a>
+</div>
+
+<% if (!tasks.length) { %>
+  <div class="card empty"><p class="muted">Хичээлд даалгавар алга байна.</p></div>
+<% } else if (!rows.length) { %>
+  <div class="card empty"><p class="muted">Хичээлд оноогдсон ангид сурагч алга байна.</p></div>
+<% } else { %>
+  <section class="card gradebook-wrap">
+    <table class="table gradebook">
+      <thead>
+        <tr>
+          <th>Сурагч</th>
+          <% tasks.forEach(function (t) { %>
+            <th class="num"><a href="<%= b %>/tasks/<%= t._id %>" title="<%= t.title %>"><%= t.type === 'quiz' ? '📝' : '📎' %> <%= t.title.length > 18 ? t.title.slice(0, 17) + '…' : t.title %></a><div class="muted small"><%= fmtScore(t.total) %></div></th>
+          <% }) %>
+          <th class="num">Нийт</th>
+          <th class="num">%</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% rows.forEach(function (r) { %>
+        <tr>
+          <td><%= r.student.fullName %> <div class="muted small"><%= r.student.className %></div></td>
+          <% r.cells.forEach(function (c) { %>
+            <td class="num">
+              <% if (c.sub && c.sub.submittedAt) { %>
+                <a href="<%= b %>/tasks/<%= c.task._id %>/submissions/<%= c.sub._id %>" class="grade-cell grade-<%= c.status %>">
+                  <%= c.status === 'graded' ? fmtScore(c.sub.score) : '?' %>
+                </a>
+              <% } else { %><span class="muted">—</span><% } %>
+            </td>
+          <% }) %>
+          <td class="num"><strong><%= fmtScore(r.sum) %></strong></td>
+          <td class="num"><%= r.pct == null ? '' : fmtScore(r.pct) %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <p class="muted small"><span class="grade-cell grade-pending">?</span> — илгээсэн, дүгнээгүй · <span class="muted">—</span> — илгээгээгүй</p>
+  </section>
+<% } %>
+<%- include('../partials/footer') %>
