@@ -7,7 +7,11 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
     "dev": "node --env-file-if-exists=.env --watch src/server.js",
-    "seed:demo": "node --env-file-if-exists=.env scripts/seed-demo.js"
+    "seed:demo": "node --env-file-if-exists=.env scripts/seed-demo.js",
+    "deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/deploy.ps1",
+    "sync:pull": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/pull.ps1",
+    "sync:push": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/push.ps1",
+    "sync:restore-local": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/restore-local.ps1"
   },
   "engines": {
     "node": ">=22.9"

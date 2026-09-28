@@ -1,13 +1,14 @@
 #!/bin/sh
 # Өгөгдлийн сангийн (хэрэглэгч, шалгалт, хичээл, илгээсэн файлууд бүгд) нөөц хувь.
 # Хэрэглээ: ./backup.sh            → backups/surgalt-YYYYmmdd-HHMM.archive.gz
+#           ./backup.sh NAME.gz    → backups/NAME.gz (sync скриптэд)
 # Өдөр бүр автоматаар: crontab -e →  0 3 * * * cd /opt/surgalt/deploy && ./backup.sh >> backups/backup.log 2>&1
 set -eu
 cd "$(dirname "$0")"
 . ./.env
 
 KEEP_DAYS="${KEEP_DAYS:-14}"
-NAME="surgalt-$(date +%Y%m%d-%H%M).archive.gz"
+NAME="${1:-surgalt-$(date +%Y%m%d-%H%M).archive.gz}"
 mkdir -p backups
 
 docker compose exec -T mongo mongodump \

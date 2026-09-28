@@ -1,0 +1,412 @@
+<title>Learn шинэчлэл ба sync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #f5f6f9;
+    --surface: #ffffff;
+    --ink: #1b2230;
+    --muted: #5d677a;
+    --line: #dfe3ea;
+    --accent: #2f5bea;
+    --accent-soft: #e8eefd;
+    --code-bg: #141a26;
+    --code-ink: #e3e8f2;
+    --code-muted: #8a95ab;
+    --safe: #1d8a55;
+    --safe-soft: #e3f4ea;
+    --warn: #a4660a;
+    --warn-soft: #fff3dc;
+    --danger: #c2362f;
+    --danger-soft: #fdeaea;
+    --chip-pc: #2f5bea;
+    --chip-srv: #7a4ad6;
+    --radius: 10px;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    --display: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #10141d;
+      --surface: #171c27;
+      --ink: #e4e8f0;
+      --muted: #9aa4b8;
+      --line: #2a3142;
+      --accent: #7b9cff;
+      --accent-soft: #1e2a4a;
+      --code-bg: #0b0f17;
+      --safe: #4cc98a;
+      --safe-soft: #15301f;
+      --warn: #e6a94a;
+      --warn-soft: #33260f;
+      --danger: #f07a72;
+      --danger-soft: #3a1a19;
+      --chip-pc: #7b9cff;
+      --chip-srv: #b596f5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #10141d;
+    --surface: #171c27;
+    --ink: #e4e8f0;
+    --muted: #9aa4b8;
+    --line: #2a3142;
+    --accent: #7b9cff;
+    --accent-soft: #1e2a4a;
+    --code-bg: #0b0f17;
+    --safe: #4cc98a;
+    --safe-soft: #15301f;
+    --warn: #e6a94a;
+    --warn-soft: #33260f;
+    --danger: #f07a72;
+    --danger-soft: #3a1a19;
+    --chip-pc: #7b9cff;
+    --chip-srv: #b596f5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 var(--sans);
+    padding-inline: 16px;
+    padding-block: 32px 64px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; gap: 24px; } .toc { position: static !important; } }
+
+  header.top { max-width: 1080px; margin: 0 auto 36px; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  h1 { font: 700 clamp(28px, 4.4vw, 42px)/1.12 var(--display); margin: 12px 0 12px; text-wrap: balance; letter-spacing: -0.02em; }
+  .lede { color: var(--muted); max-width: 64ch; margin: 0; font-size: 17px; }
+
+  .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); font-size: 14px; }
+  .toc-title { font: 500 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; border-left: 2px solid var(--line); }
+  .toc a { display: block; padding: 5px 0 5px 14px; margin-left: -2px; border-left: 2px solid transparent; color: var(--muted); text-decoration: none; }
+  .toc a:hover, .toc a:focus-visible { color: var(--ink); border-left-color: var(--accent); outline: none; }
+
+  main { min-width: 0; display: grid; gap: 56px; }
+  section { display: grid; gap: 16px; scroll-margin-top: 24px; }
+  h2 { font: 700 24px/1.25 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  h3 { font: 600 16px/1.4 var(--sans); margin: 8px 0 0; }
+  p { margin: 0; max-width: 68ch; }
+  .muted { color: var(--muted); }
+  code.i { font: 0.9em var(--mono); background: var(--accent-soft); color: var(--ink); padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
+
+  /* Чиглэлийн схем */
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  .node { text-align: center; display: grid; gap: 4px; }
+  .node strong { font: 600 15px var(--sans); }
+  .node span { font-size: 13px; color: var(--muted); }
+  .arrows { display: grid; gap: 10px; font: 500 13px var(--mono); }
+  .arrow { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .arrow i { flex: 1; min-width: 40px; height: 2px; background: currentColor; position: relative; }
+  .arrow.r i::after, .arrow.l i::before { content: ""; position: absolute; top: -4px; border: 5px solid transparent; }
+  .arrow.r i::after { right: -2px; border-left-color: currentColor; border-right: 0; }
+  .arrow.l i::before { left: -2px; border-right-color: currentColor; border-left: 0; }
+  .arrow.code { color: var(--accent); }
+  .arrow.pull { color: var(--safe); }
+  .arrow.push { color: var(--danger); }
+  @media (max-width: 560px) { .flow { grid-template-columns: 1fr; } .arrow { justify-content: center; } }
+
+  /* Шийдвэрийн хүснэгт */
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 500 12px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td code { font: 14px var(--mono); white-space: nowrap; }
+
+  /* Алхам */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; counter-reset: step; }
+  .steps > li { counter-increment: step; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 14px; }
+  .steps > li::before { content: counter(step); font: 600 13px/30px var(--mono); text-align: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+  .step-body { display: grid; gap: 10px; min-width: 0; }
+
+  /* Командын блок */
+  .cmd { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; border-left: 4px solid var(--code-bg); }
+  .cmd.safe { border-left-color: var(--safe); }
+  .cmd.danger { border-left-color: var(--danger); }
+  .cmd-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 0 14px; }
+  .where { font: 500 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; }
+  .where.pc { color: #fff; background: var(--chip-pc); }
+  .where.srv { color: #fff; background: var(--chip-srv); }
+  :root[data-theme="dark"] .where { color: #0b0f17; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .where { color: #0b0f17; } }
+  .cmd-note { font: 12px var(--mono); color: var(--code-muted); }
+  .copy { margin-left: auto; font: 500 12px var(--sans); color: var(--code-ink); background: transparent; border: 1px solid #334057; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .copy:hover, .copy:focus-visible { border-color: var(--code-muted); outline: none; }
+  pre { margin: 0; padding: 10px 14px 14px; overflow-x: auto; }
+  pre code { font: 14px/1.6 var(--mono); color: var(--code-ink); white-space: pre; }
+  pre .c { color: var(--code-muted); }
+
+  /* Анхааруулга */
+  .note { border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 6px; font-size: 15px; }
+  .note strong { font-weight: 600; }
+  .note.safe { background: var(--safe-soft); }
+  .note.safe strong { color: var(--safe); }
+  .note.warn { background: var(--warn-soft); }
+  .note.warn strong { color: var(--warn); }
+  .note.danger { background: var(--danger-soft); }
+  .note.danger strong { color: var(--danger); }
+  .note ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+
+  .badge { display: inline-block; font: 500 12px/1 var(--mono); padding: 5px 9px; border-radius: 999px; vertical-align: middle; margin-left: 8px; letter-spacing: 0.02em; }
+  .badge.safe { background: var(--safe-soft); color: var(--safe); }
+  .badge.danger { background: var(--danger-soft); color: var(--danger); }
+  .badge.neutral { background: var(--accent-soft); color: var(--accent); }
+
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; }
+  details + details { margin-top: -8px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 10px; }
+  details > div { display: grid; gap: 10px; }
+
+  footer { max-width: 1080px; margin: 56px auto 0; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<header class="top">
+  <div class="eyebrow">learn.yesuvd.tech · ажиллуулах заавар</div>
+  <h1>Код шинэчлэх ба өгөгдөл sync хийх</h1>
+  <p class="lede">Компьютер дээрээ хийсэн өөрчлөлтийг серверт хэрхэн гаргах, мөн сервер ба локалын хооронд өгөгдлийг хэрхэн зөөхийг нэг дор. Бүх үйлдэл нэг командаар хийгдэнэ.</p>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Агуулга">
+    <div class="toc-title">Агуулга</div>
+    <ol>
+      <li><a href="#overview">Юу хаашаа явдаг вэ</a></li>
+      <li><a href="#setup">Нэг удаагийн тохиргоо</a></li>
+      <li><a href="#deploy">Код шинэчлэх</a></li>
+      <li><a href="#pull">Сервер → Локал</a></li>
+      <li><a href="#push">Локал → Сервер</a></li>
+      <li><a href="#rollback">Буцаах</a></li>
+      <li><a href="#trouble">Асуудал гарвал</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <h2>Юу хаашаа явдаг вэ</h2>
+      <div class="flow" role="img" aria-label="Код компьютерээс GitHub-аар сервер рүү явна. Өгөгдлийг серверээс локал руу татаж, эсвэл локалаас сервер рүү илгээж болно.">
+        <div class="node"><strong>Компьютер</strong><span>код бичих, турших</span></div>
+        <div class="arrows">
+          <div class="arrow r code">код <i></i> npm run deploy</div>
+          <div class="arrow l pull">өгөгдөл <i></i> npm run sync:pull</div>
+          <div class="arrow r push">өгөгдөл <i></i> npm run sync:push</div>
+        </div>
+        <div class="node"><strong>Сервер</strong><span>learn.yesuvd.tech</span></div>
+      </div>
+
+      <p><strong>Код</strong> болон <strong>өгөгдөл</strong> хоёр тусдаа явдаг. Код шинэчлэхэд серверийн өгөгдөл (сурагчид, шалгалт, илгээсэн файлууд) огт хөндөгдөхгүй.</p>
+
+      <div class="note warn">
+        <strong>Sync нь нэгтгэдэггүй, солидог</strong>
+        <p>Өгөгдлийг нэг талаас нөгөө рүү зөөхөд хүлээн авагч талын өгөгдөл <em>бүхэлдээ</em> солигдоно. Хоёр талд тусад нь хийсэн өөрчлөлтийг нийлүүлэх боломжгүй. Тиймээс <strong>сервер бол үндсэн эх</strong>: контент, дүнг сервер дээр оруулна, локал дээр зөвхөн туршина.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Хүсэж буй зүйл</th><th>Команд</th><th>Юу солигдох вэ</th></tr></thead>
+          <tbody>
+            <tr><td>Шинэ функц, засварыг серверт гаргах</td><td><code>npm run deploy</code></td><td>Зөвхөн код. Өгөгдөл хэвээр.</td></tr>
+            <tr><td>Серверийн бодит өгөгдлөөр локалаар турших</td><td><code>npm run sync:pull</code></td><td>Локал өгөгдөл. Сервер хөндөгдөхгүй.</td></tr>
+            <tr><td>Локал дээр бэлдсэнээ серверт бүхэлд нь тавих</td><td><code>npm run sync:push</code></td><td><strong>Серверийн өгөгдөл</strong> бүхэлдээ.</td></tr>
+            <tr><td>Sync-ийг буцаах (локал)</td><td><code>npm run sync:restore-local</code></td><td>Локал өгөгдөл нөөцөөр.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="setup">
+      <h2>Нэг удаагийн тохиргоо <span class="badge neutral">~5 минут</span></h2>
+      <p class="muted">Эдгээрийг нэг л удаа хийнэ. Дараа нь бүх үйлдэл нууц үг асуухгүйгээр нэг командаар ажиллана.</p>
+      <ol class="steps">
+        <li><div class="step-body">
+          <h3>Серверийн хаягийг хадгалах</h3>
+          <p><code class="i">SERVER_IP</code>-ийн оронд серверийн IP-г бичээд, дараа нь PowerShell-ээ хааж шинээр нээнэ.</p>
+          <div class="cmd"><div class="cmd-head"><span class="where pc">Компьютер</span><span class="cmd-note">PowerShell</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>[Environment]::SetEnvironmentVariable('SURGALT_SERVER', 'root@SERVER_IP', 'User')</code></pre></div>
+        </div></li>
+        <li><div class="step-body">
+          <h3>SSH түлхүүр үүсгэж серверт бүртгэх</h3>
+          <p>Энэ алхмын дараа скриптүүд серверийн нууц үгийг дахин асуухгүй. Түлхүүр үүсгэх үед асуух бүх зүйлд Enter дарна.</p>
+          <div class="cmd"><div class="cmd-head"><span class="where pc">Компьютер</span><span class="cmd-note">PowerShell</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>ssh-keygen -t ed25519
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh $env:SURGALT_SERVER "mkdir -p ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys"</code></pre></div>
+          <p class="muted">Шалгах: <code class="i">ssh $env:SURGALT_SERVER "echo ok"</code> нууц үг асуухгүйгээр <code class="i">ok</code> гэж хариулах ёстой.</p>
+        </div></li>
+        <li><div class="step-body">
+          <h3>Серверт шинэ скриптүүдийг татах</h3>
+          <p>Энэ хувилбарт нэмэгдсэн <code class="i">update.sh</code> серверт байхгүй тул эхний удаа гараар татна. Эхлээд компьютер дээрээ commit, push хийгээд:</p>
+          <div class="cmd"><div class="cmd-head"><span class="where srv">Сервер</span><span class="cmd-note">ssh-ээр нэвтэрсний дараа</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>cd /opt/surgalt &amp;&amp; git pull &amp;&amp; chmod +x deploy/*.sh</code></pre></div>
+        </div></li>
+      </ol>
+    </section>
+
+    <section id="deploy">
+      <h2>Код шинэчлэх <span class="badge safe">өгөгдөл хөндөгдөхгүй</span></h2>
+      <ol class="steps">
+        <li><div class="step-body">
+          <h3>Локал дээр өөрчилж, турших</h3>
+          <p><code class="i">npm run dev</code> ажиллуулаад <code class="i">http://localhost:3000</code> дээр шалгана.</p>
+        </div></li>
+        <li><div class="step-body">
+          <h3>Commit хийх</h3>
+          <div class="cmd"><div class="cmd-head"><span class="where pc">Компьютер</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>git add -A
+git commit -m "Юу өөрчилснөө товч бичнэ"</code></pre></div>
+        </div></li>
+        <li><div class="step-body">
+          <h3>Серверт гаргах</h3>
+          <div class="cmd safe"><div class="cmd-head"><span class="where pc">Компьютер</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>npm run deploy</code></pre></div>
+          <p>Энэ нэг команд дараалан:</p>
+          <ul class="muted" style="margin:0;padding-left:20px;display:grid;gap:4px;">
+            <li>commit хийгээгүй өөрчлөлт байвал зогсоно;</li>
+            <li>кодыг GitHub руу <code class="i">git push</code> хийнэ;</li>
+            <li>сервер дээр өгөгдлийг нөөцөлнө;</li>
+            <li>шинэ кодыг татаж, Docker image-ийг дахин build хийнэ;</li>
+            <li>апп асаж, эрүүл ажиллаж байгааг шалгана.</li>
+          </ul>
+          <p>Дууссаны дараа хөтөч дээр <strong>Ctrl+F5</strong> дарж шинэчилнэ.</p>
+        </div></li>
+      </ol>
+      <div class="note safe">
+        <strong>Сервер дээр шууд ажиллуулах</strong>
+        <p>Компьютер дэргэд байхгүй үед (жишээ нь GitHub дээр шууд засвар хийсэн бол) сервер дээр <code class="i">/opt/surgalt/deploy/update.sh</code> ажиллуулахад ижил үр дүн гарна.</p>
+      </div>
+    </section>
+
+    <section id="pull">
+      <h2>Сервер → Локал <span class="badge safe">сервер хөндөгдөхгүй</span></h2>
+      <p>Серверийн бодит өгөгдлөөр (сурагчид, шалгалт, хичээл, илгээсэн файлууд) локал дээрээ турших, алдаа хайхад хэрэглэнэ.</p>
+      <div class="cmd safe"><div class="cmd-head"><span class="where pc">Компьютер</span><span class="cmd-note">Docker Desktop асаалттай байх</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>npm run sync:pull</code></pre></div>
+      <p>Скрипт дараалан хийх зүйлс:</p>
+      <ol style="margin:0;padding-left:20px;display:grid;gap:4px;">
+        <li>сервер дээр нөөц үүсгэж татна;</li>
+        <li>одоогийн локал өгөгдлийг <code class="i">.sync/</code> хавтсанд нөөцөлнө;</li>
+        <li>солихоос өмнө <strong>yes</strong> гэж баталгаажуулахыг хүснэ;</li>
+        <li>локал өгөгдлийг серверийнхээр сольж, тоог харуулна.</li>
+      </ol>
+      <div class="note warn">
+        <strong>Локал дээр оруулсан зүйл алга болно</strong>
+        <p>Локал дээр оруулсан контент серверийнхээр солигдоно. Хэрэв хадгалах зүйл байсан бол <a href="#rollback">буцааж</a> болно. Локал нөөцөөс сүүлийн 10 нь хадгалагдана.</p>
+      </div>
+    </section>
+
+    <section id="push">
+      <h2>Локал → Сервер <span class="badge danger">серверийн өгөгдөл солигдоно</span></h2>
+      <div class="note danger">
+        <strong>Ховор хэрэглэнэ</strong>
+        <p>Сервер дээрх бүх өгөгдөл локалынхаар солигдоно. Үүнд:</p>
+        <ul>
+          <li>сурагчдын илгээсэн даалгавар, файлууд;</li>
+          <li>өгсөн шалгалтын хариу, дүн;</li>
+          <li>сервер дээр шинээр оруулсан хичээл, хэрэглэгч, нууц үгийн өөрчлөлт.</li>
+        </ul>
+        <p>Хичээл эхэлсний дараа энийг бараг хэрэглэхгүй. Шинэ хичээл, шалгалтыг сервер дээр шууд эсвэл AI импортоор оруулна.</p>
+      </div>
+      <p>Хэрэглэх тохиолдол: анх серверт өгөгдөл шилжүүлэх, эсвэл сервер дээр ямар ч үйл ажиллагаа явагдаагүй байхад бэлтгэлээ бүхэлд нь тавих.</p>
+      <div class="cmd danger"><div class="cmd-head"><span class="where pc">Компьютер</span><span class="cmd-note">Docker Desktop асаалттай байх</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>npm run sync:push</code></pre></div>
+      <p class="muted">Солихоос өмнө сервер дээр автоматаар нөөц үүсч, <strong>yes</strong> гэж баталгаажуулахыг хүснэ. Солигдсоны дараа бүх хэрэглэгч дахин нэвтэрнэ.</p>
+    </section>
+
+    <section id="rollback">
+      <h2>Буцаах</h2>
+      <h3>Локал өгөгдлийг sync-ээс өмнөх төлөвт</h3>
+      <p><code class="i">sync:pull</code> дуусахад яг ажиллуулах командыг хэвлэдэг. Нөөцийн нэр мэдэхгүй бол командыг файлын нэргүй ажиллуулахад жагсаалтыг харуулна.</p>
+      <div class="cmd"><div class="cmd-head"><span class="where pc">Компьютер</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>npm run sync:restore-local -- local-backup-20261001-1030.archive.gz</code></pre></div>
+
+      <h3>Серверийн өгөгдлийг нөөцөөс</h3>
+      <p>Сервер өдөр бүр 03:00-д болон шинэчлэл, sync бүрийн өмнө нөөц үүсгэдэг.</p>
+      <div class="cmd"><div class="cmd-head"><span class="where srv">Сервер</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>cd /opt/surgalt/deploy
+ls -t backups/ | head -5          <span class="c"># сүүлийн нөөцүүд</span>
+./restore.sh backups/surgalt-20261001-0300.archive.gz</code></pre></div>
+
+      <h3>Кодыг өмнөх хувилбарт</h3>
+      <p><code class="i">update.sh</code> алдаа гарвал буцаах командыг өөрөө хэвлэдэг. Гараар хийх бол:</p>
+      <div class="cmd"><div class="cmd-head"><span class="where srv">Сервер</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>cd /opt/surgalt
+git log --oneline -5                <span class="c"># хувилбарууд</span>
+git checkout ХУВИЛБАРЫН_КОД
+cd deploy &amp;&amp; docker compose up -d --build app</code></pre></div>
+      <p class="muted">Засвараа push хийсний дараа <code class="i">git checkout main</code> хийгээд <code class="i">./update.sh</code> ажиллуулна.</p>
+    </section>
+
+    <section id="trouble">
+      <h2>Асуудал гарвал</h2>
+      <details>
+        <summary>«Серверийн хаяг тохируулаагүй»</summary>
+        <div><p><a href="#setup">Нэг удаагийн тохиргооны</a> 1-р алхмыг хийгээд PowerShell (эсвэл VS Code)-оо бүрэн хааж дахин нээнэ.</p></div>
+      </details>
+      <details>
+        <summary>«Docker Desktop асаагүй байна»</summary>
+        <div><p>Sync скриптүүд MongoDB-ийн хэрэгслийг Docker-оор ажиллуулдаг. Docker Desktop-ийг асааж, доод буланд «Engine running» болсны дараа дахин оролдоно.</p></div>
+      </details>
+      <details>
+        <summary>Нууц үг байнга асуугаад байна</summary>
+        <div><p>SSH түлхүүр бүртгэгдээгүй байна. <a href="#setup">Тохиргооны</a> 2-р алхмыг давтана.</p></div>
+      </details>
+      <details>
+        <summary>«Commit хийгээгүй өөрчлөлт байна»</summary>
+        <div><p><code class="i">npm run deploy</code> зөвхөн commit хийсэн кодыг гаргадаг. <code class="i">git add -A</code>, <code class="i">git commit -m "…"</code> хийгээд дахин ажиллуулна.</p></div>
+      </details>
+      <details>
+        <summary>Шинэчилсний дараа сайт ажиллахгүй байна</summary>
+        <div>
+          <p>Сервер дээр аппын логийг харна:</p>
+          <div class="cmd"><div class="cmd-head"><span class="where srv">Сервер</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>cd /opt/surgalt/deploy &amp;&amp; docker compose ps &amp;&amp; docker compose logs --tail 50 app</code></pre></div>
+          <p>Шалтгаан тодорхойгүй бол <a href="#rollback">кодыг өмнөх хувилбарт</a> буцааж, логийг хөгжүүлэгчид илгээнэ.</p>
+        </div>
+      </details>
+      <details>
+        <summary>PowerShell «running scripts is disabled» гэвэл</summary>
+        <div><p><code class="i">npm run …</code> командууд энэ хязгаарыг тойрдог. Скриптийг шууд ажиллуулсан бол оронд нь <code class="i">npm run</code> хэлбэрийг ашиглана.</p></div>
+      </details>
+    </section>
+  </main>
+</div>
+
+<footer>Скриптүүд: <code class="i">deploy/sync/</code> (компьютер), <code class="i">deploy/update.sh</code>, <code class="i">backup.sh</code>, <code class="i">restore.sh</code> (сервер). Дэлгэрэнгүй: <code class="i">deploy/DEPLOY.md</code>.</footer>
+
+<script>
+  document.querySelectorAll('.cmd').forEach(function (block) {
+    var btn = block.querySelector('.copy');
+    var code = block.querySelector('pre code');
+    if (!btn || !code) return;
+    btn.addEventListener('click', function () {
+      // Тайлбар (# ...) хэсгийг хуулахгүй
+      var text = Array.prototype.map.call(code.childNodes, function (n) {
+        return n.nodeType === 1 && n.classList.contains('c') ? '' : n.textContent;
+      }).join('').replace(/[ \t]+$/gm, '');
+      function done(label) { btn.textContent = label; setTimeout(function () { btn.textContent = 'Хуулах'; }, 1600); }
+      function fallback() {
+        var r = document.createRange();
+        r.selectNodeContents(code);
+        var s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+        done('Сонгогдлоо — Ctrl+C');
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done('Хуулагдлаа'); }, fallback);
+      } else {
+        fallback();
+      }
+    });
+  });
+</script>
