@@ -1,6 +1,7 @@
 // Онол, даалгаврын заавар (markdown) → аюулгүй HTML
 const { marked } = require('marked');
 const sanitizeHtml = require('sanitize-html');
+const { highlight } = require('./highlight');
 
 marked.setOptions({ gfm: true, breaks: true });
 
@@ -19,6 +20,8 @@ const SANITIZE = {
     input: ['type', 'checked', 'disabled'],
     h1: ['id'], h2: ['id'], h3: ['id'], h4: ['id'],
   },
+  // Засварлагчаар тохируулсан зургийн байрлал (зүүн/төв/баруун)
+  allowedClasses: { img: ['img-left', 'img-center', 'img-right'], span: ['fs-sm', 'fs-md', 'fs-lg', 'fs-xl', 'fs-2xl'] },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: { img: ['http', 'https'] },
   allowProtocolRelative: false,
@@ -33,8 +36,21 @@ function slugify(text) {
 }
 
 /** Markdown-ийг HTML болгож, гарчгуудад id өгнө (агуулгын жагсаалтад). */
+const decodeEntities = (s) => s
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+  .replace(/&#(?:39|x27);/gi, "'").replace(/&amp;/g, '&');
+
+/** Цэвэрлэсэн HTML-ийн код блокуудыг өнгөтэй болгоно (hljs гаралт escape хийгдсэн тул аюулгүй) */
+function highlightCode(html) {
+  return html.replace(/<pre><code(?: class="language-([\w+#.-]+)")?>([\s\S]*?)<\/code><\/pre>/g, (m, lang, body) => {
+    const code = decodeEntities(body).replace(/\n$/, '');
+    const r = highlight(code, lang);
+    return `<pre><code class="hljs${lang ? ' language-' + lang : ''}">${r.html}</code></pre>`;
+  });
+}
+
 function render(md) {
-  const html = sanitizeHtml(marked.parse(String(md || '')), SANITIZE);
+  const html = highlightCode(sanitizeHtml(marked.parse(String(md || '')), SANITIZE));
   const used = new Map();
   return html.replace(/<h([23])>([\s\S]*?)<\/h\1>/g, (m, level, inner) => {
     let id = slugify(inner.replace(/<[^>]+>/g, ''));
