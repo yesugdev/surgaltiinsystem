@@ -116,7 +116,7 @@
             </div>
           </div>
           <span class="small"><%= c.n %> илгээсэн</span>
-          <% if (c.pending) { %><a class="badge badge-amber" href="<%= b %>/tasks/<%= t._id %>?status=pending"><%= c.pending %> дүгнэх</a><% } %>
+          <% if (c.pending) { %><a class="badge badge-amber" href="<%= b %>/tasks/<%= t._id %><%= t.type === 'assignment' ? '/grade' : '?status=pending' %>"><%= c.pending %> дүгнэх</a><% } %>
           <div class="btn-group">
             <form method="post" action="<%= b %>/tasks/<%= t._id %>/move"><input type="hidden" name="dir" value="up"><button class="btn btn-sm btn-ghost" <%= i === 0 ? 'disabled' : '' %> title="Дээш">↑</button></form>
             <form method="post" action="<%= b %>/tasks/<%= t._id %>/move"><input type="hidden" name="dir" value="down"><button class="btn btn-sm btn-ghost" <%= i === lesson.tasks.length - 1 ? 'disabled' : '' %> title="Доош">↓</button></form>

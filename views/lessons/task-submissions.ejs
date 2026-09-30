@@ -8,8 +8,14 @@
     <p class="muted"><%= isQuiz ? 'Тест · ' + task.questions.length + ' асуулт' : 'Файл илгээх даалгавар' %> · <%= fmtScore(total) %> оноо
       <% if (!isQuiz && task.dueAt) { %> · Хугацаа: <%= fmtDate(task.dueAt) %><% } %></p>
   </div>
-  <a class="btn" href="<%= b %>/edit">Засах</a>
+  <div class="btn-group">
+    <a class="btn" href="<%= b %>/edit">Засах</a>
+    <% if (!isQuiz && stats.submitted) { %><a class="btn btn-primary" href="<%= b %>/grade">▶ Шалгах горим<%= stats.pending ? ' (' + stats.pending + ')' : '' %></a><% } %>
+  </div>
 </div>
+<% if (!isQuiz && stats.pending) { %>
+  <div class="flash flash-info"><strong><%= stats.pending %> ажил дүгнэх шаардлагатай.</strong> «Шалгах горим»-д бүх сурагчийн ажлыг нэг хуудсанд дараалан шалгаж, оноо өгмөгц дараагийнх нь автоматаар нээгдэнэ.</div>
+<% } %>
 
 <div class="stats">
   <div class="stat card"><span class="stat-value"><%= stats.submitted %> / <%= stats.total %></span><span class="stat-label">Илгээсэн</span></div>
@@ -43,7 +49,7 @@
         <td class="num"><%= s && s.score != null ? fmtScore(s.score) + ' / ' + fmtScore(s.maxScore) : '' %></td>
         <td class="actions">
           <% if (s && s.submittedAt) { %>
-            <a class="btn btn-sm <%= r.status === 'pending' ? 'btn-primary' : '' %>" href="<%= b %>/submissions/<%= s._id %>"><%= r.status === 'pending' ? 'Дүгнэх' : 'Харах' %></a>
+            <a class="btn btn-sm <%= r.status === 'pending' ? 'btn-primary' : '' %>" href="<%= isQuiz ? b + '/submissions/' + s._id : b + '/grade?s=' + s._id %>"><%= r.status === 'pending' ? 'Дүгнэх' : 'Харах' %></a>
           <% } %>
         </td>
       </tr>

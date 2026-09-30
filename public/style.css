@@ -417,10 +417,51 @@ body.pptx-lock { overflow: hidden; }
 }
 .embed-body .pptx-viewer { padding: 12px; }
 
+/* ---------- Шалгах горим ---------- */
+.text-success { color: var(--green); }
+.grading .container { max-width: 1480px; }
+.grade-head { margin-bottom: 14px; }
+.grader { display: grid; grid-template-columns: 250px minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.grader > .card, .grader-panel > .card { margin: 0; }
+.grader-list { padding: 10px; position: sticky; top: 72px; max-height: calc(100vh - 88px); display: flex; flex-direction: column; gap: 8px; }
+.grader-filters { display: flex; gap: 4px; }
+.grader-filters button { flex: 1; font: inherit; font-size: 0.82rem; font-weight: 500; padding: 5px 6px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.grader-filters button.active { background: var(--primary-soft); border-color: #cbd8fb; color: var(--primary); }
+.grader-students { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.grader-student { width: 100%; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--text); font: inherit; font-size: 0.9rem; text-align: left; cursor: pointer; }
+.grader-student:hover { background: var(--bg); }
+.grader-student.active { background: var(--primary); color: #fff; }
+.grader-student.active .grader-sscore, .grader-student.active .grader-mark { color: #fff; }
+.grader-sname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grader-sscore { font-size: 0.8rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.grader-mark { font-size: 0.8rem; text-align: center; }
+.st-graded .grader-mark { color: var(--green); }
+.st-graded .grader-sscore { color: var(--green); font-weight: 600; }
+.st-pending .grader-mark, .st-pending .grader-sscore { color: var(--amber); }
+.st-none { color: var(--muted); }
+.grader-empty { padding: 8px; }
+.grader-work { min-height: 60vh; display: flex; flex-direction: column; gap: 12px; }
+.grader-work-head h2 { margin: 0; }
+.grader-work h3 { margin: 4px 0 0; font-size: 0.95rem; }
+.grader-work .badge { margin-left: 8px; }
+.grader-panel { position: sticky; top: 72px; }
+.grader-form { gap: 10px; }
+.grader-student-name { font-weight: 700; font-size: 1.05rem; }
+.grader-score-row { display: flex; align-items: center; gap: 8px; }
+.grader-score-row input { width: 110px; font-size: 1.3rem; font-weight: 600; padding: 6px 10px; }
+.grader-form > .btn-primary { align-self: stretch !important; padding: 10px; }
+.grader-status { min-height: 1.3em; }
+.grader-nav { display: flex; justify-content: space-between; }
+.grader-keys { margin: 0; line-height: 1.8; }
+kbd { font: 0.78rem ui-monospace, Consolas, monospace; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
   .grid-2, .grid-side, .take-layout, .import-layout, .editor-layout, .md-split, .lesson-layout, .review-layout { grid-template-columns: 1fr; }
   .lesson-side { display: none; }
+  .grader { grid-template-columns: 1fr; }
+  .grader-list, .grader-panel { position: static; max-height: 260px; }
+  .grader-panel { max-height: none; order: -1; }
   .theory { padding: 18px; }
   .docx-page { padding: 20px; }
   .review-side .sticky { position: static; }

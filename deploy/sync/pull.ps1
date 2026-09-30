@@ -1,7 +1,8 @@
 ﻿# Серверийн өгөгдлийг локал руу татна: локал өгөгдөл СЕРВЕРИЙНХЭЭР СОЛИГДОНО.
 # Серверт юу ч өөрчлөгдөхгүй. Хэрэглээ:  npm run sync:pull
 param(
-  [string]$Server = $env:SURGALT_SERVER,
+  # Терминал хувьсагчийг хараахан харахгүй (тохируулсны дараа шинээр нээгээгүй) бол Windows-т хадгалсныг уншина
+  [string]$Server = $(if ($env:SURGALT_SERVER) { $env:SURGALT_SERVER } else { [Environment]::GetEnvironmentVariable('SURGALT_SERVER', 'User') }),
   [string]$RemoteDir = '/opt/surgalt'
 )
 . "$PSScriptRoot\common.ps1"

@@ -237,10 +237,16 @@
         </div></li>
         <li><div class="step-body">
           <h3>SSH түлхүүр үүсгэж серверт бүртгэх</h3>
-          <p>Энэ алхмын дараа скриптүүд серверийн нууц үгийг дахин асуухгүй. Түлхүүр үүсгэх үед асуух бүх зүйлд Enter дарна.</p>
+          <p>Энэ алхмын дараа скриптүүд серверийн нууц үгийг дахин асуухгүй.</p>
+          <div class="note warn">
+            <strong>Түлхүүр аль хэдийн байвал шинээр бүү үүсгэ</strong>
+            <p><code class="i">$env:USERPROFILE\.ssh\id_ed25519.pub</code> файл байгаа бол (жишээ нь GitHub-т ашигладаг) <code class="i">ssh-keygen</code>-ийг алгасна. Шинээр үүсгэвэл хуучин түлхүүр дарагдаж GitHub-ийн эрх алдагдана.</p>
+          </div>
+          <div class="cmd"><div class="cmd-head"><span class="where pc">Компьютер</span><span class="cmd-note">зөвхөн түлхүүр байхгүй үед</span><button class="copy" type="button">Хуулах</button></div>
+<pre><code>ssh-keygen -t ed25519</code></pre></div>
+          <p>Түлхүүрээ серверт бүртгэнэ (серверийн нууц үгийг сүүлчийн удаа асууна):</p>
           <div class="cmd"><div class="cmd-head"><span class="where pc">Компьютер</span><span class="cmd-note">PowerShell</span><button class="copy" type="button">Хуулах</button></div>
-<pre><code>ssh-keygen -t ed25519
-type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh $env:SURGALT_SERVER "mkdir -p ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys"</code></pre></div>
+<pre><code>type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh $env:SURGALT_SERVER "mkdir -p ~/.ssh &amp;&amp; chmod 700 ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys &amp;&amp; chmod 600 ~/.ssh/authorized_keys"</code></pre></div>
           <p class="muted">Шалгах: <code class="i">ssh $env:SURGALT_SERVER "echo ok"</code> нууц үг асуухгүйгээр <code class="i">ok</code> гэж хариулах ёстой.</p>
         </div></li>
         <li><div class="step-body">

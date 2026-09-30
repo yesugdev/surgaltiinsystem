@@ -33,7 +33,7 @@
           <% r.cells.forEach(function (c) { %>
             <td class="num">
               <% if (c.sub && c.sub.submittedAt) { %>
-                <a href="<%= b %>/tasks/<%= c.task._id %>/submissions/<%= c.sub._id %>" class="grade-cell grade-<%= c.status %>">
+                <a href="<%= b %>/tasks/<%= c.task._id %><%= c.task.type === 'quiz' ? '/submissions/' + c.sub._id : '/grade?s=' + c.sub._id %>" class="grade-cell grade-<%= c.status %>">
                   <%= c.status === 'graded' ? fmtScore(c.sub.score) : '?' %>
                 </a>
               <% } else { %><span class="muted">—</span><% } %>

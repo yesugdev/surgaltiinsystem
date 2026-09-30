@@ -1,0 +1,67 @@
+<%- include('../partials/header', { bodyClass: 'grading' }) %>
+<% const b = '/lessons/' + lesson._id + '/tasks/' + task._id; %>
+<div class="page-head grade-head">
+  <div>
+    <a href="<%= b %>" class="back">← <%= task.title %></a>
+    <h1>Шалгах: <%= task.title %></h1>
+    <p class="muted small" id="grade-progress">&nbsp;</p>
+  </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-sm" data-open-dialog="#instr-dialog">Даалгаврын заавар</button>
+  </div>
+</div>
+
+<div class="grader" id="grader"
+     data-base="<%= b %>"
+     data-max="<%= task.maxPoints %>"
+     data-initial="<%= initial %>">
+  <!-- Сурагчдын жагсаалт -->
+  <aside class="grader-list card">
+    <div class="grader-filters" role="tablist">
+      <button type="button" class="active" data-filter="all">Бүгд</button>
+      <button type="button" data-filter="pending">Дүгнэх</button>
+      <button type="button" data-filter="graded">Дүгнэсэн</button>
+    </div>
+    <ol class="grader-students" id="grader-students"></ol>
+  </aside>
+
+  <!-- Сурагчийн ажил -->
+  <section class="grader-work card" id="grader-work">
+    <p class="muted">Сурагч сонгоно уу.</p>
+  </section>
+
+  <!-- Дүгнэх -->
+  <aside class="grader-panel">
+    <form class="card form grader-form" id="grader-form" autocomplete="off">
+      <div class="grader-student-name" id="grader-name">—</div>
+      <label for="grader-score">Оноо <small class="muted">(0 – <%= fmtScore(task.maxPoints) %>)</small></label>
+      <div class="grader-score-row">
+        <input type="number" id="grader-score" name="score" min="0" max="<%= task.maxPoints %>" step="0.5" required disabled>
+        <span class="muted">/ <%= fmtScore(task.maxPoints) %></span>
+      </div>
+      <label for="grader-feedback">Сэтгэгдэл <small class="muted">(сурагчид харагдана)</small></label>
+      <textarea id="grader-feedback" name="feedback" rows="6" maxlength="5000" placeholder="Сайн хийсэн зүйл, засах зүйл..." disabled></textarea>
+      <button class="btn btn-primary" id="grader-save" disabled>Хадгалаад дараагийнх →</button>
+      <div class="grader-status small" id="grader-status" role="status"></div>
+      <div class="grader-nav">
+        <button type="button" class="btn btn-sm" id="grader-prev">← Өмнөх</button>
+        <button type="button" class="btn btn-sm" id="grader-next">Дараах →</button>
+      </div>
+      <p class="muted small grader-keys">
+        <kbd>←</kbd> <kbd>→</kbd> сурагч солих · оноон дээр <kbd>Enter</kbd> хадгалах · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> сэтгэгдлээс хадгалах
+      </p>
+    </form>
+  </aside>
+</div>
+
+<dialog id="instr-dialog" class="prompt-dialog">
+  <div class="prompt-dialog-head">
+    <h2>Даалгаврын заавар</h2>
+    <button type="button" class="btn btn-ghost btn-sm" data-close>✕</button>
+  </div>
+  <div class="markdown"><%- instructionsHtml %></div>
+  <div class="btn-group prompt-dialog-actions"><div class="spacer"></div><button type="button" class="btn" data-close>Хаах</button></div>
+</dialog>
+
+<script type="application/json" id="grader-data"><%- JSON.stringify(rows).replace(/</g, '\\u003c') %></script>
+<%- include('../partials/footer', { scripts: ['/preview.js', '/vendor/jszip.js', '/vendor/pptx-preview.js', '/pptx-viewer.js', '/grader.js'] }) %>

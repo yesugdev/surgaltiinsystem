@@ -1,7 +1,7 @@
 const express = require('express');
 const { Subject, Class, User, Lesson, Submission } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { clean, isId, toArray, parseInputDate, fmtScore } = require('../helpers');
+const { clean, isId, toArray, parseInputDate, fmtScore, fmtDate } = require('../helpers');
 const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects } = require('../access');
 const { buildLessonPrompt } = require('../ai-prompt');
 const md = require('../markdown');
@@ -460,6 +460,48 @@ router.get('/:id/tasks/:tid', loadLesson, findTask, async (req, res) => {
   });
 });
 
+// Шалгах горим: нэг даалгаврын бүх сурагчийн ажлыг нэг хуудсанд дараалан шалгана
+router.get('/:id/tasks/:tid/grade', loadLesson, findTask, async (req, res) => {
+  const { lesson, task } = req;
+  if (task.type !== 'assignment') return res.redirect(`${base(lesson)}/tasks/${task._id}`);
+  const subs = await Submission.find({ lesson: lesson._id, taskId: task._id }).select('-answers').lean();
+  const byStudent = new Map(subs.map((s) => [String(s.student), s]));
+  const students = await lessonStudents(lesson, subs.map((s) => s.student));
+  const rows = students.map((st) => {
+    const sub = byStudent.get(String(st._id));
+    return {
+      name: st.fullName,
+      username: st.username,
+      className: st.className,
+      sub: sub?.submittedAt
+        ? {
+            id: String(sub._id),
+            submittedAt: fmtDate(sub.submittedAt),
+            late: !!sub.late,
+            attemptCount: sub.attemptCount || 1,
+            text: sub.text || '',
+            feedback: sub.feedback || '',
+            score: sub.score,
+            files: sub.files.map((f) => ({
+              fileId: String(f.fileId),
+              name: f.name,
+              size: files.fmtSize(f.size),
+              kind: files.viewKind(f.contentType),
+            })),
+          }
+        : null,
+    };
+  });
+  res.render('lessons/grade', {
+    title: 'Шалгах · ' + task.title,
+    lesson,
+    task,
+    rows,
+    initial: isId(req.query.s) ? req.query.s : '',
+    instructionsHtml: md.render(task.instructions),
+  });
+});
+
 async function loadSubmission(req, res, next) {
   const sub = isId(req.params.sid)
     ? await Submission.findOne({ _id: req.params.sid, lesson: req.lesson._id, taskId: req.task._id })
@@ -496,10 +538,14 @@ router.get('/:id/tasks/:tid/submissions/:sid', loadLesson, findTask, loadSubmiss
 router.post('/:id/tasks/:tid/submissions/:sid/grade', loadLesson, findTask, loadSubmission, async (req, res) => {
   const { task, sub } = req;
   const back = `${base(req.lesson)}/tasks/${task._id}/submissions/${sub._id}`;
+  // Шалгах горим хуудас ачаалахгүйгээр (fetch) хадгалдаг — тэр үед JSON буцаана
+  const wantsJson = (req.get('accept') || '').includes('application/json');
   if (task.type === 'assignment') {
     const pts = Number(req.body.score);
     if (req.body.score === '' || !(pts >= 0 && pts <= task.maxPoints)) {
-      flash(req, 'error', `Оноо 0–${fmtScore(task.maxPoints)} хооронд байна.`);
+      const msg = `Оноо 0–${fmtScore(task.maxPoints)} хооронд байна.`;
+      if (wantsJson) return res.status(400).json({ error: msg });
+      flash(req, 'error', msg);
       return res.redirect(back);
     }
     sub.score = pts;
@@ -520,6 +566,7 @@ router.post('/:id/tasks/:tid/submissions/:sid/grade', loadLesson, findTask, load
   sub.gradedBy = req.user._id;
   sub.gradedAt = new Date();
   await sub.save();
+  if (wantsJson) return res.json({ ok: true, score: sub.score, maxScore: sub.maxScore, feedback: sub.feedback });
   flash(req, 'success', 'Дүн хадгалагдлаа.');
   res.redirect(req.body.next && isId(req.body.next) ? `${base(req.lesson)}/tasks/${task._id}/submissions/${req.body.next}` : back);
 });
