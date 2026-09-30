@@ -67,7 +67,7 @@ async function buildExamAnalysis(templateBuffer, { questions, groups, date, teac
   const T = tpl.worksheets[0];
 
   const out = new ExcelJS.Workbook();
-  out.creator = 'Сургалтын систем';
+  out.creator = 'YeSuvd';
   out.calcProperties.fullCalcOnLoad = true; // Excel нээхэд бүх томьёог тооцно
 
   const Q = questions.length;

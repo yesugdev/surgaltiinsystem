@@ -2,7 +2,7 @@
   "name": "surgaltiin-system",
   "version": "0.1.0",
   "private": true,
-  "description": "Сургалтын систем — багшийн үйл ажиллагааг автоматжуулах. Модуль 1: Шалгалт",
+  "description": "YeSuvd Learning Platform — багшийн үйл ажиллагааг автоматжуулах сургалтын систем",
   "main": "src/server.js",
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
@@ -11,13 +11,15 @@
     "deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/deploy.ps1",
     "sync:pull": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/pull.ps1",
     "sync:push": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/push.ps1",
-    "sync:restore-local": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/restore-local.ps1"
+    "sync:restore-local": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/restore-local.ps1",
+    "build:client": "esbuild client/login-scene.js --bundle --minify --format=iife --target=es2019 --legal-comments=none --outfile=public/js/login-scene.js"
   },
   "engines": {
     "node": ">=22.9"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
     "connect-mongo": "^6.0.0",
     "ejs": "^6.0.1",
     "exceljs": "^4.4.0",
@@ -29,6 +31,10 @@
     "mongoose": "^8.24.4",
     "multer": "^2.4.0",
     "pptx-preview": "^1.0.7",
-    "sanitize-html": "^2.17.7"
+    "sanitize-html": "^2.17.7",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

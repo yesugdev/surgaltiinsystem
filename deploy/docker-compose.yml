@@ -1,4 +1,4 @@
-# Сургалтын систем — production (learn.yesuvd.tech)
+# YeSuvd Learning Platform — production (learn.yesuvd.tech)
 # Ажиллуулах: cd deploy && docker compose up -d --build
 
 name: surgalt
