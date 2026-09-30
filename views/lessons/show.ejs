@@ -13,7 +13,7 @@
     <% if (lesson.description) { %><p class="muted small"><%= lesson.description %></p><% } %>
   </div>
   <div class="btn-group">
-    <a class="btn btn-primary" href="<%= b %>/import">✨ AI-аар оруулах</a>
+    <% if (locals.canUseAI) { %><a class="btn btn-primary" href="<%= b %>/import">✨ AI-аар оруулах</a><% } %>
     <a class="btn" href="<%= b %>/edit">Тохиргоо</a>
     <a class="btn" href="<%= b %>/grades">Дүн</a>
     <form method="post" action="<%= b %>/publish"
@@ -30,13 +30,22 @@
 <% if (!lesson.theory.trim() && !lesson.tasks.length) { %>
   <section class="card empty-hero">
     <h2>Агуулгаа оруулъя</h2>
-    <p class="muted">AI prompt ашиглаад онол, тест, даалгаврыг <strong>нэг дор</strong> бэлтгэж буулгах нь хамгийн хурдан. Эсвэл гараар нэг нэгээр нэмж болно.</p>
-    <div class="btn-group center">
-      <a class="btn btn-primary btn-lg" href="<%= b %>/import">✨ AI-аар онол, даалгавар оруулах</a>
-      <a class="btn" href="<%= b %>/theory">Онол бичих</a>
-      <a class="btn" href="<%= b %>/tasks/new?type=quiz">+ Тест</a>
-      <a class="btn" href="<%= b %>/tasks/new?type=assignment">+ Даалгавар</a>
-    </div>
+    <% if (locals.canUseAI) { %>
+      <p class="muted">AI prompt ашиглаад онол, тест, даалгаврыг <strong>нэг дор</strong> бэлтгэж буулгах нь хамгийн хурдан. Эсвэл гараар нэг нэгээр нэмж болно.</p>
+      <div class="btn-group center">
+        <a class="btn btn-primary btn-lg" href="<%= b %>/import">✨ AI-аар онол, даалгавар оруулах</a>
+        <a class="btn" href="<%= b %>/theory">Онол бичих</a>
+        <a class="btn" href="<%= b %>/tasks/new?type=quiz">+ Тест</a>
+        <a class="btn" href="<%= b %>/tasks/new?type=assignment">+ Даалгавар</a>
+      </div>
+    <% } else { %>
+      <p class="muted">Гурван алхмаар хичээлээ бэлдэнэ.</p>
+      <ol class="start-steps">
+        <li><a href="<%= b %>/theory"><strong>Онол бичих</strong><span>Word шиг засварлагчаар гарчиг, жагсаалт, хүснэгт, зураг оруулна</span></a></li>
+        <li><a href="<%= b %>/tasks/new?type=quiz"><strong>Тест нэмэх</strong><span>Сонголттой болон бичгээр хариулах асуулт — автоматаар дүгнэгдэнэ</span></a></li>
+        <li><a href="<%= b %>/tasks/new?type=assignment"><strong>Даалгавар нэмэх</strong><span>Сурагч файлаар илгээж, та оноо өгнө</span></a></li>
+      </ol>
+    <% } %>
   </section>
 <% } %>
 

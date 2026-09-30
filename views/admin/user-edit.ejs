@@ -44,6 +44,7 @@
           </div>
           <p class="muted small">Багш зөвхөн эдгээр хичээлээр шалгалт бэлдэнэ.</p>
         <% } %>
+        <label class="check ai-toggle"><input type="checkbox" name="aiEnabled" <%= target.aiEnabled ? 'checked' : '' %>> <span><strong>AI туслах</strong> <span class="muted small">— Асаавал багш AI prompt ашиглан онол, даалгавар, тестийн асуултыг текстээр олноор оруулах боломжтой болно. Унтраалттай үед эдгээр боломж огт харагдахгүй, багш гараар оруулна.</span></span></label>
       </fieldset>
       <label class="check"><input type="checkbox" name="active" <%= target.active ? 'checked' : '' %> <%= isSelf ? 'disabled' : '' %>> Идэвхтэй (нэвтрэх боломжтой)</label>
       <button class="btn btn-primary">Хадгалах</button>

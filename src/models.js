@@ -38,6 +38,8 @@ const userSchema = new Schema(
     classId: { type: Types.ObjectId, ref: 'Class', default: null, index: true },
     // Багшийн заадаг хичээлүүд
     subjectIds: { type: [{ type: Types.ObjectId, ref: 'Subject' }], default: [], index: true },
+    // Багш AI prompt, текстээр олноор оруулах боломжийг ашиглах эрх (админд үргэлж нээлттэй)
+    aiEnabled: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

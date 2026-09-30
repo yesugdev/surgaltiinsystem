@@ -51,7 +51,7 @@
   <h2>Асуултууд</h2>
   <% if (!locked) { %>
     <div class="btn-group">
-      <a class="btn" href="/exams/<%= exam._id %>/questions/import">📋 Олноор оруулах</a>
+      <% if (locals.canUseAI) { %><a class="btn" href="/exams/<%= exam._id %>/questions/import">📋 Олноор оруулах</a><% } %>
       <a class="btn btn-primary" href="/exams/<%= exam._id %>/questions/new">+ Асуулт нэмэх</a>
     </div>
   <% } %>
@@ -60,9 +60,14 @@
 <% if (!exam.questions.length) { %>
   <div class="card empty">
     <p class="muted">Асуулт нэмээгүй байна.</p>
-    <% if (!locked) { %>
+    <% if (!locked && locals.canUseAI) { %>
       <p class="muted small">Олон асуултыг нэг дор буулгаж оруулах боломжтой. AI-аар форматжуулах prompt тэнд бий.</p>
-      <a class="btn btn-primary" href="/exams/<%= exam._id %>/questions/import">📋 Асуултуудаа олноор оруулах</a>
+      <div class="btn-group center">
+        <a class="btn btn-primary" href="/exams/<%= exam._id %>/questions/import">📋 Асуултуудаа олноор оруулах</a>
+        <a class="btn" href="/exams/<%= exam._id %>/questions/new">+ Асуулт нэмэх</a>
+      </div>
+    <% } else if (!locked) { %>
+      <a class="btn btn-primary" href="/exams/<%= exam._id %>/questions/new">+ Эхний асуултаа нэмэх</a>
     <% } %>
   </div>
 <% } %>

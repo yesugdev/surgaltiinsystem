@@ -13,6 +13,7 @@ async function loadUser(req, res, next) {
     if (user && user.active) {
       req.user = user;
       res.locals.user = user;
+      res.locals.canUseAI = user.role === 'admin' || (user.role === 'teacher' && user.aiEnabled === true);
     } else {
       delete req.session.userId;
     }
