@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+<div class="narrow">
+  <a href="/exams" class="back">← Шалгалтууд</a>
+  <h1>Анализын Excel загвар</h1>
+  <p class="muted">Шалгалтын «Үр дүн» хуудасны <strong>«📊 Анализ (Excel) татах»</strong> товч энэ загвараар файл гаргана. Анги бүр тусдаа хуудсанд, даалгаврын тоо, авах оноо, сурагчдын нүд шалгалтын хэмжээгээр нэмэгдэнэ. Загварын томьёо, хэлбэржүүлэлт хэвээр үлдэнэ.</p>
+
+  <section class="card">
+    <h2>Одоогийн загвар</h2>
+    <p><strong><%= template.name %></strong>
+      <% if (template.custom) { %><span class="badge badge-green">Сургуулийн загвар</span><% } else { %><span class="badge">Анхдагч</span><% } %></p>
+    <% if (template.custom && template.uploadedAt) { %><p class="muted small">Оруулсан: <%= fmtDate(template.uploadedAt) %></p><% } %>
+    <% if (!template.custom) { %>
+      <p class="muted small">Анхдагч загварт хянасан ажилтны нэрийг цэгээр сольсон. Сургуулийнхаа бөглөсөн (гарчиг, гарын үсгийн нэртэй) загварыг доороос оруулна уу.</p>
+    <% } %>
+    <div class="btn-group">
+      <a class="btn" href="/exams/analysis-template/download">Загварыг татах</a>
+      <% if (template.custom) { %>
+        <form method="post" action="/exams/analysis-template/reset" data-confirm="Анхдагч загвар руу буцах уу?"><button class="btn btn-ghost">Анхдагч руу буцах</button></form>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Загвар солих</h2>
+    <p class="muted small">Одоогийн загвартай ижил байрлалтай байх ёстой: C4 «Даалгавар», K4 «Авах оноо», N4 «Түвшин», мөр 7-оос сурагчид, 33-р мөрөөс дүн шинжилгээ. Гарчиг, огноо, гарын үсгийн мөр, фонт, өнгийг чөлөөтэй засаж болно.</p>
+    <form method="post" action="/exams/analysis-template" enctype="multipart/form-data" class="upload-row">
+      <input type="file" name="file" accept=".xlsx" required>
+      <button class="btn btn-primary">Оруулах</button>
+    </form>
+  </section>
+</div>
+<%- include('../partials/footer') %>

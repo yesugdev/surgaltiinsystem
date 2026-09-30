@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { Subject, Class, User, Exam, Attempt } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate, fmtDate, fmtScore } = require('../helpers');
@@ -6,6 +7,9 @@ const { finalizeExpired } = require('../grading');
 const { buildImportPrompt } = require('../ai-prompt');
 const QuestionParser = require('../../public/question-parser');
 const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects } = require('../access');
+const { buildExamAnalysis, getTemplate, validateTemplate, SETTING_KEY } = require('../exam-analysis');
+const files = require('../files');
+const { Setting } = require('../models');
 
 const router = express.Router();
 router.use(requireRole('admin', 'teacher'));
@@ -106,6 +110,55 @@ router.get('/', async (req, res) => {
 });
 
 // ---------------- Үүсгэх / засах ----------------
+// ---------------- Анализын Excel загвар (админ) ----------------
+function adminOnly(req, res, next) {
+  if (req.user.role !== 'admin') return res.status(403).render('error', { title: 'Хандах эрхгүй', message: 'Зөвхөн админ загвар солино.' });
+  next();
+}
+
+router.get('/analysis-template', adminOnly, async (req, res) => {
+  const t = await getTemplate();
+  res.render('exams/analysis-template', { title: 'Анализын Excel загвар', template: t });
+});
+
+router.get('/analysis-template/download', adminOnly, async (req, res) => {
+  const t = await getTemplate();
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="template.xlsx"; filename*=UTF-8''${encodeURIComponent('анализ-загвар.xlsx')}`);
+  res.send(t.buffer);
+});
+
+router.post('/analysis-template', adminOnly, files.uploader('file', 1), async (req, res) => {
+  const back = '/exams/analysis-template';
+  const f = req.files[0];
+  if (req.uploadError || !f) {
+    flash(req, 'error', req.uploadError || 'Файл сонгоно уу.');
+    return res.redirect(back);
+  }
+  if (!/\.xlsx$/i.test(f.originalname)) {
+    flash(req, 'error', 'Зөвхөн .xlsx файл оруулна.');
+    return res.redirect(back);
+  }
+  const problem = await validateTemplate(f.buffer);
+  if (problem) {
+    flash(req, 'error', problem);
+    return res.redirect(back);
+  }
+  const [saved] = await files.saveFiles([f], { kind: 'setting', key: SETTING_KEY, uploadedBy: req.user._id });
+  const prev = await Setting.findOne({ key: SETTING_KEY }).lean();
+  await Setting.updateOne({ key: SETTING_KEY }, { value: { fileId: saved.fileId, name: saved.name } }, { upsert: true });
+  if (prev?.value?.fileId) await files.deleteFiles([prev.value.fileId]);
+  flash(req, 'success', `«${saved.name}» загвар хадгалагдлаа. Цаашид шалгалтын анализ энэ загвараар гарна.`);
+  res.redirect(back);
+});
+
+router.post('/analysis-template/reset', adminOnly, async (req, res) => {
+  const prev = await Setting.findOneAndDelete({ key: SETTING_KEY }).lean();
+  if (prev?.value?.fileId) await files.deleteFiles([prev.value.fileId]);
+  flash(req, 'success', 'Анхдагч загвар руу буцлаа.');
+  res.redirect('/exams/analysis-template');
+});
+
 router.get('/new', async (req, res) => {
   if (!(await allowedSubjects(req.user)).length) {
     return res.status(403).render('error', {
@@ -443,6 +496,68 @@ router.get('/:id/results.csv', loadExam, async (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="exam-${req.exam._id}-results.csv"`);
   res.send(csv);
+});
+
+// Сургуулийн «анализ-хөндлөн» Excel загвараар дүн шинжилгээ (анги бүр тусдаа хуудас)
+router.get('/:id/analysis.xlsx', loadExam, async (req, res) => {
+  const exam = req.exam;
+  await finalizeExpired({ exam: exam._id });
+  const attempts = await Attempt.find({ exam: exam._id, submittedAt: { $ne: null } }).lean();
+  const byStudent = new Map(attempts.map((a) => [String(a.student), a]));
+  const takers = await User.find({ _id: { $in: attempts.map((a) => a.student) } }).select('fullName classId').lean();
+  const classIds = [...new Set([...exam.classIds.map(String), ...takers.map((t) => String(t.classId || ''))])].filter(isId);
+  const [classes, expected, creator] = await Promise.all([
+    Class.find({ _id: { $in: classIds } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean(),
+    User.aggregate([{ $match: { role: 'student', classId: { $in: classIds.map((id) => new mongoose.Types.ObjectId(id)) } } }, { $group: { _id: '$classId', n: { $sum: 1 } } }]),
+    exam.createdBy ? User.findById(exam.createdBy).select('fullName').lean() : null,
+  ]);
+  const expectedMap = new Map(expected.map((e) => [String(e._id), e.n]));
+  const total = exam.questions.reduce((s, q) => s + q.points, 0);
+
+  const groups = classes.map((cls) => ({
+    className: cls.name,
+    expectedCount: expectedMap.get(String(cls._id)) || 0,
+    students: takers
+      .filter((t) => String(t.classId) === String(cls._id))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'mn'))
+      .map((t) => {
+        const a = byStudent.get(String(t._id));
+        const pts = new Map(a.answers.map((x) => [String(x.questionId), x.points]));
+        return {
+          name: t.fullName,
+          // Асуултын дарааллаар (сурагчид холилдсон ч гэсэн)
+          scores: exam.questions.map((q) => (pts.has(String(q._id)) ? pts.get(String(q._id)) : null)),
+          max: a.maxScore ?? total,
+        };
+      }),
+  }));
+  // Анги сольсон/ангигүй сурагчид
+  const known = new Set(classes.map((c) => String(c._id)));
+  const orphans = takers.filter((t) => !known.has(String(t.classId)));
+  if (orphans.length) {
+    groups.push({
+      className: 'Бусад',
+      expectedCount: orphans.length,
+      students: orphans.map((t) => {
+        const a = byStudent.get(String(t._id));
+        const pts = new Map(a.answers.map((x) => [String(x.questionId), x.points]));
+        return { name: t.fullName, scores: exam.questions.map((q) => pts.get(String(q._id)) ?? null), max: a.maxScore ?? total };
+      }),
+    });
+  }
+
+  const firstSubmit = attempts.reduce((m, a) => (!m || a.submittedAt < m ? a.submittedAt : m), null);
+  const { buffer: template } = await getTemplate();
+  const xlsx = await buildExamAnalysis(template, {
+    questions: exam.questions,
+    groups,
+    date: exam.startAt || firstSubmit || new Date(),
+    teacherName: creator?.fullName || '',
+  });
+  const fileName = `${exam.title.replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'shalgalt'} - анализ.xlsx`;
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="analysis.xlsx"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+  res.send(xlsx);
 });
 
 async function loadAttempt(req, res, next) {

@@ -184,7 +184,17 @@ const submissionSchema = new Schema(
 );
 submissionSchema.index({ lesson: 1, taskId: 1, student: 1 }, { unique: true });
 
+// ---------- Системийн тохиргоо (key → value) ----------
+const settingSchema = new Schema(
+  {
+    key: { type: String, required: true, unique: true },
+    value: { type: Schema.Types.Mixed, default: null },
+  },
+  { timestamps: true }
+);
+
 module.exports = {
+  Setting: mongoose.model('Setting', settingSchema),
   Lesson: mongoose.model('Lesson', lessonSchema),
   Submission: mongoose.model('Submission', submissionSchema),
   Subject: mongoose.model('Subject', subjectSchema),

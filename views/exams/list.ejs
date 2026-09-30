@@ -8,7 +8,10 @@
       <% } else { %>Танд хичээл оноогоогүй байна<% } %>
     </p>
   </div>
+  <div class="btn-group">
+  <% if (user.role === 'admin') { %><a href="/exams/analysis-template" class="btn">Анализын загвар</a><% } %>
   <% if (canCreate) { %><a href="/exams/new<%= subjectFilter && subjectFilter !== 'none' ? '?subject=' + subjectFilter : '' %>" class="btn btn-primary">+ Шинэ шалгалт</a><% } %>
+  </div>
 </div>
 
 <% if (!canCreate) { %>
