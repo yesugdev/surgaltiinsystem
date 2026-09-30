@@ -17,6 +17,7 @@ COPY src ./src
 COPY views ./views
 COPY public ./public
 COPY scripts ./scripts
+COPY templates ./templates
 
 # root эрхгүй хэрэглэгчээр ажиллуулна
 USER node
