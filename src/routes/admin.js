@@ -409,6 +409,7 @@ router.post('/users', async (req, res) => {
   let password = String(req.body.password ?? '').trim();
   const classId = role === 'student' && isId(req.body.classId) ? req.body.classId : null;
   const subjectIds = role === 'teacher' ? await validSubjectIds(req.body.subjectIds) : [];
+  const aiEnabled = role === 'teacher' && req.body.aiEnabled === 'on';
 
   if (!fullName || !username) {
     flash(req, 'error', 'Нэр болон нэвтрэх нэрийг оруулна уу.');
@@ -425,7 +426,7 @@ router.post('/users', async (req, res) => {
   if (!password) password = genPassword(8);
 
   try {
-    await User.create({ username, passwordHash: await bcrypt.hash(password, 10), fullName, role, classId, subjectIds });
+    await User.create({ username, passwordHash: await bcrypt.hash(password, 10), fullName, role, classId, subjectIds, aiEnabled });
   } catch (err) {
     if (!isDuplicateKey(err)) throw err;
     flash(req, 'error', `"${username}" нэвтрэх нэр аль хэдийн бүртгэлтэй байна.`);
@@ -461,13 +462,14 @@ router.post('/users/:id', loadTargetUser, async (req, res) => {
   const active = isSelf ? true : req.body.active === 'on';
   const classId = role === 'student' && isId(req.body.classId) ? req.body.classId : null;
   const subjectIds = role === 'teacher' ? await validSubjectIds(req.body.subjectIds) : [];
+  const aiEnabled = role === 'teacher' && req.body.aiEnabled === 'on';
 
   if (!fullName || !USERNAME_RE.test(username)) {
     flash(req, 'error', 'Нэр болон зөв нэвтрэх нэр оруулна уу.');
     return res.redirect(back);
   }
   try {
-    await User.updateOne({ _id: target._id }, { fullName, username, role, active, classId, subjectIds });
+    await User.updateOne({ _id: target._id }, { fullName, username, role, active, classId, subjectIds, aiEnabled });
   } catch (err) {
     if (!isDuplicateKey(err)) throw err;
     flash(req, 'error', `"${username}" нэвтрэх нэр аль хэдийн бүртгэлтэй байна.`);

@@ -2,12 +2,13 @@ const express = require('express');
 const { Subject, Class, User, Lesson, Submission } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate, fmtScore, fmtDate } = require('../helpers');
-const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects } = require('../access');
+const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI } = require('../access');
 const { buildLessonPrompt } = require('../ai-prompt');
 const md = require('../markdown');
 const files = require('../files');
 const QuestionParser = require('../../public/question-parser');
 const LessonParser = require('../../public/lesson-parser');
+const { parseQuestionsJson, toQuestionsJson } = require('../questions');
 
 const router = express.Router();
 router.use(requireRole('admin', 'teacher'));
@@ -135,7 +136,9 @@ router.post('/', async (req, res) => {
   const { errors, data } = await parseLessonForm(req);
   if (errors.length) return renderLessonForm(req, res, { title: 'Шинэ хичээл', lesson: data, errors, status: 400 });
   const lesson = await Lesson.create({ ...data, createdBy: req.user._id });
-  flash(req, 'success', 'Хичээл үүслээ. Одоо онол, даалгавраа AI-аар нэг дор эсвэл гараар оруулна уу.');
+  flash(req, 'success', canUseAI(req.user)
+    ? 'Хичээл үүслээ. Одоо онол, даалгавраа AI-аар нэг дор эсвэл гараар оруулна уу.'
+    : 'Хичээл үүслээ. Одоо онол бичиж, тест болон даалгавар нэмнэ үү.');
   res.redirect(base(lesson));
 });
 
@@ -210,7 +213,7 @@ router.post('/:id/delete', loadLesson, async (req, res) => {
 
 // ---------------- Онол ----------------
 router.get('/:id/theory', loadLesson, (req, res) => {
-  res.render('lessons/theory', { title: 'Онол засах', lesson: req.lesson });
+  res.render('lessons/theory', { title: 'Онол засах', lesson: req.lesson, theoryHtml: md.render(req.lesson.theory) });
 });
 
 router.post('/:id/theory', loadLesson, async (req, res) => {
@@ -223,6 +226,16 @@ router.post('/:id/theory', loadLesson, async (req, res) => {
 // ---------------- Хавсралт файл ----------------
 router.post('/:id/attachments', loadLesson, files.uploader('files', 10), async (req, res) => {
   const back = base(req.lesson) + '#attachments';
+  // Засварлагчийн «Зураг оруулах» товч хуудас ачаалахгүйгээр (fetch) дууддаг
+  if ((req.get('accept') || '').includes('application/json')) {
+    const err = req.uploadError || (!req.files.length ? 'Файл сонгоно уу.' : req.lesson.attachments.length + req.files.length > 30 ? 'Нэг хичээлд хамгийн ихдээ 30 хавсралт байна.' : null)
+      || (req.files.some((f) => !files.typeFor(f.originalname)?.startsWith('image/')) ? 'Зөвхөн зураг (JPG, PNG, GIF, WEBP) оруулна.' : null);
+    if (err) return res.status(400).json({ error: err });
+    const saved = await files.saveFiles(req.files, { kind: 'lesson', lessonId: req.lesson._id, uploadedBy: req.user._id });
+    req.lesson.attachments.push(...saved);
+    await req.lesson.save();
+    return res.json({ files: saved.map((f) => ({ url: '/files/' + f.fileId, name: f.name })) });
+  }
   if (req.uploadError) {
     flash(req, 'error', req.uploadError);
     return res.redirect(back);
@@ -288,9 +301,9 @@ function taskFromParsed(t) {
   return { type: 'assignment', title: t.title, instructions: t.instructions, maxPoints: t.maxPoints };
 }
 
-router.get('/:id/import', loadLesson, (req, res) => renderImport(req, res));
+router.get('/:id/import', requireAI, loadLesson, (req, res) => renderImport(req, res));
 
-router.post('/:id/import', loadLesson, async (req, res) => {
+router.post('/:id/import', requireAI, loadLesson, async (req, res) => {
   const text = String(req.body.text ?? '').slice(0, 600000);
   const mode = req.body.mode === 'replace' ? 'replace' : 'append';
   const parsed = LessonParser.parse(text);
@@ -324,7 +337,11 @@ router.post('/:id/import', loadLesson, async (req, res) => {
 });
 
 // ---------------- Даалгавар ----------------
-function parseTaskForm(body, type) {
+/**
+ * Тест: асуултыг карт засварлагчаас (questionsJson) авна. AI эрхтэй хэрэглэгч текст форматаар
+ * (questionsMode=text, questionsText) засаж болно.
+ */
+function parseTaskForm(body, type, allowText) {
   const errors = [];
   const data = {
     type,
@@ -333,13 +350,24 @@ function parseTaskForm(body, type) {
   };
   if (!data.title) errors.push('Даалгаврын нэрийг оруулна уу.');
   let questionsText = '';
+  let questionsJson = '[]';
   if (type === 'quiz') {
-    questionsText = String(body.questionsText ?? '').slice(0, 300000);
     data.allowRetry = body.allowRetry === 'on';
     data.showAnswers = body.showAnswers === 'on';
-    const r = QuestionParser.parse(questionsText);
-    r.errors.forEach((e) => errors.push((e.question ? `${e.question}-р асуулт: ` : '') + e.message));
-    data.questions = r.questions.map((q) => ({ type: q.type, text: q.text, points: q.points, options: q.options, acceptedAnswers: q.acceptedAnswers }));
+    if (allowText && body.questionsMode === 'text') {
+      questionsText = String(body.questionsText ?? '').slice(0, 300000);
+      const r = QuestionParser.parse(questionsText);
+      r.errors.forEach((e) => errors.push((e.question ? `${e.question}-р асуулт: ` : '') + e.message));
+      data.questions = r.questions.map((q) => ({ type: q.type, text: q.text, points: q.points, options: q.options, acceptedAnswers: q.acceptedAnswers }));
+      questionsJson = toQuestionsJson(data.questions);
+    } else {
+      // Алдаатай үед ч багшийн бичсэнийг алдахгүйн тулд ирсэн JSON-ийг буцааж өгнө
+      questionsJson = String(body.questionsJson ?? '[]').slice(0, 2000000);
+      const r = parseQuestionsJson(questionsJson);
+      errors.push(...r.errors);
+      data.questions = r.questions;
+      questionsText = QuestionParser.stringify(data.questions);
+    }
   } else {
     const pts = Number(body.maxPoints);
     if (!(pts >= 0.5 && pts <= 1000)) errors.push('Дээд оноо 0.5–1000 байна.');
@@ -348,15 +376,18 @@ function parseTaskForm(body, type) {
     data.dueAt = parseInputDate(body.dueAt);
     data.allowLate = body.allowLate === 'on';
   }
-  return { errors, data, questionsText };
+  return { errors, data, questionsText, questionsJson };
 }
 
-function renderTaskForm(res, { lesson, task, questionsText = '', errors = [], locked = false, status = 200 }) {
+function renderTaskForm(res, { lesson, task, questionsText = '', questionsJson = '[]', questionsMode = 'visual', errors = [], locked = false, status = 200 }) {
   res.status(status).render('lessons/task-form', {
     title: task._id ? 'Даалгавар засах' : task.type === 'quiz' ? 'Тест нэмэх' : 'Даалгавар нэмэх',
     lesson,
     task,
     questionsText,
+    questionsJson,
+    questionsMode,
+    instructionsHtml: md.render(task.instructions || ''),
     errors,
     locked,
   });
@@ -372,9 +403,15 @@ router.get('/:id/tasks/new', loadLesson, (req, res) => {
 
 router.post('/:id/tasks', loadLesson, async (req, res) => {
   const type = req.body.type === 'assignment' ? 'assignment' : 'quiz';
-  const { errors, data, questionsText } = parseTaskForm(req.body, type);
+  const allowText = canUseAI(req.user);
+  const { errors, data, questionsText, questionsJson } = parseTaskForm(req.body, type, allowText);
   if (req.lesson.tasks.length >= LessonParser.MAX_TASKS) errors.push(`Нэг хичээлд хамгийн ихдээ ${LessonParser.MAX_TASKS} даалгавар байна.`);
-  if (errors.length) return renderTaskForm(res, { lesson: req.lesson, task: data, questionsText, errors, status: 400 });
+  if (errors.length) {
+    return renderTaskForm(res, {
+      lesson: req.lesson, task: data, questionsText, questionsJson,
+      questionsMode: allowText && req.body.questionsMode === 'text' ? 'text' : 'visual', errors, status: 400,
+    });
+  }
   req.lesson.tasks.push(data);
   await req.lesson.save();
   flash(req, 'success', `«${data.title}» нэмэгдлээ.`);
@@ -383,21 +420,28 @@ router.post('/:id/tasks', loadLesson, async (req, res) => {
 
 router.get('/:id/tasks/:tid/edit', loadLesson, findTask, async (req, res) => {
   const locked = req.task.type === 'quiz' && !!(await Submission.exists({ lesson: req.lesson._id, taskId: req.task._id }));
+  const isQuiz = req.task.type === 'quiz';
   renderTaskForm(res, {
     lesson: req.lesson,
     task: req.task,
-    questionsText: req.task.type === 'quiz' ? QuestionParser.stringify(req.task.questions) : '',
+    questionsText: isQuiz ? QuestionParser.stringify(req.task.questions) : '',
+    questionsJson: isQuiz ? toQuestionsJson(req.task.questions) : '[]',
     locked,
   });
 });
 
 router.post('/:id/tasks/:tid', loadLesson, findTask, async (req, res) => {
   const task = req.task;
+  const allowText = canUseAI(req.user);
   const locked = task.type === 'quiz' && !!(await Submission.exists({ lesson: req.lesson._id, taskId: task._id }));
-  const body = locked ? { ...req.body, questionsText: QuestionParser.stringify(task.questions) } : req.body;
-  const { errors, data, questionsText } = parseTaskForm(body, task.type);
+  // Түгжигдсэн тестэд одоогийн асуултыг хэвээр дамжуулна
+  const body = locked ? { ...req.body, questionsMode: 'visual', questionsJson: toQuestionsJson(task.questions) } : req.body;
+  const { errors, data, questionsText, questionsJson } = parseTaskForm(body, task.type, allowText);
   if (errors.length) {
-    return renderTaskForm(res, { lesson: req.lesson, task: { ...data, _id: task._id }, questionsText, errors, locked, status: 400 });
+    return renderTaskForm(res, {
+      lesson: req.lesson, task: { ...data, _id: task._id }, questionsText, questionsJson,
+      questionsMode: allowText && body.questionsMode === 'text' ? 'text' : 'visual', errors, locked, status: 400,
+    });
   }
   if (locked) delete data.questions; // гүйцэтгэсэн сурагчийн хариулт эвдрэхгүйн тулд асуултыг хөндөхгүй
   task.set(data);

@@ -33,14 +33,14 @@
       <p class="muted">Хэрэглэгч олдсонгүй.</p>
     <% } else { %>
       <table class="table">
-        <thead><tr><th>Овог нэр</th><th>Нэвтрэх нэр</th><% if (role === 'student') { %><th>Анги</th><% } %><% if (role === 'teacher') { %><th>Хичээлийн төрөл</th><% } %><th>Төлөв</th><th></th></tr></thead>
+        <thead><tr><th>Овог нэр</th><th>Нэвтрэх нэр</th><% if (role === 'student') { %><th>Анги</th><% } %><% if (role === 'teacher') { %><th>Хичээлийн төрөл</th><th>AI туслах</th><% } %><th>Төлөв</th><th></th></tr></thead>
         <tbody>
         <% users.forEach(function (u) { %>
           <tr class="<%= u.active ? '' : 'inactive' %>">
             <td><%= u.fullName %></td>
             <td><code><%= u.username %></code></td>
             <% if (role === 'student') { %><td><%= u.className || '—' %></td><% } %>
-            <% if (role === 'teacher') { %><td><% if (u.subjectNames.length) { %><%= u.subjectNames.join(', ') %><% } else { %><span class="badge badge-amber">Оноогоогүй</span><% } %></td><% } %>
+            <% if (role === 'teacher') { %><td><% if (u.subjectNames.length) { %><%= u.subjectNames.join(', ') %><% } else { %><span class="badge badge-amber">Оноогоогүй</span><% } %></td><td><% if (u.aiEnabled) { %><span class="badge badge-blue">Асаалттай</span><% } else { %><span class="muted small">—</span><% } %></td><% } %>
             <td><% if (u.active) { %><span class="badge badge-green">Идэвхтэй</span><% } else { %><span class="badge">Идэвхгүй</span><% } %></td>
             <td class="actions"><a class="btn btn-sm" href="/admin/users/<%= u._id %>">Засах</a></td>
           </tr>
@@ -81,6 +81,7 @@
             </div>
           <% } %>
         </fieldset>
+        <label class="check ai-toggle"><input type="checkbox" name="aiEnabled"> <span><strong>AI туслах</strong> <span class="muted small">— Асаавал багш AI prompt ашиглан онол, даалгавар, тестийн асуултыг текстээр олноор оруулах боломжтой болно. Унтраалттай үед эдгээр боломж огт харагдахгүй, багш гараар оруулна.</span></span></label>
       <% } %>
       <button class="btn btn-primary">Бүртгэх</button>
     </form>

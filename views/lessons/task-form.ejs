@@ -4,32 +4,30 @@
   <div>
     <a href="<%= b %>#tasks" class="back">← <%= lesson.title %></a>
     <h1><%= isNew ? (isQuiz ? 'Тест нэмэх' : 'Даалгавар нэмэх') : (isQuiz ? 'Тест засах' : 'Даалгавар засах') %></h1>
-    <p class="muted"><%= isQuiz ? 'Зөв, буруу хариултаар автоматаар дүгнэгдэнэ.' : 'Сурагч файл (Word, PDF, зураг…) илгээж, багш оноо өгнө.' %></p>
+    <p class="muted"><%= isQuiz ? 'Сурагчийн хариултыг систем автоматаар дүгнэнэ.' : 'Сурагч файл (Word, PDF, зураг…) илгээж, та оноо өгнө.' %></p>
   </div>
 </div>
 
 <% if (errors.length) { %>
-  <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+  <div class="flash flash-error"><strong>Хадгалагдсангүй. Дараахыг засна уу:</strong><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
 <% } %>
 
-<form method="post" action="<%= isNew ? b + '/tasks' : b + '/tasks/' + task._id %>" class="form">
+<form method="post" action="<%= isNew ? b + '/tasks' : b + '/tasks/' + task._id %>" class="form task-form">
   <input type="hidden" name="type" value="<%= task.type %>">
   <section class="card form">
-    <label>Нэр <input name="title" value="<%= task.title %>" required maxlength="200" placeholder="<%= isQuiz ? 'жишээ: Бататгах тест' : 'жишээ: Бие даалт' %>"></label>
+    <label for="task-title">Нэр</label>
+    <input id="task-title" name="title" value="<%= task.title %>" required maxlength="200" placeholder="<%= isQuiz ? 'жишээ: Бататгах тест' : 'жишээ: Бие даалт' %>">
 
-    <div class="md-field">
-      <label for="instructions"><%= isQuiz ? 'Заавар (заавал биш)' : 'Даалгаврын заавар' %> <small class="muted">— Markdown</small></label>
-      <div class="md-split">
-        <textarea name="instructions" id="instructions" rows="<%= isQuiz ? 3 : 10 %>" data-md-preview="#instr-preview" maxlength="50000"
-                  placeholder="<%= isQuiz ? 'Сурагчдад харагдах товч заавар' : 'Юу хийх, ямар хэлбэрээр илгээх, үнэлэх шалгуур...' %>"><%= task.instructions %></textarea>
-        <div class="markdown md-preview-box" id="instr-preview"></div>
-      </div>
-    </div>
+    <label for="instructions"><%= isQuiz ? 'Заавар (заавал биш)' : 'Даалгаврын заавар' %></label>
+    <textarea name="instructions" id="instructions" rows="<%= isQuiz ? 3 : 8 %>" maxlength="50000" data-rich
+              data-html-source="#instructions-html" data-upload="<%= b %>/attachments" <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+              placeholder="<%= isQuiz ? 'Сурагчдад харагдах товч заавар' : 'Юу хийх, ямар хэлбэрээр илгээх, хэрхэн үнэлэх вэ...' %>"><%= task.instructions %></textarea>
+    <template id="instructions-html"><%- instructionsHtml %></template>
 
     <% if (!isQuiz) { %>
       <div class="row">
         <label>Дээд оноо <input type="number" name="maxPoints" min="0.5" max="1000" step="0.5" value="<%= task.maxPoints %>" required></label>
-        <label>Илгээх хугацаа <input type="datetime-local" name="dueAt" value="<%= toInputDate(task.dueAt) %>"></label>
+        <label>Илгээх хугацаа <small class="muted">(заавал биш)</small> <input type="datetime-local" name="dueAt" value="<%= toInputDate(task.dueAt) %>"></label>
       </div>
       <label class="check"><input type="checkbox" name="allowLate" <%= task.allowLate ? 'checked' : '' %>> Хугацаа хэтэрсэн ч илгээхийг зөвшөөрөх (хоцорсон гэж тэмдэглэгдэнэ)</label>
     <% } else { %>
@@ -44,24 +42,42 @@
     <section class="card">
       <div class="import-toolbar">
         <h2>Асуултууд</h2>
-        <span id="questions-summary" class="small muted"></span>
+        <div class="btn-group">
+          <span id="quiz-summary" class="small muted"></span>
+          <% if (locals.canUseAI && !locked) { %>
+            <div class="seg" role="tablist" aria-label="Засах хэлбэр">
+              <button type="button" class="seg-btn <%= questionsMode !== 'text' ? 'active' : '' %>" data-mode="visual">Карт</button>
+              <button type="button" class="seg-btn <%= questionsMode === 'text' ? 'active' : '' %>" data-mode="text">Текст формат</button>
+            </div>
+          <% } %>
+        </div>
       </div>
       <% if (locked) { %>
         <div class="flash flash-info">Сурагчид энэ тестийг өгсөн тул асуултыг өөрчлөх боломжгүй (нэр, заавар, тохиргоог өөрчилж болно). Өөрчлөх шаардлагатай бол «Гүйцэтгэл» хуудаснаас сурагчдын гүйцэтгэлийг устгана уу.</div>
-      <% } else { %>
-        <p class="muted small">Шалгалтын асуултын формат: <code>1. Асуулт</code>, <code>A) сонголт</code>, зөв сонголтын өмнө <code>*</code>, нээлттэй асуултад <code>Хариулт: …</code>, <code>Оноо: 2</code>.</p>
       <% } %>
-      <div class="import-layout">
-        <textarea name="questionsText" id="questions-text" rows="18" spellcheck="false" <%= locked ? 'readonly' : '' %>
-                  placeholder="1. Асуултын текст&#10;A) Сонголт&#10;*B) Зөв сонголт&#10;C) Сонголт&#10;&#10;2. Нээлттэй асуулт&#10;Хариулт: Зөв хариулт"><%= questionsText %></textarea>
-        <div class="preview-list" id="questions-preview"></div>
-      </div>
+
+      <input type="hidden" name="questionsJson" value="">
+      <input type="hidden" name="questionsMode" value="<%= questionsMode === 'text' && locals.canUseAI ? 'text' : 'visual' %>">
+      <div id="quiz-builder" class="quiz-builder" data-locked="<%= locked ? '1' : '0' %>" <%= questionsMode === 'text' && locals.canUseAI ? 'hidden' : '' %>></div>
+      <script type="application/json" id="quiz-data"><%- questionsJson.replace(/</g, '\\u003c') %></script>
+
+      <% if (locals.canUseAI && !locked) { %>
+        <div id="quiz-text-mode" <%= questionsMode === 'text' ? '' : 'hidden' %>>
+          <p class="muted small">Текст формат: <code>1. Асуулт</code>, <code>A) сонголт</code>, зөв сонголтын өмнө <code>*</code>, бичгээр хариулах асуултад <code>Хариулт: …</code>, <code>Оноо: 2</code>.</p>
+          <div class="import-layout">
+            <textarea name="questionsText" id="questions-text" rows="18" spellcheck="false"><%= questionsText %></textarea>
+            <div class="preview-list" id="questions-preview"></div>
+          </div>
+        </div>
+      <% } %>
     </section>
   <% } %>
 
-  <div class="btn-group">
-    <button class="btn btn-primary">Хадгалах</button>
+  <div class="btn-group sticky-actions task-actions">
     <a class="btn btn-ghost" href="<%= b %>#tasks">Болих</a>
+    <button class="btn btn-primary">Хадгалах</button>
   </div>
 </form>
-<%- include('../partials/footer', { scripts: ['/question-parser.js', '/preview.js', '/task-form.js'] }) %>
+
+<% const scripts = ['/js/rich-editor.js']; if (isQuiz) { scripts.push('/question-parser.js', '/quiz-builder.js'); if (locals.canUseAI) scripts.push('/preview.js', '/task-form.js'); } %>
+<%- include('../partials/footer', { scripts: scripts }) %>

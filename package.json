@@ -12,7 +12,7 @@
     "sync:pull": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/pull.ps1",
     "sync:push": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/push.ps1",
     "sync:restore-local": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/sync/restore-local.ps1",
-    "build:client": "esbuild client/login-scene.js --bundle --minify --format=iife --target=es2019 --legal-comments=none --outfile=public/js/login-scene.js"
+    "build:client": "esbuild client/login-scene.js client/rich-editor.js --bundle --minify --format=iife --target=es2019 --legal-comments=none --outdir=public/js"
   },
   "engines": {
     "node": ">=22.9"
@@ -35,6 +35,8 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   }
 }

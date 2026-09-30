@@ -6,7 +6,7 @@ const { clean, isId, toArray, parseInputDate, fmtDate, fmtScore } = require('../
 const { finalizeExpired } = require('../grading');
 const { buildImportPrompt } = require('../ai-prompt');
 const QuestionParser = require('../../public/question-parser');
-const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects } = require('../access');
+const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, requireAI } = require('../access');
 const { buildExamAnalysis, getTemplate, validateTemplate, SETTING_KEY } = require('../exam-analysis');
 const files = require('../files');
 const { Setting } = require('../models');
@@ -334,9 +334,9 @@ async function renderImport(req, res, { text = '', mode = 'append', errors = [],
   });
 }
 
-router.get('/:id/questions/import', loadExam, guardLocked, (req, res) => renderImport(req, res));
+router.get('/:id/questions/import', requireAI, loadExam, guardLocked, (req, res) => renderImport(req, res));
 
-router.post('/:id/questions/import', loadExam, guardLocked, async (req, res) => {
+router.post('/:id/questions/import', requireAI, loadExam, guardLocked, async (req, res) => {
   const text = String(req.body.text ?? '').slice(0, 500_000);
   const mode = req.body.mode === 'replace' ? 'replace' : 'append';
   const { questions, errors } = QuestionParser.parse(text);

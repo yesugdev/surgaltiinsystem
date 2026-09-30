@@ -37,4 +37,15 @@ function visibleSubjects(user) {
     .lean();
 }
 
-module.exports = { ownerFilter, allowedSubjects, formSubjects, visibleSubjects };
+/** AI prompt болон текстээр олноор оруулах боломж: админ, эсвэл админ эрх олгосон багш */
+function canUseAI(user) {
+  return !!user && (user.role === 'admin' || (user.role === 'teacher' && user.aiEnabled === true));
+}
+
+/** Эрхгүй хэрэглэгчээс уг боломжийг бүрэн нууна (хуудас байхгүй мэт 404) */
+function requireAI(req, res, next) {
+  if (canUseAI(req.user)) return next();
+  res.status(404).render('error', { title: 'Олдсонгүй', message: 'Хуудас олдсонгүй.' });
+}
+
+module.exports = { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI };

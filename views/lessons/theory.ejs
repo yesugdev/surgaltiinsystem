@@ -3,25 +3,40 @@
   <div>
     <a href="/lessons/<%= lesson._id %>" class="back">← <%= lesson.title %></a>
     <h1>Онол</h1>
-    <p class="muted">Markdown форматаар бичнэ. Баруун талд сурагчдад харагдах байдлаар шууд харагдана.</p>
+    <p class="muted">Word-д бичдэг шиг бичнэ. Сурагчдад яг ингэж харагдана. Word, вэб хуудаснаас хуулж буулгаж болно.</p>
   </div>
-  <button type="button" class="btn" data-open-dialog="#md-help">Markdown заавар</button>
 </div>
 
-<form method="post" action="/lessons/<%= lesson._id %>/theory" class="editor-layout">
-  <section class="card editor-pane">
-    <textarea name="theory" id="theory-text" data-md-preview="#theory-preview" spellcheck="false"
-              placeholder="## Гарчиг&#10;&#10;Онолын агуулга...&#10;&#10;- жагсаалт&#10;- **тод** текст"><%= lesson.theory %></textarea>
-    <div class="btn-group">
-      <button class="btn btn-primary">Хадгалах</button>
-      <a class="btn btn-ghost" href="/lessons/<%= lesson._id %>">Болих</a>
-    </div>
-  </section>
-  <section class="card editor-pane">
-    <div class="muted small">Урьдчилан харах</div>
-    <div class="markdown" id="theory-preview"></div>
-  </section>
+<form method="post" action="/lessons/<%= lesson._id %>/theory" class="theory-form" id="theory-form">
+  <textarea name="theory" id="theory-text" rows="18" data-rich data-html-source="#theory-html"
+            data-upload="/lessons/<%= lesson._id %>/attachments" <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+            placeholder="Онолоо энд бичнэ үү. Дээрх товчоор гарчиг, жагсаалт, хүснэгт, зураг оруулна."><%= lesson.theory %></textarea>
+  <template id="theory-html"><%- theoryHtml %></template>
+  <div class="btn-group sticky-actions">
+    <a class="btn btn-ghost" href="/lessons/<%= lesson._id %>">Болих</a>
+    <button class="btn btn-primary">Хадгалах</button>
+  </div>
 </form>
 
-<%- include('partials/md-help') %>
-<%- include('../partials/footer', { scripts: ['/preview.js'] }) %>
+<details class="card editor-tips">
+  <summary>Зөвлөмж</summary>
+  <ul class="small">
+    <li><strong>Гарчиг</strong> товчоор хэсгүүдээ нэрлэвэл сурагчийн хуудсанд агуулгын жагсаалт автоматаар гарна.</li>
+    <li><strong>Зураг</strong> товчоор компьютерээсээ зураг оруулна. Зураг хичээлийн «Хавсралт»-д хадгалагдана.</li>
+    <li><strong>Хүснэгт</strong> оруулсны дараа нүд бүр дээр дарж бичнэ.</li>
+    <li>Жагсаалтын мөрөнд <kbd>Tab</kbd> дарвал дэд жагсаалт болно, <kbd>Shift</kbd>+<kbd>Tab</kbd> буцаана.</li>
+    <li>Слайд (.pptx) хавсаргавал онолын доор слайд болж тоглогдоно — хичээлийн хуудасны «Хавсралт файл» хэсгээс нэмнэ.</li>
+  </ul>
+</details>
+
+<script>
+  // Хадгалаагүй өөрчлөлттэй хуудас хаахаас сэргийлнэ
+  (function () {
+    var form = document.getElementById('theory-form');
+    var dirty = false;
+    form.addEventListener('input', function () { dirty = true; }, true);
+    form.addEventListener('submit', function () { dirty = false; });
+    window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+  })();
+</script>
+<%- include('../partials/footer', { scripts: ['/js/rich-editor.js'] }) %>
