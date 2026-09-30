@@ -1,4 +1,4 @@
-# Сургалтын систем — production image
+# YeSuvd Learning Platform — production image
 FROM node:22-alpine
 
 # Шалгалтын цагийг Монголын цагаар тооцно (анхдагч UTC бол 8 цагаар зөрнө)

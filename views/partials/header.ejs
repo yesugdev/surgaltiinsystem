@@ -3,14 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= locals.title ? title + ' · ' : '' %>Сургалтын систем</title>
+  <title><%= locals.title ? title + ' · ' : '' %>YeSuvd</title>
+  <link rel="icon" href="/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="/img/favicon-64.png">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="<%= locals.bodyClass || '' %>">
 <% const u = locals.user; const p = locals.currentPath || ''; const on = (prefix) => (p === prefix || p.startsWith(prefix + '/')) ? 'active' : ''; %>
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="/"><span class="brand-mark">С</span> Сургалтын систем</a>
+    <a class="brand" href="/"><img src="/img/yesuvd-mark.png" alt="" class="brand-logo" width="34" height="34"> YeSuvd</a>
     <% if (u) { %>
       <nav class="nav">
         <% if (u.role === 'admin') { %>

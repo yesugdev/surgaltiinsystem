@@ -2,6 +2,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const express = require('express');
 const session = require('express-session');
+const compression = require('compression');
 const { MongoStore } = require('connect-mongo');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -53,6 +54,8 @@ async function main() {
 
   Object.assign(app.locals, helpers, { fmtSize: files.fmtSize, viewKind: files.viewKind });
   app.disable('x-powered-by');
+  // HTML, CSS, JS хариуг gzip-ээр шахна (3D дэвсгэрийн скрипт 535KB → ~140KB)
+  app.use(compression());
 
   // Docker/Caddy-ийн эрүүл мэндийн шалгалт
   app.get('/healthz', (req, res) => {
@@ -103,7 +106,7 @@ async function main() {
     res.status(500).render('error', { title: 'Алдаа', message: 'Системийн алдаа гарлаа. Дахин оролдоно уу.' });
   });
 
-  const server = app.listen(PORT, () => console.log(`Сургалтын систем ажиллаж байна: http://localhost:${PORT}`));
+  const server = app.listen(PORT, () => console.log(`YeSuvd ажиллаж байна: http://localhost:${PORT}`));
 
   // docker stop / шинэчлэлийн үед эхэлсэн хүсэлтүүдийг дуусгаад унтарна
   const shutdown = (signal) => {
