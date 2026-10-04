@@ -15,24 +15,33 @@
   <div class="topbar-inner">
     <a class="brand" href="/"><img src="/img/yesuvd-mark.png" alt="" class="brand-logo" width="34" height="34"> YeSuvd</a>
     <% if (u) { %>
-      <nav class="nav">
+      <nav class="nav" aria-label="Үндсэн цэс">
         <% if (u.role === 'admin') { %>
           <a href="/admin" class="<%= p === '/admin' ? 'active' : '' %>">Самбар</a>
-          <a href="/admin/subjects" class="<%= on('/admin/subjects') %>">Хичээлийн төрөл</a>
-          <a href="/admin/classes" class="<%= on('/admin/classes') %>">Анги, бүлэг</a>
-          <a href="/admin/users" class="<%= on('/admin/users') %>">Хэрэглэгчид</a>
-          <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
-          <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
-        <% } else if (u.role === 'teacher') { %>
-          <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
-          <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
-        <% } else { %>
+        <% } %>
+        <% if (u.role === 'student') { %>
           <a href="/learn" class="<%= on('/learn') %>">Хичээл</a>
           <a href="/student" class="<%= on('/student') %>">Шалгалт</a>
+        <% } else { %>
+          <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
+          <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
+        <% } %>
+        <% if (locals.canCoding) { %>
+          <a href="/coding" class="<%= on('/coding') %>">Өрсөлдөөнт Coding</a>
+        <% } %>
+        <% if (u.role === 'admin') { const adminOn = ['/admin/subjects', '/admin/classes', '/admin/users'].some(function (x) { return on(x); }); %>
+          <details class="nav-menu">
+            <summary class="<%= adminOn ? 'active' : '' %>">Удирдлага</summary>
+            <div class="nav-menu-list">
+              <a href="/admin/users" class="<%= on('/admin/users') %>">Хэрэглэгчид</a>
+              <a href="/admin/classes" class="<%= on('/admin/classes') %>">Анги, бүлэг</a>
+              <a href="/admin/subjects" class="<%= on('/admin/subjects') %>">Хичээлийн төрөл</a>
+            </div>
+          </details>
         <% } %>
       </nav>
       <div class="userbox">
-        <span class="userbox-name"><%= u.fullName %> <small class="muted">· <%= ROLE_LABELS[u.role] %></small></span>
+        <span class="userbox-name" title="<%= u.fullName %>"><span class="userbox-full"><%= u.fullName %></span><small class="muted"><%= ROLE_LABELS[u.role] %></small></span>
         <a href="/password" class="btn btn-ghost btn-sm">Нууц үг</a>
         <form method="post" action="/logout"><button class="btn btn-ghost btn-sm">Гарах</button></form>
       </div>

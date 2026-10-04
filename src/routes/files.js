@@ -1,7 +1,7 @@
 // Хичээлийн хавсралт болон сурагчийн илгээсэн файлыг эрх шалгаж харуулна
 const express = require('express');
 const mammoth = require('mammoth');
-const { Lesson } = require('../models');
+const { Lesson, Problem } = require('../models');
 const { requireRole } = require('../middleware/auth');
 const { isId } = require('../helpers');
 const files = require('../files');
@@ -21,15 +21,23 @@ async function loadFile(req, res, next) {
   if (!isId(req.params.id)) return deny();
   const doc = await files.findFile(req.params.id);
   const meta = doc?.metadata;
-  if (!meta?.lessonId) return deny();
-  const lesson = await Lesson.findById(meta.lessonId).select('createdBy subject classIds published title').lean();
-  if (!lesson) return deny();
-
   const u = req.user;
-  let ok = canManage(u, lesson);
-  if (!ok && u.role === 'student') {
-    if (meta.kind === 'lesson') ok = lesson.published && lesson.classIds.some((id) => String(id) === String(u.classId));
-    if (meta.kind === 'submission') ok = String(meta.studentId) === String(u._id);
+  let ok = false;
+  if (meta?.kind === 'problem' && meta.problemId) {
+    // Өрсөлдөөнт Coding бодлогын өгүүлбэр доторх зураг
+    // Нийтлэгдсэн бодлого бүх сурагчид нээлттэй; удирдах: админ эсвэл үүсгэсэн мэдээлэл зүйн багш
+    const problem = await Problem.findById(meta.problemId).select('createdBy published').lean();
+    if (!problem) return deny();
+    ok = u.role === 'admin' || (u.codingStaff && String(problem.createdBy) === String(u._id)) || (u.role === 'student' && problem.published);
+  } else {
+    if (!meta?.lessonId) return deny();
+    const lesson = await Lesson.findById(meta.lessonId).select('createdBy subject classIds published title').lean();
+    if (!lesson) return deny();
+    ok = canManage(u, lesson);
+    if (!ok && u.role === 'student') {
+      if (meta.kind === 'lesson') ok = lesson.published && lesson.classIds.some((id) => String(id) === String(u.classId));
+      if (meta.kind === 'submission') ok = String(meta.studentId) === String(u._id);
+    }
   }
   if (!ok) return deny();
   req.fileDoc = doc;

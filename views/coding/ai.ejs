@@ -1,0 +1,82 @@
+<%- include('../partials/header') %>
+<% const mb = '/coding/manage/' + problem._id; const hasRef = !!(problem.refCode && problem.refCode.trim()); %>
+<div class="page-head">
+  <div>
+    <a href="<%= mb %>#tests" class="back">← <%= problem.title %></a>
+    <h1>✨ AI-аар тест бэлтгэх</h1>
+    <p class="muted">Prompt-д өгүүлбэр, жишээ тест болон таны <strong>зөв бодолт</strong> орсон. AI тестийн оролт, гаралтыг бэлэн текстээр өгнө — та зөвхөн буулгана.</p>
+  </div>
+</div>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error"><strong>Тест оруулж чадсангүй:</strong><pre class="error-pre"><%= errors.join('\n') %></pre></div>
+<% } %>
+
+<% if (!hasRef) { %>
+  <div class="flash flash-warn">«Зөв бодолт» оруулаагүй байна. <a href="<%= mb %>#reference">Зөв кодоо оруулбал</a> prompt-д нэмэгдэж, AI-ийн гаралтыг систем шалгаж засна.</div>
+<% } else { %>
+  <div class="flash flash-info">Зөв бодолт (<strong><%= LANGUAGES[problem.refLanguage] ? LANGUAGES[problem.refLanguage].label : problem.refLanguage %></strong>) prompt-д орсон. Хадгалахдаа AI-ийн гаралтыг энэ кодоор шалгана.</div>
+<% } %>
+
+<ol class="ai-steps">
+  <li class="card">
+    <div class="import-toolbar">
+      <h2>1. Prompt-ыг хуулж AI-д өгнө</h2>
+      <button type="button" class="btn btn-primary" id="copy-prompt">📋 Хуулах</button>
+    </div>
+    <p class="muted small">ChatGPT, Claude, Gemini зэрэгт буулгана.</p>
+    <textarea id="prompt-text" rows="12" class="mono" readonly><%= prompt %></textarea>
+  </li>
+  <li class="card">
+    <div class="import-toolbar">
+      <h2>2. AI-ийн хариултыг буулгана</h2>
+      <span class="badge" id="ai-count">0 тест</span>
+    </div>
+    <form method="post" action="<%= mb %>/tests/ai" class="form" id="ai-form">
+      <textarea name="text" id="ai-text" rows="16" class="mono" spellcheck="false" required
+                placeholder="=== INPUT 1 ===&#10;3&#10;1 2 3&#10;=== OUTPUT 1 ===&#10;6&#10;=== INPUT 2 ===&#10;…"><%= text %></textarea>
+      <div class="row">
+        <label>Хэрхэн
+          <select name="mode">
+            <option value="replace" <%= problem.testCount ? '' : 'selected' %>>Хуучин тестийг солих</option>
+            <option value="append" <%= problem.testCount ? 'selected' : '' %>>Одоогийнхон дээр нэмэх</option>
+          </select>
+        </label>
+        <label>Эхний хэдэн тестийг жишээ болгох <input type="number" name="samples" min="0" max="10" value="<%= problem.sampleCount || 1 %>">
+          <small class="muted">Солих үед</small></label>
+      </div>
+      <label class="check"><input type="checkbox" name="verify" <%= verify && hasRef ? 'checked' : '' %> <%= hasRef ? '' : 'disabled' %>>
+        Гаралтыг зөв бодолтоор шалгах (AI буруу бодсон бол автоматаар засна) — <strong>зөвлөж байна</strong></label>
+      <button class="btn btn-primary" id="ai-submit">3. Тестүүдийг оруулах</button>
+      <span class="muted small" id="ai-wait" hidden><span class="spinner"></span> Зөв бодолтоор шалгаж байна…</span>
+    </form>
+  </li>
+</ol>
+
+<script>
+  (function () {
+    var btn = document.getElementById('copy-prompt');
+    var ta = document.getElementById('prompt-text');
+    btn.addEventListener('click', function () {
+      var done = function () { btn.textContent = '✓ Хуулагдлаа'; setTimeout(function () { btn.textContent = '📋 Хуулах'; }, 2000); };
+      if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+      else { ta.select(); document.execCommand('copy'); done(); }
+    });
+    // Буулгасан текстэд хэдэн тест байгааг шууд харуулна
+    var text = document.getElementById('ai-text');
+    var count = document.getElementById('ai-count');
+    function recount() {
+      var ins = (text.value.match(/^[ \t]*={2,}[ \t]*(INPUT|ОРОЛТ)\b/gim) || []).length;
+      var outs = (text.value.match(/^[ \t]*={2,}[ \t]*(OUTPUT|ГАРАЛТ)\b/gim) || []).length;
+      count.textContent = ins + ' тест' + (ins && outs < ins ? ' (' + (ins - outs) + ' нь гаралтгүй)' : '');
+      count.className = 'badge ' + (ins ? 'badge-green' : '');
+    }
+    text.addEventListener('input', recount);
+    recount();
+    document.getElementById('ai-form').addEventListener('submit', function () {
+      document.getElementById('ai-submit').disabled = true;
+      document.getElementById('ai-wait').hidden = false;
+    });
+  })();
+</script>
+<%- include('../partials/footer') %>

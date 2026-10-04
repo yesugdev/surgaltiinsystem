@@ -1,0 +1,69 @@
+<%# Илгээлтийн үр дүн. compact = бодлогын хуудсанд (засварлагчийн доор) %>
+<% const staffViewer = user.role !== 'student'; const pending = sub.status === 'queued' || sub.status === 'running'; const compact = locals.compact; %>
+<div class="result-card result-<%= pending ? 'wait' : sub.status === 'error' ? 'error' : sub.verdict === 'AC' ? 'ok' : 'bad' %>" data-status="<%= sub.status %>">
+  <div class="result-head">
+    <div>
+      <%- include('_verdict', { s: sub }) %>
+      <% if (sub.status === 'done' && sub.verdict !== 'CE') { %>
+        <span class="result-score"><strong><%= sub.score %></strong> / 100 оноо</span>
+        <span class="muted small"><%= sub.passed %>/<%= sub.total %> тест · <%= sub.timeMs %> мс · <%= Math.round(sub.memoryKb / 1024) %> MB</span>
+      <% } %>
+    </div>
+    <% if (compact && !pending) { %><a class="small" href="/coding/submissions/<%= sub._id %>">Дэлгэрэнгүй →</a><% } %>
+  </div>
+
+  <% if (pending) { %>
+    <p class="muted small"><%= sub.status === 'queued' ? 'Дараалалд хүлээж байна…' : 'Тестүүд дээр ажиллуулж байна…' %></p>
+  <% } else if (sub.status === 'error') { %>
+    <p class="small"><%= sub.error || 'Шалгах үед алдаа гарлаа.' %></p>
+  <% } else if (sub.verdict === 'CE') { %>
+    <p class="small">Код хөрвүүлэгдсэнгүй. Алдааны мэдээлэл:</p>
+    <pre class="error-pre"><%= sub.compileOutput || '(мэдээлэл алга)' %></pre>
+  <% } else { %>
+    <% if (sub.verdict === 'AC') { %><p class="result-cheer">🎉 Бүх тест зөв! Сайн байна.</p><% } %>
+    <div class="test-chips">
+      <% results.forEach(function (r) { const v = VERDICTS[r.verdict] || { tone: 'muted', label: r.verdict }; %>
+        <span class="test-chip v-<%= v.tone %>" title="<%= r.n %>-р тест: <%= v.label %> · <%= r.timeMs %> мс · <%= Math.round((r.memoryKb || 0) / 1024) %> MB"><%= r.n %><small><%= r.verdict %></small></span>
+      <% }) %>
+    </div>
+
+    <% if (!compact) { %>
+      <table class="table compact-table">
+        <thead><tr><th>#</th><th>Үр дүн</th><th class="num">Хугацаа</th><th class="num">Санах ой</th></tr></thead>
+        <tbody>
+        <% results.forEach(function (r) { const v = VERDICTS[r.verdict] || { tone: 'muted', label: r.verdict }; %>
+          <tr>
+            <td><%= r.n %><% if (r.sample) { %> <span class="badge badge-blue">жишээ</span><% } %></td>
+            <td><span class="verdict v-<%= v.tone %>"><%= v.label %></span></td>
+            <td class="num small"><%= r.timeMs %> мс</td>
+            <td class="num small"><%= Math.round((r.memoryKb || 0) / 1024) %> MB</td>
+          </tr>
+          <% if (r.verdict !== 'AC' && (r.test || (r.stderr && (staffViewer || r.sample)))) { %>
+            <tr class="test-detail"><td colspan="4">
+              <% if (r.test) { %>
+                <div class="io-compare">
+                  <div><strong class="small">Оролт</strong><pre><%= r.test.input.length > 2000 ? r.test.input.slice(0, 2000) + '\n…' : r.test.input %></pre></div>
+                  <div><strong class="small">Хүлээгдэж буй гаралт</strong><pre><%= r.test.output.length > 2000 ? r.test.output.slice(0, 2000) + '\n…' : r.test.output %></pre></div>
+                  <div><strong class="small">Таны гаралт</strong><pre><%= r.output || '' %></pre></div>
+                </div>
+              <% } %>
+              <% if (r.stderr && (staffViewer || r.sample)) { %><strong class="small">Алдааны мэдээлэл</strong><pre class="error-pre"><%= r.stderr %></pre><% } %>
+            </td></tr>
+          <% } %>
+        <% }) %>
+        </tbody>
+      </table>
+      <p class="muted small">Жишээ тестүүдийн оролт, гаралтыг харуулна. Бусад тест нууц.</p>
+    <% } else { %>
+      <% const firstBad = results.find(function (r) { return r.verdict !== 'AC'; }); %>
+      <% if (firstBad && firstBad.test) { %>
+        <div class="io-compare">
+          <div><strong class="small">Жишээ оролт</strong><pre><%= firstBad.test.input.length > 1000 ? firstBad.test.input.slice(0, 1000) + '\n…' : firstBad.test.input %></pre></div>
+          <div><strong class="small">Хүлээгдэж буй</strong><pre><%= firstBad.test.output.length > 1000 ? firstBad.test.output.slice(0, 1000) + '\n…' : firstBad.test.output %></pre></div>
+          <div><strong class="small">Таны гаралт</strong><pre><%= firstBad.output || '' %></pre></div>
+        </div>
+        <% if (firstBad.stderr) { %><pre class="error-pre"><%= firstBad.stderr %></pre><% } %>
+      <% } %>
+    <% } %>
+  <% } %>
+</div>

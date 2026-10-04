@@ -195,7 +195,83 @@ const settingSchema = new Schema(
   { timestamps: true }
 );
 
+// ---------- Өрсөлдөөнт Coding: бодлого, тест, илгээлт ----------
+const problemSchema = new Schema(
+  {
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    subject: { type: Types.ObjectId, ref: 'Subject', default: null, index: true },
+    createdBy: { type: Types.ObjectId, ref: 'User', index: true },
+    classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },
+    published: { type: Boolean, default: false },
+    statement: { type: String, default: '', maxlength: 200000 }, // markdown
+    attachments: { type: [fileRefSchema], default: [] }, // өгүүлбэр доторх зураг
+    timeLimitMs: { type: Number, default: 1000, min: 100, max: 10000 },
+    memoryLimitMb: { type: Number, default: 256, min: 16, max: 1024 },
+    languages: { type: [String], default: ['cpp17', 'py38', 'py3'] },
+    startAt: { type: Date, default: null },
+    endAt: { type: Date, default: null },
+    showStandings: { type: Boolean, default: true },
+    // Багшийн зөв бодолт: тестийн гаралтыг автоматаар үүсгэнэ (сурагчид харагдахгүй)
+    refLanguage: { type: String, default: '' },
+    refCode: { type: String, default: '', maxlength: 100000 },
+    generatorCode: { type: String, default: '', maxlength: 100000 },
+    testCount: { type: Number, default: 0 },
+    sampleCount: { type: Number, default: 0 },
+    testsSize: { type: Number, default: 0 }, // байт
+  },
+  { timestamps: true }
+);
+
+const problemTestSchema = new Schema({
+  problem: { type: Types.ObjectId, ref: 'Problem', required: true },
+  order: { type: Number, required: true },
+  name: { type: String, default: '', maxlength: 200 }, // эх файлын нэр (zip-ээс)
+  input: { type: String, default: '' },
+  output: { type: String, default: '' },
+  sample: { type: Boolean, default: false }, // сурагчид харагдах жишээ
+});
+problemTestSchema.index({ problem: 1, order: 1 });
+
+const testResultSchema = new Schema(
+  {
+    verdict: String,
+    timeMs: Number,
+    memoryKb: Number,
+    sample: Boolean,
+    output: String, // зөвхөн жишээ тестэд (богиносгосон)
+    stderr: String,
+  },
+  { _id: false }
+);
+
+const codeSubmissionSchema = new Schema(
+  {
+    problem: { type: Types.ObjectId, ref: 'Problem', required: true },
+    user: { type: Types.ObjectId, ref: 'User', required: true },
+    isStaff: { type: Boolean, default: false }, // багшийн туршилт — самбарт тооцохгүй
+    language: { type: String, required: true },
+    code: { type: String, required: true, maxlength: 65536 },
+    status: { type: String, enum: ['queued', 'running', 'done', 'error'], default: 'queued', index: true },
+    verdict: { type: String, default: '' }, // AC WA TLE MLE RE CE OLE
+    score: { type: Number, default: 0 }, // 0–100
+    passed: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
+    timeMs: { type: Number, default: 0 },
+    memoryKb: { type: Number, default: 0 },
+    compileOutput: { type: String, default: '' },
+    results: { type: [testResultSchema], default: [] },
+    error: { type: String, default: '' },
+    judgedAt: { type: Date, default: null },
+  },
+  { timestamps: true }
+);
+codeSubmissionSchema.index({ problem: 1, user: 1, createdAt: -1 });
+codeSubmissionSchema.index({ status: 1, createdAt: 1 });
+
 module.exports = {
+  Problem: mongoose.model('Problem', problemSchema),
+  ProblemTest: mongoose.model('ProblemTest', problemTestSchema),
+  CodeSubmission: mongoose.model('CodeSubmission', codeSubmissionSchema),
   Setting: mongoose.model('Setting', settingSchema),
   Lesson: mongoose.model('Lesson', lessonSchema),
   Submission: mongoose.model('Submission', submissionSchema),

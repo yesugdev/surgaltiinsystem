@@ -1,0 +1,126 @@
+<%- include('../partials/header') %>
+<%- include('_manage-head', { problem: problem, tab: 'tests' }) %>
+<% const mb = '/coding/manage/' + problem._id; const kb = function (n) { return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(1) + ' MB'; }; %>
+
+<% if (!judgeOk) { %>
+  <div class="flash flash-warn">Шүүгч (judge) сервер ажиллахгүй байна — гаралт үүсгэх, шалгах боломжгүй.</div>
+<% } %>
+
+<div class="stats">
+  <div class="card stat"><span class="stat-value"><%= problem.testCount %></span><span class="stat-label">тест (<%= problem.sampleCount %> жишээ)</span></div>
+  <div class="card stat"><span class="stat-value"><%= kb(problem.testsSize) %></span><span class="stat-label">нийт хэмжээ</span></div>
+  <div class="card stat"><span class="stat-value"><%= subCount %></span><span class="stat-label">сурагчийн илгээлт</span></div>
+  <div class="card stat"><span class="stat-value"><%= participantCount %></span><span class="stat-label">оролцсон сурагч (бүх сурагчид нээлттэй)</span></div>
+</div>
+
+<section class="card" id="tests">
+  <div class="import-toolbar">
+    <h2>Тестүүд</h2>
+    <div class="btn-group">
+      <% if (canAI) { %><a class="btn" href="<%= mb %>/tests/ai">✨ AI-аар тест бэлтгэх</a><% } %>
+      <% if (tests.length) { %><a class="btn" href="<%= mb %>/tests.zip">⬇ Zip татах</a><% } %>
+    </div>
+  </div>
+
+  <form method="post" action="<%= mb %>/tests/upload" enctype="multipart/form-data" class="upload-tests" id="upload-form">
+    <label class="dropzone" id="dropzone">
+      <input type="file" name="files" multiple accept=".zip,.txt,.in,.out,.ans" id="test-files">
+      <span class="dropzone-icon" aria-hidden="true">📦</span>
+      <strong>Zip эсвэл txt файлуудаа энд чирж оруулна уу</strong>
+      <span class="muted small">Нэрлэх: <code>input01.txt</code> + <code>output01.txt</code>, <code>input02.txt</code> + <code>output02.txt</code> … (мөн <code>01.in</code>/<code>01.out</code>, <code>1.in</code>/<code>1.ans</code>)</span>
+      <span class="dropzone-files muted small" id="dropzone-files"></span>
+    </label>
+    <div class="row upload-options">
+      <label>Хэрхэн
+        <select name="mode">
+          <option value="replace" <%= tests.length ? '' : 'selected' %>>Хуучин тестийг солих</option>
+          <option value="append" <%= tests.length ? 'selected' : '' %>>Одоогийнхон дээр нэмэх</option>
+        </select>
+      </label>
+      <label>Эхний хэдэн тестийг жишээ болгох <input type="number" name="samples" min="0" max="10" value="<%= tests.length ? 0 : 1 %>">
+        <small class="muted">Жишээ тест сурагчдад харагдана (солих үед)</small></label>
+    </div>
+    <p class="muted small">Гаралтын файл байхгүй бол (зөвхөн <code>input*.txt</code>) гаралтыг доорх «Зөв бодолт»-оор автоматаар тооцоолно.</p>
+    <button class="btn btn-primary">Тест оруулах</button>
+  </form>
+
+  <% if (tests.length) { %>
+    <table class="table tests-table">
+      <thead><tr><th>#</th><th>Оролт</th><th>Гаралт</th><th>Жишээ</th><th></th></tr></thead>
+      <tbody>
+      <% tests.forEach(function (t, i) { %>
+        <tr>
+          <td><%= i + 1 %><% if (t.name) { %><div class="muted small"><%= t.name %></div><% } %></td>
+          <td><pre class="io-preview"><%= t.inputPreview %></pre><a class="small" href="<%= mb %>/tests/<%= t._id %>/input" target="_blank"><%= kb(t.inputSize) %></a></td>
+          <td><pre class="io-preview"><%= t.outputPreview %></pre><a class="small" href="<%= mb %>/tests/<%= t._id %>/output" target="_blank"><%= kb(t.outputSize) %></a></td>
+          <td>
+            <form method="post" action="<%= mb %>/tests/<%= t._id %>/sample">
+              <button class="btn btn-sm <%= t.sample ? 'btn-sample-on' : '' %>" title="Сурагчдад жишээ болгон харуулах эсэх"><%= t.sample ? '✓ Жишээ' : 'Нууц' %></button>
+            </form>
+          </td>
+          <td class="actions">
+            <form method="post" action="<%= mb %>/tests/<%= t._id %>/delete" onsubmit="return confirm('Энэ тестийг устгах уу?')"><button class="btn btn-sm btn-ghost" title="Устгах">🗑</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <form method="post" action="<%= mb %>/tests/clear" onsubmit="return confirm('Бүх тестийг устгах уу?')" class="right">
+      <button class="btn btn-sm btn-ghost">Бүх тестийг устгах</button>
+    </form>
+  <% } %>
+
+  <details class="manual-test">
+    <summary>Нэг тест гараар нэмэх</summary>
+    <form method="post" action="<%= mb %>/tests/add" class="form">
+      <div class="grid-2">
+        <label>Оролт <textarea name="input" rows="6" class="mono" spellcheck="false" required></textarea></label>
+        <label>Гаралт <small class="muted">(хоосон бол зөв бодолтоор тооцоолно)</small> <textarea name="output" rows="6" class="mono" spellcheck="false"></textarea></label>
+      </div>
+      <label class="check"><input type="checkbox" name="sample"> Жишээ тест (сурагчдад харагдана)</label>
+      <button class="btn">Тест нэмэх</button>
+    </form>
+  </details>
+</section>
+
+<section class="card" id="reference">
+  <h2>Зөв бодолт <small class="muted">(сурагчдад харагдахгүй)</small></h2>
+  <p class="muted small">Зөв кодоо оруулбал: зөвхөн оролт оруулахад гаралтыг автоматаар тооцоолно, мөн тестүүд зөв эсэхийг шалгана.</p>
+  <form method="post" action="<%= mb %>/reference" class="form">
+    <div class="row">
+      <label>Хэл
+        <select name="refLanguage" id="ref-language">
+          <option value="">— сонгох —</option>
+          <% Object.keys(LANGUAGES).forEach(function (k) { %>
+            <option value="<%= k %>" <%= problem.refLanguage === k ? 'selected' : '' %>><%= LANGUAGES[k].label %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+    <textarea name="refCode" rows="14" class="mono code-input" spellcheck="false" data-code-editor data-language-select="#ref-language" placeholder="Зөв бодолтын код"><%= problem.refCode %></textarea>
+    <div class="btn-group">
+      <button class="btn" name="action" value="save">Хадгалах</button>
+      <button class="btn" name="action" value="outputs" <%= tests.length ? '' : 'disabled' %> onclick="return confirm('Бүх тестийн гаралтыг энэ кодоор дахин тооцоолох уу? Одоогийн гаралтууд солигдоно.')">Бүх гаралтыг тооцоолох</button>
+      <button class="btn btn-primary" name="action" value="check" <%= tests.length ? '' : 'disabled' %>>Тестүүд дээр шалгах</button>
+    </div>
+  </form>
+</section>
+
+<script>
+  // Чирж оруулах: сонгосон файлуудын нэрийг харуулна
+  (function () {
+    var input = document.getElementById('test-files');
+    var zone = document.getElementById('dropzone');
+    var list = document.getElementById('dropzone-files');
+    function show() {
+      var names = Array.prototype.map.call(input.files, function (f) { return f.name; });
+      list.textContent = names.length ? names.slice(0, 6).join(', ') + (names.length > 6 ? ' … (+' + (names.length - 6) + ')' : '') : '';
+      zone.classList.toggle('has-files', names.length > 0);
+    }
+    input.addEventListener('change', show);
+    ['dragenter', 'dragover'].forEach(function (ev) { zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { zone.addEventListener(ev, function () { zone.classList.remove('drag'); }); });
+    zone.addEventListener('drop', function (e) { e.preventDefault(); input.files = e.dataTransfer.files; show(); });
+  })();
+</script>
+<%- include('../partials/footer', { scripts: ['/js/code-editor.js'] }) %>

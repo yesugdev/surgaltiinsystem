@@ -1,0 +1,80 @@
+<%- include('../partials/header', { bodyClass: 'wide' }) %>
+<div class="page-head">
+  <div>
+    <a href="<%= staff ? '/coding/manage/' + problem._id : '/coding' %>" class="back">← <%= staff ? 'Бодлого удирдах' : 'Өрсөлдөөнт Coding' %></a>
+    <h1><%= problem.title %></h1>
+    <p class="limits">
+      <span>⏱ <%= problem.timeLimitMs / 1000 %> сек</span>
+      <span>💾 <%= problem.memoryLimitMb %> MB</span>
+      <% if (problem.endAt) { %><span>⌛ <%= phase === 'closed' ? 'Дууссан' : 'Дуусах' %>: <%= fmtDate(problem.endAt) %></span><% } %>
+    </p>
+  </div>
+  <% if (problem.showStandings || staff) { %><a class="btn" href="/coding/<%= problem._id %>/standings">🏆 Онооны самбар</a><% } %>
+</div>
+
+<% if (staff) { %><div class="flash flash-info">Та сурагчийн харагдацыг үзэж байна. Таны илгээлт онооны самбарт тооцогдохгүй.</div><% } %>
+<% if (phase === 'closed' && !staff) { %><div class="flash flash-warn">Бодлогын хугацаа дууссан. Код илгээх боломжгүй.</div><% } %>
+
+<div class="solve-layout">
+  <section class="card statement">
+    <div class="markdown"><%- statementHtml %></div>
+    <% samples.forEach(function (t, i) { %>
+      <div class="sample">
+        <div class="sample-col">
+          <div class="sample-head"><strong>Жишээ <%= samples.length > 1 ? i + 1 : '' %> — оролт</strong><button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy="#sample-in-<%= i %>">Хуулах</button></div>
+          <pre id="sample-in-<%= i %>"><%= t.input %></pre>
+        </div>
+        <div class="sample-col">
+          <div class="sample-head"><strong>Гаралт</strong><button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy="#sample-out-<%= i %>">Хуулах</button></div>
+          <pre id="sample-out-<%= i %>"><%= t.output %></pre>
+        </div>
+      </div>
+    <% }) %>
+  </section>
+
+  <div class="solve-side">
+    <section class="card editor-card">
+      <form id="submit-form" data-url="/coding/<%= problem._id %>/submit" data-problem="<%= problem._id %>">
+        <div class="editor-toolbar">
+          <label class="sr-only" for="language">Хэл</label>
+          <select name="language" id="language">
+            <% languages.forEach(function (l) { %>
+              <option value="<%= l %>" <%= l === lastLanguage ? 'selected' : '' %>><%= LANGUAGES[l].label %></option>
+            <% }) %>
+          </select>
+          <label class="btn btn-sm btn-ghost file-load" title="Компьютер дээрх .cpp / .py файлаас ачаалах">📂 Файлаас
+            <input type="file" accept=".cpp,.cc,.cxx,.h,.py,.txt" id="code-file" hidden>
+          </label>
+          <span class="muted small editor-hint">Ctrl+Enter — илгээх</span>
+        </div>
+        <textarea name="code" id="code" rows="16" class="mono code-input" spellcheck="false" data-code-editor data-language-select="#language" data-draft-key="<%= problem._id %>"></textarea>
+        <div class="btn-group submit-row">
+          <button class="btn btn-primary" id="submit-btn" <%= phase === 'closed' && !staff ? 'disabled' : '' %>>Илгээх</button>
+          <span class="small" id="submit-msg" role="status"></span>
+        </div>
+      </form>
+      <div id="result" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <h2>Миний илгээлтүүд</h2>
+      <% if (!mySubs.length) { %>
+        <p class="muted small" id="no-subs">Одоогоор илгээгээгүй байна.</p>
+      <% } %>
+      <table class="table compact-table" id="my-subs" <%= mySubs.length ? '' : 'hidden' %>>
+        <thead><tr><th>Хугацаа</th><th>Хэл</th><th>Үр дүн</th><th class="num">Оноо</th></tr></thead>
+        <tbody>
+          <% mySubs.forEach(function (s) { %>
+            <tr data-id="<%= s._id %>" data-status="<%= s.status %>">
+              <td class="small"><a href="/coding/submissions/<%= s._id %>"><%= fmtDate(s.createdAt) %></a></td>
+              <td class="small"><%= LANGUAGES[s.language] ? LANGUAGES[s.language].label : s.language %></td>
+              <td><%- include('_verdict', { s: s }) %></td>
+              <td class="num"><%= s.status === 'done' ? s.score : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+<%- include('../partials/footer', { scripts: ['/js/code-editor.js', '/coding.js'] }) %>

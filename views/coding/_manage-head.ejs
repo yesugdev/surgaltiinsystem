@@ -1,0 +1,20 @@
+<% const mb = '/coding/manage/' + problem._id; %>
+<div class="page-head">
+  <div>
+    <a href="/coding" class="back">← Өрсөлдөөнт Coding</a>
+    <h1><%= problem.title %>
+      <% if (problem.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber">Ноорог</span><% } %>
+    </h1>
+    <p class="muted small"><%= problem.timeLimitMs %> мс · <%= problem.memoryLimitMb %> MB · <%= problem.languages.map(function (l) { return LANGUAGES[l] ? LANGUAGES[l].label : l; }).join(', ') %></p>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="/coding/<%= problem._id %>">Сурагчийн харагдац</a>
+    <form method="post" action="<%= mb %>/publish"><button class="btn <%= problem.published ? '' : 'btn-primary' %>"><%= problem.published ? 'Нийтлэлээс буцаах' : 'Нийтлэх' %></button></form>
+  </div>
+</div>
+<nav class="tabs">
+  <a href="<%= mb %>" class="<%= tab === 'tests' ? 'active' : '' %>">Тест ба зөв бодолт</a>
+  <a href="<%= mb %>/edit" class="<%= tab === 'edit' ? 'active' : '' %>">Өгүүлбэр, тохиргоо</a>
+  <a href="<%= mb %>/submissions" class="<%= tab === 'subs' ? 'active' : '' %>">Илгээлтүүд</a>
+  <a href="/coding/<%= problem._id %>/standings" class="<%= tab === 'standings' ? 'active' : '' %>">Онооны самбар</a>
+</nav>

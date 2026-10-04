@@ -18,7 +18,7 @@ else
 fi
 
 echo "3/4 Build хийж, аппыг дахин асааж байна..."
-docker compose up -d --build app
+docker compose up -d --build app judge
 
 echo "4/4 Шалгаж байна..."
 i=0

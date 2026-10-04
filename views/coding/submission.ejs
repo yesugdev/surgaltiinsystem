@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+<% const staffViewer = user.role !== 'student'; %>
+<div class="page-head">
+  <div>
+    <a href="<%= staffViewer ? '/coding/manage/' + problem._id + '/submissions' : '/coding/' + problem._id %>" class="back">← <%= problem.title %></a>
+    <h1>Илгээлт</h1>
+    <p class="muted small"><%= author ? author.fullName : '' %> · <%= LANGUAGES[sub.language] ? LANGUAGES[sub.language].label : sub.language %> · <%= fmtDate(sub.createdAt) %></p>
+  </div>
+  <div class="btn-group">
+    <% if (canRejudge) { %>
+      <form method="post" action="/coding/manage/submissions/<%= sub._id %>/rejudge"><button class="btn">↻ Дахин шалгах</button></form>
+    <% } %>
+    <a class="btn btn-primary" href="/coding/<%= problem._id %>">Бодлого руу</a>
+  </div>
+</div>
+
+<div id="result" data-poll="<%= sub.status === 'queued' || sub.status === 'running' ? '/coding/submissions/' + sub._id + '/status' : '' %>">
+  <%- include('_result', { compact: false }) %>
+</div>
+
+<section class="card">
+  <div class="import-toolbar">
+    <h2>Код</h2>
+    <button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy="#code-view">Хуулах</button>
+  </div>
+  <pre class="code-view markdown-code"><code class="hljs" id="code-view"><%- codeHtml %></code></pre>
+</section>
+<%- include('../partials/footer', { scripts: ['/coding.js'] }) %>

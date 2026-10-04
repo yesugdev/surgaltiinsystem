@@ -1,0 +1,39 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Өрсөлдөөнт Coding</h1>
+    <p class="muted">Бодлогоо C++ эсвэл Python-оор бодоод илгээгээрэй. Систем тестүүд дээр шалгаж оноо өгнө.</p>
+  </div>
+  <a href="/coding/standings" class="btn">🏆 Онооны самбар</a>
+</div>
+
+<% if (!problems.length) { %>
+  <div class="card empty"><p>Одоогоор бодлого алга байна.</p></div>
+<% } else { %>
+  <div class="problem-grid">
+    <% problems.forEach(function (p) { const m = p.mine; const done = m && m.best === 100; %>
+      <% if (p.phase === 'upcoming') { %>
+        <div class="card problem-card is-upcoming">
+          <div class="problem-card-head"><strong><%= p.title %></strong><span class="badge badge-blue">Эхлээгүй</span></div>
+          <p class="muted small">Эхлэх: <%= fmtDate(p.startAt) %></p>
+        </div>
+      <% } else { %>
+        <a class="card problem-card <%= done ? 'is-solved' : '' %>" href="/coding/<%= p._id %>">
+          <div class="problem-card-head">
+            <strong><%= p.title %></strong>
+            <% if (done) { %><span class="badge badge-green">✓ Бодсон</span>
+            <% } else if (m) { %><span class="badge badge-amber"><%= m.best %> оноо</span>
+            <% } else if (p.phase === 'closed') { %><span class="badge">Дууссан</span><% } %>
+          </div>
+          <p class="muted small">
+            <%= p.timeLimitMs / 1000 %> сек
+            <% if (m) { %> · <%= m.attempts %> оролдлого<% } %>
+            <% if (p.endAt && p.phase === 'open') { %> · дуусах: <%= fmtDate(p.endAt) %><% } %>
+          </p>
+          <div class="score-bar" aria-hidden="true"><span style="width: <%= m ? m.best : 0 %>%"></span></div>
+        </a>
+      <% } %>
+    <% }) %>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

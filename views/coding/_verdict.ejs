@@ -1,0 +1,8 @@
+<%# Илгээлтийн төлөвийн тэмдэг: s = {status, verdict, score} %>
+<% if (s.status === 'queued' || s.status === 'running') { %>
+  <span class="verdict v-wait"><span class="spinner" aria-hidden="true"></span><%= s.status === 'queued' ? 'Дараалалд' : 'Шалгаж байна' %></span>
+<% } else if (s.status === 'error') { %>
+  <span class="verdict v-muted" title="<%= s.error || '' %>">Алдаа</span>
+<% } else { const v = VERDICTS[s.verdict] || { label: s.verdict, tone: 'muted' }; %>
+  <span class="verdict v-<%= v.tone %>" title="<%= v.label %>"><%= v.label %><% if (s.verdict !== 'AC' && s.verdict !== 'CE' && s.score != null) { %> · <%= s.score %><% } %></span>
+<% } %>
