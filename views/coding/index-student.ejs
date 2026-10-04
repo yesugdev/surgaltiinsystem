@@ -2,10 +2,37 @@
 <div class="page-head">
   <div>
     <h1>Өрсөлдөөнт Coding</h1>
-    <p class="muted">Бодлогоо C++ эсвэл Python-оор бодоод илгээгээрэй. Систем тестүүд дээр шалгаж оноо өгнө.</p>
+    <p class="muted">Бодлогоо C++ эсвэл Python-оор бодоод илгээгээрэй. Оноо цуглуулж зэрэглэлээ ахиулаарай!</p>
   </div>
   <a href="/coding/standings" class="btn">🏆 Онооны самбар</a>
 </div>
+
+<section class="rank-hero tier-<%= me.tier.key %>">
+  <div class="rank-main">
+    <span class="rank-icon" aria-hidden="true"><%= me.tier.icon %></span>
+    <div>
+      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин</span>
+      <h2 class="rank-name"><%= me.tier.name %></h2>
+      <% if (me.tier.next) { %>
+        <div class="tier-progress"><span style="width: <%= me.tier.progress %>%"></span></div>
+        <span class="small"><%= me.tier.next.icon %> <strong><%= me.tier.next.name %></strong> хүртэл <%= me.tier.toNext %> оноо</span>
+      <% } else { %><span class="small">Та хамгийн дээд зэрэглэлд хүрсэн! 🎉</span><% } %>
+    </div>
+  </div>
+  <div class="rank-stats">
+    <div><strong><%= me.total %></strong><span>оноо</span></div>
+    <div><strong><%= me.rank ? '#' + me.rank : '—' %></strong><span><%= me.players %> оролцогчоос</span></div>
+    <div><strong><%= me.solved %></strong><span>бодсон</span></div>
+  </div>
+  <% if (top.length) { %>
+    <a class="rank-top" href="/coding/standings">
+      <span class="muted small">Тэргүүлэгчид</span>
+      <% top.forEach(function (r, i) { %>
+        <span class="rank-top-row"><%= ['🥇', '🥈', '🥉'][i] %> <%= r.student.fullName %> <b><%= r.total %></b></span>
+      <% }) %>
+    </a>
+  <% } %>
+</section>
 
 <% if (!problems.length) { %>
   <div class="card empty"><p>Одоогоор бодлого алга байна.</p></div>

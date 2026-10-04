@@ -9,6 +9,7 @@ const { problemOwnerFilter } = require('../access');
 const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
+const { TIERS, tierFor } = require('../coding-ranks');
 
 const router = express.Router();
 router.use(requireRole());
@@ -16,8 +17,8 @@ router.use(requireRole());
 const notFound = (res, what = 'Бодлого') => res.status(404).render('error', { title: 'Олдсонгүй', message: `${what} олдсонгүй.` });
 const isStaff = (u) => !!u.codingStaff;
 
-// Мэдээлэл зүйн бус багшид энэ хэсэг байхгүй мэт
-router.use((req, res, next) => (req.user.role === 'student' || isStaff(req.user) ? next() : notFound(res, 'Хуудас')));
+// Мэдээлэл зүйн бус багш, админ нээгээгүй ангийн сурагчид энэ хэсэг байхгүй мэт
+router.use((req, res, next) => (req.user.codingPlayer || isStaff(req.user) ? next() : notFound(res, 'Хуудас')));
 
 /** Бодлогын төлөв: upcoming | open | closed */
 function phase(p, now = new Date()) {
@@ -77,7 +78,7 @@ router.get('/', async (req, res) => {
     return res.render('coding/index-staff', { title: 'Өрсөлдөөнт Coding', problems, health });
   }
 
-  // Сурагч: бүх нийтлэгдсэн бодлого
+  // Сурагч: бүх нийтлэгдсэн бодлого + өөрийн зэрэглэл, байр
   const problems = await Problem.find({ published: true }).select('title startAt endAt testCount timeLimitMs languages createdAt').sort({ createdAt: -1 }).lean();
   const mine = await bestScores(problems.map((p) => p._id), { user: u._id });
   const mineMap = new Map(mine.map((m) => [String(m._id.p), m]));
@@ -85,8 +86,30 @@ router.get('/', async (req, res) => {
     p.phase = phase(p);
     p.mine = mineMap.get(String(p._id)) || null;
   }
-  res.render('coding/index-student', { title: 'Өрсөлдөөнт Coding', problems });
+  const rows = await buildStandings(await standingsProblems(false));
+  const meRow = rows.find((r) => String(r.student._id) === String(u._id));
+  const myTotal = meRow ? meRow.total : 0;
+  res.render('coding/index-student', {
+    title: 'Өрсөлдөөнт Coding',
+    problems,
+    me: {
+      total: myTotal,
+      tier: tierFor(myTotal),
+      rank: meRow?.rank || null,
+      players: rows.filter((r) => r.total > 0).length,
+      solved: mine.filter((m) => m.best === 100).length,
+    },
+    top: rows.filter((r) => r.rank).slice(0, 3),
+    TIERS,
+  });
 });
+
+/** Нийт самбарт тооцох бодлогууд: нийтлэгдсэн, эхэлсэн (сурагчид showStandings-тай нь) */
+async function standingsProblems(staff) {
+  const list = await Problem.find(staff ? { published: true } : { published: true, showStandings: true })
+    .select('title startAt endAt').sort({ createdAt: 1 }).lean();
+  return list.filter((p) => phase(p) !== 'upcoming');
+}
 
 // ---------------- Онооны самбар ----------------
 /**
@@ -95,12 +118,16 @@ router.get('/', async (req, res) => {
  */
 async function buildStandings(problems, { classId = null } = {}) {
   const ids = problems.map((p) => p._id);
+  // Зөвхөн Coding нээгдсэн ангийн сурагчид
+  const enabled = await Class.distinct('_id', { codingEnabled: true });
   let students;
   if (classId) {
-    students = await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId').lean();
+    students = enabled.some((id) => String(id) === String(classId))
+      ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId').lean()
+      : [];
   } else {
     const participants = await CodeSubmission.distinct('user', { problem: { $in: ids }, isStaff: false, status: 'done' });
-    students = await User.find({ _id: { $in: participants }, role: 'student', active: { $ne: false } }).select('fullName username classId').lean();
+    students = await User.find({ _id: { $in: participants }, role: 'student', classId: { $in: enabled }, active: { $ne: false } }).select('fullName username classId').lean();
   }
   const [best, classes] = await Promise.all([
     bestScores(ids, { user: { $in: students.map((s) => s._id) } }),
@@ -114,8 +141,9 @@ async function buildStandings(problems, { classId = null } = {}) {
     const solved = cells.filter((c) => c && c.best === 100).length;
     const last = cells.reduce((m, c) => (c && c.best > 0 && c.at > m ? c.at : m), new Date(0));
     return {
-      student: { ...s, className: classMap.get(String(s.classId)) || '' },
+      student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
       cells, total, solved, last,
+      tier: tierFor(total),
       attempts: cells.reduce((n, c) => n + (c ? c.attempts : 0), 0),
     };
   });
@@ -128,23 +156,32 @@ async function buildStandings(problems, { classId = null } = {}) {
   return rows;
 }
 
-/** Самбарын ангийн шүүлтүүр: сурагчтай бүх анги */
+/** Самбарын ангийн шүүлтүүр: Coding нээгдсэн, сурагчтай анги */
 async function standingsClasses() {
   const ids = await User.distinct('classId', { role: 'student', classId: { $ne: null } });
-  return Class.find({ _id: { $in: ids } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean();
+  return Class.find({ _id: { $in: ids }, codingEnabled: true }).collation({ locale: 'mn' }).sort({ name: 1 }).lean();
 }
 
+/** Нэг бодлогын самбарт ч зэрэглэлийг нийт оноогоор харуулна */
+async function attachOverallTier(rows) {
+  const overall = await buildStandings(await standingsProblems(false));
+  const map = new Map(overall.map((r) => [String(r.student._id), r.tier]));
+  for (const r of rows) r.tier = map.get(String(r.student._id)) || tierFor(0);
+  return rows;
+}
+
+/** Нэрийн эхний үсгүүд (аватарт): «Бат Болд» → «ББ» */
+const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
 router.get('/standings', async (req, res) => {
-  const staff = isStaff(req.user);
-  let problems = await Problem.find(staff ? { published: true } : { published: true, showStandings: true })
-    .select('title startAt endAt').sort({ createdAt: 1 }).lean();
-  problems = problems.filter((p) => phase(p) !== 'upcoming');
+  const problems = await standingsProblems(isStaff(req.user));
   const classes = await standingsClasses();
   const classId = classes.find((c) => String(c._id) === req.query.class)?._id || null;
   res.render('coding/standings', {
     title: 'Онооны самбар',
     problems,
     rows: await buildStandings(problems, { classId }),
+    TIERS,
     classes,
     classId: classId ? String(classId) : '',
     single: null,
@@ -252,7 +289,8 @@ router.get('/:id/standings', loadProblem, async (req, res) => {
   res.render('coding/standings', {
     title: 'Онооны самбар · ' + p.title,
     problems: [p],
-    rows: await buildStandings([p], { classId }),
+    rows: await attachOverallTier(await buildStandings([p], { classId })),
+    TIERS,
     classes,
     classId: classId ? String(classId) : '',
     single: p,

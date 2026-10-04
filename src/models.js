@@ -7,6 +7,8 @@ const classSchema = new Schema(
     name: { type: String, required: true, trim: true, maxlength: 100 },
     schoolYear: { type: String, trim: true, maxlength: 20 },
     description: { type: String, trim: true, maxlength: 2000 },
+    // Өрсөлдөөнт Coding-д оролцох эсэх (админ ангиар нээнэ)
+    codingEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
