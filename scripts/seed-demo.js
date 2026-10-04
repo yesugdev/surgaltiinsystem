@@ -1,7 +1,7 @@
 // Туршилтын өгөгдөл: 1 багш, 1 анги, 3 сурагч, 1 нийтлэгдсэн шалгалт
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { Subject, Class, User, Exam, Lesson } = require('../src/models');
+const { Subject, Class, User, Exam, Lesson, Problem, ProblemTest } = require('../src/models');
 const LessonParser = require('../public/lesson-parser');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/surgaltiin_system';
@@ -79,8 +79,27 @@ async function main() {
     });
   }
 
+  // Өрсөлдөөнт Coding: Мэдээлэл зүй төрөл, жишээ бодлого
+  const info = await subject('Мэдээлэл зүй', 'INFO');
+  await User.updateOne({ _id: teacher._id }, { $addToSet: { subjectIds: info._id } });
+  if (!(await Problem.exists({ title: 'Хоёр тооны нийлбэр' }))) {
+    const problem = await Problem.create({
+      title: 'Хоёр тооны нийлбэр',
+      createdBy: teacher._id, // «Мэдээлэл зүй» оноогдсон тул бодлого оруулах эрхтэй
+      published: true,
+      statement: 'Хоёр бүхэл тоо **a**, **b** өгөгдөнө. Тэдгээрийн нийлбэрийг ол.\n\n## Оролт\nНэг мөрөнд хоёр бүхэл тоо a, b (−10⁹ ≤ a, b ≤ 10⁹).\n\n## Гаралт\na + b-г хэвлэнэ.',
+      timeLimitMs: 1000,
+      memoryLimitMb: 256,
+      refLanguage: 'py38',
+      refCode: 'a, b = map(int, input().split())\nprint(a + b)\n',
+    });
+    const cases = [['1 2', '3'], ['-5 5', '0'], ['1000000000 1000000000', '2000000000'], ['-1000000000 -7', '-1000000007'], ['0 0', '0']];
+    await ProblemTest.insertMany(cases.map(([i, o], k) => ({ problem: problem._id, order: k + 1, input: i + '\n', output: o + '\n', sample: k === 0 })));
+    await Problem.updateOne({ _id: problem._id }, { testCount: cases.length, sampleCount: 1, testsSize: cases.reduce((s, [i, o]) => s + i.length + o.length + 2, 0) });
+  }
+
   console.log('Туршилтын өгөгдөл бэлэн:');
-  console.log('  Багш:    bagsh / bagsh123 (Математик)');
+  console.log('  Багш:    bagsh / bagsh123 (Математик, Мэдээлэл зүй)');
   console.log('  Сурагч:  demo001, demo002, demo003 / demo123');
   await mongoose.disconnect();
 }

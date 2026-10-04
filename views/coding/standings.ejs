@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+<% const staffViewer = user.role !== 'student'; %>
+<% if (single && staffViewer) { %>
+  <%- include('_manage-head', { problem: single, tab: 'standings' }) %>
+<% } else { %>
+  <div class="page-head">
+    <div>
+      <a href="<%= single ? '/coding/' + single._id : '/coding' %>" class="back">← <%= single ? single.title : 'Өрсөлдөөнт Coding' %></a>
+      <h1>🏆 Онооны самбар</h1>
+      <p class="muted">Бүх сурагч хоорондоо өрсөлдөнө. <%= single ? 'Энэ бодлогын хамгийн сайн оноо' : 'Бүх бодлогын хамгийн сайн онооны нийлбэр' %>; тэнцвэл оноогоо түрүүлж авсан нь дээр.</p>
+    </div>
+  </div>
+<% } %>
+
+<% if (classes.length > 1) { %>
+  <div class="tabs">
+    <a href="?" class="<%= !classId ? 'active' : '' %>">🌐 Бүх сурагч</a>
+    <% classes.forEach(function (c) { %>
+      <a href="?class=<%= c._id %>" class="<%= String(c._id) === classId ? 'active' : '' %>"><%= c.name %></a>
+    <% }) %>
+  </div>
+<% } %>
+
+<% if (!problems.length) { %>
+  <div class="card empty"><p>Нийтлэгдсэн бодлого алга байна.</p></div>
+<% } else if (!rows.length) { %>
+  <div class="card empty"><p><%= classId ? 'Энэ ангид сурагч алга.' : 'Одоогоор хэн ч бодоогүй байна. Эхний оролцогч болоорой!' %></p></div>
+<% } else { %>
+  <section class="card standings-wrap">
+    <table class="table standings">
+      <thead>
+        <tr>
+          <th class="num">#</th><th>Сурагч</th><th>Анги</th>
+          <% if (!single) { problems.forEach(function (p, i) { %><th class="num prob-col" title="<%= p.title %>"><a href="/coding/<%= p._id %>"><%= String.fromCharCode(65 + (i % 26)) %><%= i >= 26 ? Math.floor(i / 26) : '' %></a></th><% }) } %>
+          <th class="num">Нийт</th><th class="num">Оролдлого</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% rows.forEach(function (r) { const me = String(r.student._id) === String(user._id); %>
+        <tr class="<%= me ? 'me' : '' %> <%= r.rank && r.rank <= 3 ? 'top' + r.rank : '' %>">
+          <td class="num"><%= r.rank ? (r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : r.rank) : '—' %></td>
+          <td><%= r.student.fullName %><% if (me) { %> <span class="badge badge-blue">та</span><% } %></td>
+          <td class="muted small"><%= r.student.className || '—' %></td>
+          <% if (!single) { r.cells.forEach(function (c) { %>
+            <td class="num cell <%= c ? (c.best === 100 ? 'cell-ok' : c.best > 0 ? 'cell-part' : 'cell-bad') : '' %>"><%= c ? c.best : '' %></td>
+          <% }) } %>
+          <td class="num"><strong><%= r.total %></strong></td>
+          <td class="num muted"><%= r.attempts || '' %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <% if (!single && problems.length) { %>
+      <p class="muted small">
+        <% problems.forEach(function (p, i) { %><%= String.fromCharCode(65 + (i % 26)) %><%= i >= 26 ? Math.floor(i / 26) : '' %> — <%= p.title %><%= i < problems.length - 1 ? ' · ' : '' %><% }) %>
+      </p>
+    <% } %>
+  </section>
+<% } %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<% const isNew = !problem._id; const langs = problem.languages || []; %>
+<% if (!isNew) { %>
+  <%- include('_manage-head', { problem: problem, tab: 'edit' }) %>
+<% } else { %>
+  <div class="page-head"><div><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><h1>Шинэ бодлого</h1></div></div>
+<% } %>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+<% } %>
+
+<form method="post" action="<%= isNew ? '/coding/manage' : '/coding/manage/' + problem._id %>" class="form">
+  <section class="card form">
+    <label>Бодлогын нэр <input name="title" value="<%= problem.title || '' %>" required maxlength="200" placeholder="жишээ: Хоёр тооны нийлбэр"></label>
+
+    <label for="statement">Өгүүлбэр</label>
+    <textarea name="statement" id="statement" rows="14" data-rich data-html-source="#statement-html"
+              <%= isNew ? '' : 'data-upload=/coding/manage/' + problem._id + '/attachments' %> <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+              placeholder="Бодлогын нөхцөл, оролт, гаралтын формат, хязгаарууд"><%= problem.statement || '' %></textarea>
+    <template id="statement-html"><%- statementHtml %></template>
+    <p class="muted small">«Оролт», «Гаралт» хэсгүүдийг гарчгаар тусгаарлавал ойлгомжтой. Жишээ тестийг энд бичих шаардлагагүй — тестүүдээс «Жишээ» гэж тэмдэглэсэн нь автоматаар харагдана.<% if (isNew) { %> Зураг оруулах боломж бодлого үүссэний дараа нээгдэнэ.<% } %></p>
+  </section>
+
+  <section class="card form">
+    <h2>Шалгах тохиргоо</h2>
+    <div class="row">
+      <label>Хугацааны хязгаар (мс) <input type="number" name="timeLimitMs" min="100" max="10000" step="100" value="<%= problem.timeLimitMs %>" required>
+        <small class="muted">Нэг тест дээр. Python удаан тул 1000–2000 мс тохиромжтой.</small></label>
+      <label>Санах ойн хязгаар (MB) <input type="number" name="memoryLimitMb" min="16" max="1024" value="<%= problem.memoryLimitMb %>" required></label>
+    </div>
+    <fieldset>
+      <legend>Зөвшөөрөх хэл</legend>
+      <div class="checks">
+        <% Object.keys(LANGUAGES).forEach(function (k) { %>
+          <label class="check"><input type="checkbox" name="languages" value="<%= k %>" <%= langs.includes(k) ? 'checked' : '' %>> <%= LANGUAGES[k].label %></label>
+        <% }) %>
+      </div>
+    </fieldset>
+  </section>
+
+  <section class="card form">
+    <h2>Хугацаа</h2>
+    <p class="muted small">Нийтлэгдсэн бодлогыг бүх сурагч бодож, нэг онооны самбарт хоорондоо өрсөлдөнө.</p>
+    <div class="row">
+      <label>Эхлэх <small class="muted">(заавал биш)</small> <input type="datetime-local" name="startAt" value="<%= toInputDate(problem.startAt) %>"></label>
+      <label>Дуусах <small class="muted">(заавал биш)</small> <input type="datetime-local" name="endAt" value="<%= toInputDate(problem.endAt) %>"></label>
+    </div>
+    <label class="check"><input type="checkbox" name="showStandings" <%= problem.showStandings ? 'checked' : '' %>> Сурагчдад онооны самбарт харуулах</label>
+  </section>
+
+  <div class="btn-group sticky-actions">
+    <a class="btn btn-ghost" href="<%= isNew ? '/coding' : '/coding/manage/' + problem._id %>">Болих</a>
+    <button class="btn btn-primary"><%= isNew ? 'Үүсгээд тест оруулах →' : 'Хадгалах' %></button>
+  </div>
+</form>
+
+<% if (!isNew) { %>
+  <section class="card danger-zone">
+    <h2>Бодлого устгах</h2>
+    <p class="muted small">Бүх тест, сурагчдын илгээлт хамт устна.</p>
+    <form method="post" action="/coding/manage/<%= problem._id %>/delete" onsubmit="return confirm('Бодлого, бүх тест, илгээлтийг устгах уу?')">
+      <button class="btn btn-danger">Устгах</button>
+    </form>
+  </section>
+<% } %>
+<%- include('../partials/footer', { scripts: ['/js/rich-editor.js'] }) %>

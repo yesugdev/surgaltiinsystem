@@ -11,6 +11,23 @@ function ownerFilter(user) {
   return { createdBy: user._id, $or: [{ subject: { $in: user.subjectIds || [] } }, { subject: null }] };
 }
 
+// ---------- Өрсөлдөөнт Coding ----------
+// Бодлого оруулах эрх: админ, эсвэл «Мэдээлэл зүй» төрөл оноогдсон багш. Бүх сурагчид хамтдаа өрсөлдөнө.
+const INFORMATICS = { $or: [{ name: /мэдээлэл/i }, { code: /^(INFO|ICT|CS|IT)$/i }] };
+
+/** Мэдээлэл зүйн багш эсэх (loadUser дотор нэг удаа тооцоолно) */
+async function isCodingStaff(user) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  if (user.role !== 'teacher' || !(user.subjectIds || []).length) return false;
+  return !!(await Subject.exists({ _id: { $in: user.subjectIds }, ...INFORMATICS }));
+}
+
+/** Админ бүх бодлогыг, багш өөрийн үүсгэснийг удирдана */
+function problemOwnerFilter(user) {
+  return user.role === 'admin' ? {} : { createdBy: user._id };
+}
+
 /** Шинээр үүсгэхэд сонгож болох хичээлийн төрлүүд */
 function allowedSubjects(user) {
   const filter = { active: true };
@@ -48,4 +65,4 @@ function requireAI(req, res, next) {
   res.status(404).render('error', { title: 'Олдсонгүй', message: 'Хуудас олдсонгүй.' });
 }
 
-module.exports = { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI };
+module.exports = { ownerFilter, problemOwnerFilter, isCodingStaff, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI };

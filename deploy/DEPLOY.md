@@ -83,9 +83,24 @@ crontab -e                                    # өдөр бүр 03:00-д авт�
 cd /opt/surgalt/deploy
 ./backup.sh
 git pull
-docker compose up -d --build app
+docker compose up -d --build app judge
 ```
 Өгөгдөл (`mongo_data` volume) болон сертификат (`caddy_data`) хэвээр үлдэнэ.
+
+## 8. Өрсөлдөөнт Coding — шүүгч (judge)
+
+Сурагчийн кодыг `judge` контейнер ажиллуулна (C++17 g++, Python 3.8.10, Python 3.12). `docker compose up -d --build app judge`
+хамт асаана. Хамгаалалт: интернетгүй дотоод сүлжээ, зөвхөн уншигдах файлын систем, код бүр root-биш тусдаа хэрэглэгчээр,
+CPU/санах ой/процессын хязгаартай.
+
+- Анх удаа build хийхэд хэдэн минут (Python 3.8 + g++ татна).
+- Төлөв: `docker compose ps judge`, лог: `docker compose logs --tail 50 judge`
+- Зэрэг шалгах тоо: `deploy/.env`-д `JUDGE_SLOTS=2` (CPU цөмийн тоогоор), `JUDGE_CPUS=2`
+- Нэмэлт хамгаалалт (заавал биш): `deploy/.env`-д `JUDGE_TOKEN=<санамсаргүй урт текст>`
+
+Локал компьютер дээр (`http://127.0.0.1:5055` дээр асна, `npm run dev`-тэй зэрэг тусдаа терминалд):
+- `npm run judge` — Docker Desktop-оор, сервертэй ижил хамгаалалттай
+- `npm run judge:local` — Docker-гүй, суусан Python 3.8 / Python / g++-аар шууд (хамгаалалтгүй, зөвхөн туршилтад)
 
 ## Ашигтай командууд
 

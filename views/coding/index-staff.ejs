@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Өрсөлдөөнт Coding</h1>
+    <p class="muted">Програмчлалын бодлого. Нийтлэгдсэн бодлогыг бүх сурагч бодож, хоорондоо өрсөлдөнө. Кодыг C++ болон Python-оор автоматаар шалгана.</p>
+  </div>
+  <div class="btn-group">
+    <a href="/coding/standings" class="btn">🏆 Онооны самбар</a>
+    <a href="/coding/manage/new" class="btn btn-primary">+ Шинэ бодлого</a>
+  </div>
+</div>
+
+<% if (!health) { %>
+  <div class="flash flash-warn">Шүүгч (judge) сервер ажиллахгүй байна — сурагчдын илгээлт шалгагдахгүй, дараалалд хүлээгдэнэ. Системийн админд хандана уу.</div>
+<% } %>
+
+<% if (!problems.length) { %>
+  <div class="card empty-hero">
+    <h2>Эхний бодлогоо нэмээрэй</h2>
+    <ol class="start-steps">
+      <li><a href="/coding/manage/new"><strong>Бодлого үүсгэх</strong><span>Өгүүлбэр, хугацаа, санах ойн хязгаар</span></a></li>
+      <li><a href="/coding/manage/new"><strong>Тест оруулах</strong><span>input01.txt, output01.txt … файлуудыг zip-лээд нэг дор</span></a></li>
+      <li><a href="/coding/manage/new"><strong>Нийтлэх</strong><span>Бүх сурагч бодож, систем автоматаар шалгана</span></a></li>
+    </ol>
+  </div>
+<% } else { %>
+  <section class="card">
+    <table class="table">
+      <thead><tr><th>Бодлого</th><th class="num">Тест</th><th class="num">Оролдсон</th><th class="num">Бодсон</th><th>Төлөв</th><th></th></tr></thead>
+      <tbody>
+      <% problems.forEach(function (p) { %>
+        <tr>
+          <td><a href="/coding/manage/<%= p._id %>"><strong><%= p.title %></strong></a>
+            <div class="muted small"><%= p.timeLimitMs %> мс<% if (user.role === 'admin') { %> · <%= p.creatorName %><% } %>
+              <% if (p.endAt) { %> · дуусах: <%= fmtDate(p.endAt) %><% } %></div></td>
+          <td class="num"><%= p.testCount %><% if (!p.testCount) { %> <span class="badge badge-amber">алга</span><% } %></td>
+          <td class="num"><%= p.userCount %></td>
+          <td class="num"><%= p.solverCount %></td>
+          <td>
+            <% if (!p.published) { %><span class="badge badge-amber">Ноорог</span>
+            <% } else if (p.phase === 'upcoming') { %><span class="badge badge-blue">Эхлээгүй</span>
+            <% } else if (p.phase === 'closed') { %><span class="badge">Дууссан</span>
+            <% } else { %><span class="badge badge-green">Нээлттэй</span><% } %>
+          </td>
+          <td class="actions">
+            <a class="btn btn-sm" href="/coding/manage/<%= p._id %>">Удирдах</a>
+            <a class="btn btn-sm" href="/coding/manage/<%= p._id %>/submissions">Илгээлт<% if (p.subCount) { %> (<%= p.subCount %>)<% } %></a>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+<% } %>
+<%- include('../partials/footer') %>

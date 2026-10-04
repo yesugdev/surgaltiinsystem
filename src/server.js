@@ -97,6 +97,8 @@ async function main() {
   app.use('/lessons', require('./routes/lessons'));
   app.use('/learn', require('./routes/learn'));
   app.use('/files', require('./routes/files'));
+  app.use('/coding/manage', require('./routes/coding-manage'));
+  app.use('/coding', require('./routes/coding'));
 
   app.use((req, res) => {
     res.status(404).render('error', { title: 'Олдсонгүй', message: 'Хуудас олдсонгүй.' });
@@ -107,6 +109,8 @@ async function main() {
   });
 
   const server = app.listen(PORT, () => console.log(`YeSuvd ажиллаж байна: http://localhost:${PORT}`));
+  // Өрсөлдөөнт Coding: илгээлтийн дараалал
+  require('./judge').start().catch((e) => console.error('Judge дараалал:', e.message));
 
   // docker stop / шинэчлэлийн үед эхэлсэн хүсэлтүүдийг дуусгаад унтарна
   const shutdown = (signal) => {

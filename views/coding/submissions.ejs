@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<%- include('_manage-head', { problem: problem, tab: 'subs' }) %>
+<% const mb = '/coding/manage/' + problem._id; %>
+
+<div class="import-toolbar">
+  <div class="tabs tabs-inline">
+    <a href="<%= mb %>/submissions" class="<%= !query.verdict ? 'active' : '' %>">Бүгд</a>
+    <% ['AC', 'WA', 'TLE', 'RE', 'CE'].forEach(function (v) { %>
+      <a href="<%= mb %>/submissions?verdict=<%= v %>" class="<%= query.verdict === v ? 'active' : '' %>"><%= VERDICTS[v].label %></a>
+    <% }) %>
+  </div>
+  <form method="post" action="<%= mb %>/rejudge" onsubmit="return confirm('Бүх илгээлтийг дахин шалгах уу? (тест өөрчилсөн бол)')">
+    <button class="btn btn-sm">↻ Бүгдийг дахин шалгах</button>
+  </form>
+</div>
+
+<% if (!subs.length) { %>
+  <div class="card empty"><p>Илгээлт алга байна.</p></div>
+<% } else { %>
+  <section class="card">
+    <table class="table">
+      <thead><tr><th>Хугацаа</th><th>Сурагч</th><th>Хэл</th><th>Үр дүн</th><th class="num">Тест</th><th class="num">Хугацаа</th><th class="num">Санах ой</th><th></th></tr></thead>
+      <tbody>
+      <% subs.forEach(function (s) { %>
+        <tr>
+          <td class="small"><%= fmtDate(s.createdAt) %></td>
+          <td><%= s.u ? s.u.fullName : '—' %><% if (s.isStaff) { %> <span class="badge">багш</span><% } %>
+            <div class="muted small"><%= s.u ? s.u.className || s.u.username : '' %></div></td>
+          <td class="small"><%= LANGUAGES[s.language] ? LANGUAGES[s.language].label : s.language %></td>
+          <td><%- include('_verdict', { s: s }) %></td>
+          <td class="num"><%= s.status === 'done' && s.verdict !== 'CE' ? s.passed + '/' + s.total : '—' %></td>
+          <td class="num small"><%= s.timeMs ? s.timeMs + ' мс' : '—' %></td>
+          <td class="num small"><%= s.memoryKb ? Math.round(s.memoryKb / 1024) + ' MB' : '—' %></td>
+          <td class="actions"><a class="btn btn-sm" href="/coding/submissions/<%= s._id %>">Код</a></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+<% } %>
+<%- include('../partials/footer') %>

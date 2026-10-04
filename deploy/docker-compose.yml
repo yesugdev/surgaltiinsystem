@@ -34,6 +34,9 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      # `docker compose up -d --build app` шүүгчийг ч хамт build хийж асаана
+      judge:
+        condition: service_started
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -44,6 +47,36 @@ services:
       MAX_FILE_MB: ${MAX_FILE_MB:-25}
       TRUST_PROXY: "1"
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      JUDGE_URL: http://judge:8000
+      JUDGE_TOKEN: ${JUDGE_TOKEN:-}
+    networks:
+      - default
+      - judge
+    logging: *logging
+
+  # Өрсөлдөөнт Coding: сурагчийн кодыг ажиллуулах хамгаалагдсан шүүгч
+  # Интернетгүй (internal сүлжээ), файлын систем зөвхөн уншигдана, эрх хасагдсан.
+  judge:
+    build:
+      context: ../judge
+    image: surgalt-judge:latest
+    restart: unless-stopped
+    environment:
+      JUDGE_TOKEN: ${JUDGE_TOKEN:-}
+      JUDGE_SLOTS: ${JUDGE_SLOTS:-2}
+    networks:
+      - judge
+    read_only: true
+    tmpfs:
+      - /tmp:rw,exec,nosuid,size=512m,mode=1777
+    cap_drop: [ALL]
+    # setpriv (кодыг тусдаа хэрэглэгчээр), үлдсэн процессыг устгах, түр файл цэвэрлэхэд л хэрэгтэй
+    cap_add: [SETUID, SETGID, KILL, CHOWN, DAC_OVERRIDE, FOWNER]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1536m
+    cpus: ${JUDGE_CPUS:-2}
     logging: *logging
 
   caddy:
@@ -62,6 +95,11 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     logging: *logging
+
+networks:
+  # Шүүгчийн сүлжээ: гадагш (интернет) гарах боломжгүй
+  judge:
+    internal: true
 
 volumes:
   mongo_data:
