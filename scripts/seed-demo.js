@@ -20,7 +20,7 @@ async function main() {
 
   const cls = await Class.findOneAndUpdate(
     { name: '10А (туршилт)' },
-    { $setOnInsert: { name: '10А (туршилт)', schoolYear: '2026-2027' } },
+    { $setOnInsert: { name: '10А (туршилт)', schoolYear: '2026-2027', codingEnabled: true } },
     { upsert: true, new: true }
   );
   const subject = async (name, code) =>

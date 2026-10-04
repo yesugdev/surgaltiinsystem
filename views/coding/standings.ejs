@@ -1,16 +1,34 @@
 <%- include('../partials/header') %>
-<% const staffViewer = user.role !== 'student'; %>
+<% const staffViewer = user.role !== 'student';
+   const letter = function (i) { return String.fromCharCode(65 + (i % 26)) + (i >= 26 ? Math.floor(i / 26) : ''); };
+   const meRow = rows.find(function (r) { return String(r.student._id) === String(user._id); });
+   const ranked = rows.filter(function (r) { return r.rank; });
+   const podium = [ranked[1], ranked[0], ranked[2]]; %>
 <% if (single && staffViewer) { %>
   <%- include('_manage-head', { problem: single, tab: 'standings' }) %>
 <% } else { %>
-  <div class="page-head">
-    <div>
-      <a href="<%= single ? '/coding/' + single._id : '/coding' %>" class="back">← <%= single ? single.title : 'Өрсөлдөөнт Coding' %></a>
-      <h1>🏆 Онооны самбар</h1>
-      <p class="muted">Бүх сурагч хоорондоо өрсөлдөнө. <%= single ? 'Энэ бодлогын хамгийн сайн оноо' : 'Бүх бодлогын хамгийн сайн онооны нийлбэр' %>; тэнцвэл оноогоо түрүүлж авсан нь дээр.</p>
-    </div>
-  </div>
+  <a href="<%= single ? '/coding/' + single._id : '/coding' %>" class="back">← <%= single ? single.title : 'Өрсөлдөөнт Coding' %></a>
 <% } %>
+
+<section class="lb-hero">
+  <div>
+    <h1>🏆 <%= single ? single.title : 'Онооны самбар' %></h1>
+    <p><%= single ? 'Энэ бодлогын хамгийн сайн оноогоор' : 'Бүх бодлогын хамгийн сайн онооны нийлбэрээр' %> бүх сурагч хоорондоо өрсөлдөнө. Тэнцвэл оноогоо түрүүлж авсан нь дээр.</p>
+  </div>
+  <% if (meRow) { %>
+    <div class="lb-me tier-<%= meRow.tier.key %>">
+      <span class="avatar avatar-lg"><%= meRow.student.initials %></span>
+      <div class="lb-me-body">
+        <div class="lb-me-top"><strong><%= meRow.rank ? meRow.rank + '-р байр' : 'Байргүй' %></strong><span class="muted small"> / <%= ranked.length %> оролцогч</span></div>
+        <span class="tier-badge"><%= meRow.tier.icon %> <%= meRow.tier.name %></span>
+        <% if (meRow.tier.next) { %>
+          <div class="tier-progress" title="<%= meRow.tier.next.name %> хүртэл <%= meRow.tier.toNext %> оноо"><span style="width: <%= meRow.tier.progress %>%"></span></div>
+          <span class="small muted"><%= meRow.tier.next.icon %> <%= meRow.tier.next.name %> хүртэл <strong><%= meRow.tier.toNext %></strong> оноо</span>
+        <% } else { %><span class="small">Хамгийн дээд зэрэглэл! 🎉</span><% } %>
+      </div>
+    </div>
+  <% } %>
+</section>
 
 <% if (classes.length > 1) { %>
   <div class="tabs">
@@ -24,37 +42,75 @@
 <% if (!problems.length) { %>
   <div class="card empty"><p>Нийтлэгдсэн бодлого алга байна.</p></div>
 <% } else if (!rows.length) { %>
-  <div class="card empty"><p><%= classId ? 'Энэ ангид сурагч алга.' : 'Одоогоор хэн ч бодоогүй байна. Эхний оролцогч болоорой!' %></p></div>
+  <div class="card empty"><p class="lb-empty-icon">🚀</p><p><%= classId ? 'Энэ ангид сурагч алга.' : 'Одоогоор хэн ч бодоогүй байна. Эхний оролцогч болоорой!' %></p></div>
 <% } else { %>
+  <% if (ranked.length) { %>
+    <div class="podium" aria-label="Тэргүүлэгчид">
+      <% podium.forEach(function (r, i) { const place = [2, 1, 3][i]; %>
+        <% if (r) { %>
+          <div class="podium-col place-<%= place %> tier-<%= r.tier.key %> <%= String(r.student._id) === String(user._id) ? 'is-me' : '' %>">
+            <% if (place === 1) { %><span class="podium-crown" aria-hidden="true">👑</span><% } %>
+            <span class="avatar avatar-xl"><%= r.student.initials %></span>
+            <strong class="podium-name"><%= r.student.fullName %></strong>
+            <span class="muted small"><%= r.student.className %></span>
+            <span class="tier-badge"><%= r.tier.icon %> <%= r.tier.name %></span>
+            <div class="podium-block"><span class="podium-medal"><%= place === 1 ? '🥇' : place === 2 ? '🥈' : '🥉' %></span><strong><%= r.total %></strong><small>оноо</small></div>
+          </div>
+        <% } else { %><div class="podium-col podium-empty place-<%= place %>"></div><% } %>
+      <% }) %>
+    </div>
+  <% } %>
+
   <section class="card standings-wrap">
     <table class="table standings">
       <thead>
         <tr>
-          <th class="num">#</th><th>Сурагч</th><th>Анги</th>
-          <% if (!single) { problems.forEach(function (p, i) { %><th class="num prob-col" title="<%= p.title %>"><a href="/coding/<%= p._id %>"><%= String.fromCharCode(65 + (i % 26)) %><%= i >= 26 ? Math.floor(i / 26) : '' %></a></th><% }) } %>
-          <th class="num">Нийт</th><th class="num">Оролдлого</th>
+          <th class="num">#</th><th>Сурагч</th>
+          <% if (!single) { problems.forEach(function (p, i) { %><th class="num prob-col" title="<%= p.title %>"><a href="/coding/<%= p._id %>"><%= letter(i) %></a></th><% }) } %>
+          <th>Нийт</th><th class="num">Оролдлого</th>
         </tr>
       </thead>
       <tbody>
+      <% const maxTotal = Math.max(1, rows[0] ? rows[0].total : 1); %>
       <% rows.forEach(function (r) { const me = String(r.student._id) === String(user._id); %>
-        <tr class="<%= me ? 'me' : '' %> <%= r.rank && r.rank <= 3 ? 'top' + r.rank : '' %>">
-          <td class="num"><%= r.rank ? (r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : r.rank) : '—' %></td>
-          <td><%= r.student.fullName %><% if (me) { %> <span class="badge badge-blue">та</span><% } %></td>
-          <td class="muted small"><%= r.student.className || '—' %></td>
+        <tr class="<%= me ? 'me' : '' %> tier-<%= r.tier.key %>">
+          <td class="num rank-cell"><%= r.rank ? (r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : r.rank) : '—' %></td>
+          <td>
+            <div class="player">
+              <span class="avatar"><%= r.student.initials %></span>
+              <div>
+                <div class="player-name"><%= r.student.fullName %><% if (me) { %> <span class="badge badge-blue">та</span><% } %></div>
+                <div class="player-meta"><span class="tier-chip"><%= r.tier.icon %> <%= r.tier.name %></span><% if (r.student.className) { %><span class="muted"> · <%= r.student.className %></span><% } %></div>
+              </div>
+            </div>
+          </td>
           <% if (!single) { r.cells.forEach(function (c) { %>
-            <td class="num cell <%= c ? (c.best === 100 ? 'cell-ok' : c.best > 0 ? 'cell-part' : 'cell-bad') : '' %>"><%= c ? c.best : '' %></td>
+            <td class="num cell <%= c ? (c.best === 100 ? 'cell-ok' : c.best > 0 ? 'cell-part' : 'cell-bad') : '' %>"><%= c ? (c.best === 100 ? '✓' : c.best) : '' %></td>
           <% }) } %>
-          <td class="num"><strong><%= r.total %></strong></td>
+          <td class="total-cell">
+            <strong><%= r.total %></strong>
+            <div class="total-bar"><span style="width: <%= Math.round(r.total / maxTotal * 100) %>%"></span></div>
+          </td>
           <td class="num muted"><%= r.attempts || '' %></td>
         </tr>
       <% }) %>
       </tbody>
     </table>
-    <% if (!single && problems.length) { %>
-      <p class="muted small">
-        <% problems.forEach(function (p, i) { %><%= String.fromCharCode(65 + (i % 26)) %><%= i >= 26 ? Math.floor(i / 26) : '' %> — <%= p.title %><%= i < problems.length - 1 ? ' · ' : '' %><% }) %>
+    <% if (!single) { %>
+      <p class="muted small prob-legend">
+        <% problems.forEach(function (p, i) { %><span><b><%= letter(i) %></b> <%= p.title %></span><% }) %>
       </p>
     <% } %>
   </section>
 <% } %>
+
+<section class="card tier-legend">
+  <h2>Зэрэглэлүүд</h2>
+  <p class="muted small">Бодлого бүр 100 оноо. Бүх бодлогын хамгийн сайн онооны нийлбэрээр зэрэглэл ахина.</p>
+  <div class="tier-list">
+    <% TIERS.forEach(function (t) { %>
+      <span class="tier-badge tier-<%= t.key %> <%= meRow && meRow.tier.key === t.key ? 'is-current' : '' %>"><%= t.icon %> <%= t.name %> <small><%= t.min %>+</small></span>
+    <% }) %>
+  </div>
+</section>
 <%- include('../partials/footer') %>

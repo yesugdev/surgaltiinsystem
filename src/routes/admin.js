@@ -203,6 +203,14 @@ router.post('/classes', async (req, res) => {
   }
 });
 
+// Өрсөлдөөнт Coding-ийг бүх ангид нэг дор нээх / хаах
+router.post('/classes/coding-all', async (req, res) => {
+  const enable = req.body.enable === '1';
+  await Class.updateMany({}, { $set: { codingEnabled: enable } });
+  flash(req, 'success', enable ? 'Өрсөлдөөнт Coding бүх ангид нээгдлээ.' : 'Өрсөлдөөнт Coding бүх ангид хаагдлаа.');
+  res.redirect('/admin/classes');
+});
+
 async function loadClass(req, res, next) {
   const cls = isId(req.params.id) ? await Class.findById(req.params.id).lean() : null;
   if (!cls) return res.status(404).render('error', { title: 'Олдсонгүй', message: 'Анги олдсонгүй.' });
@@ -242,6 +250,15 @@ router.post('/classes/:id', loadClass, async (req, res) => {
     flash(req, 'error', `"${name}" нэртэй анги аль хэдийн бүртгэлтэй байна.`);
   }
   res.redirect('/admin/classes/' + req.cls._id);
+});
+
+// Тухайн ангид Өрсөлдөөнт Coding нээх / хаах
+router.post('/classes/:id/coding', loadClass, async (req, res) => {
+  const enable = !req.cls.codingEnabled;
+  await Class.updateOne({ _id: req.cls._id }, { $set: { codingEnabled: enable } });
+  flash(req, 'success', `"${req.cls.name}" ангид Өрсөлдөөнт Coding ${enable ? 'нээгдлээ' : 'хаагдлаа'}.`);
+  const back = req.body.back === 'class' ? '/admin/classes/' + req.cls._id : '/admin/classes';
+  res.redirect(back);
 });
 
 router.post('/classes/:id/delete', loadClass, async (req, res) => {

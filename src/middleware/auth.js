@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, Class } = require('../models');
 const { isCodingStaff } = require('../access');
 
 /** Сессээс хэрэглэгчийг ачаалж, идэвхгүй болсон бол гаргана */
@@ -15,9 +15,10 @@ async function loadUser(req, res, next) {
       req.user = user;
       res.locals.user = user;
       res.locals.canUseAI = user.role === 'admin' || (user.role === 'teacher' && user.aiEnabled === true);
-      // Өрсөлдөөнт Coding: сурагч оролцогч, админ ба мэдээлэл зүйн багш удирдагч
+      // Өрсөлдөөнт Coding: админ ба мэдээлэл зүйн багш удирдана; сурагч — админ ангид нь нээсэн бол оролцоно
       user.codingStaff = await isCodingStaff(user);
-      res.locals.canCoding = user.role === 'student' || user.codingStaff;
+      user.codingPlayer = user.role === 'student' && !!user.classId && !!(await Class.exists({ _id: user.classId, codingEnabled: true }));
+      res.locals.canCoding = user.codingPlayer || user.codingStaff;
     } else {
       delete req.session.userId;
     }

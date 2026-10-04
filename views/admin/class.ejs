@@ -5,10 +5,18 @@
     <h1><%= cls.name %></h1>
     <p class="muted"><%= cls.schoolYear || '' %> · <%= students.length %> сурагч</p>
   </div>
-  <form method="post" action="/admin/classes/<%= cls._id %>/delete"
-        data-confirm="«<%= cls.name %>» ангийг устгах уу? Сурагчид устахгүй, харин ангигүй болно.">
-    <button class="btn btn-danger">Анги устгах</button>
-  </form>
+  <div class="btn-group">
+    <form method="post" action="/admin/classes/<%= cls._id %>/coding">
+      <input type="hidden" name="back" value="class">
+      <button class="switch <%= cls.codingEnabled ? 'on' : '' %>" role="switch" aria-checked="<%= cls.codingEnabled ? 'true' : 'false' %>">
+        <span class="switch-knob" aria-hidden="true"></span><span class="switch-label">💻 Өрсөлдөөнт Coding: <%= cls.codingEnabled ? 'Нээлттэй' : 'Хаалттай' %></span>
+      </button>
+    </form>
+    <form method="post" action="/admin/classes/<%= cls._id %>/delete"
+          data-confirm="«<%= cls.name %>» ангийг устгах уу? Сурагчид устахгүй, харин ангигүй болно.">
+      <button class="btn btn-danger">Анги устгах</button>
+    </form>
+  </div>
 </div>
 
 <div class="grid-2">

@@ -11,8 +11,15 @@
     <% if (!classes.length) { %>
       <div class="empty"><p class="muted">Одоогоор анги бүртгэгдээгүй байна. Баруун талын маягтаар эхний ангиа нэмнэ үү.</p></div>
     <% } else { %>
+      <div class="import-toolbar coding-bulk">
+        <span class="small muted">💻 Өрсөлдөөнт Coding: <strong><%= classes.filter(function (c) { return c.codingEnabled; }).length %></strong> / <%= classes.length %> ангид нээлттэй</span>
+        <div class="btn-group">
+          <form method="post" action="/admin/classes/coding-all"><input type="hidden" name="enable" value="1"><button class="btn btn-sm">Бүгдэд нээх</button></form>
+          <form method="post" action="/admin/classes/coding-all" data-confirm="Бүх ангид Өрсөлдөөнт Coding-ийг хаах уу?"><input type="hidden" name="enable" value="0"><button class="btn btn-sm btn-ghost">Бүгдэд хаах</button></form>
+        </div>
+      </div>
       <table class="table">
-        <thead><tr><th>Анги</th><th>Хичээлийн жил</th><th class="num">Сурагч</th><th></th></tr></thead>
+        <thead><tr><th>Анги</th><th>Хичээлийн жил</th><th class="num">Сурагч</th><th>Өрсөлдөөнт Coding</th><th></th></tr></thead>
         <tbody>
         <% classes.forEach(function (c) { %>
           <tr>
@@ -20,6 +27,13 @@
               <% if (c.description) { %><div class="muted small"><%= c.description %></div><% } %></td>
             <td><%= c.schoolYear || '—' %></td>
             <td class="num"><%= c.studentCount %></td>
+            <td>
+              <form method="post" action="/admin/classes/<%= c._id %>/coding">
+                <button class="switch <%= c.codingEnabled ? 'on' : '' %>" role="switch" aria-checked="<%= c.codingEnabled ? 'true' : 'false' %>" title="<%= c.codingEnabled ? 'Хаах' : 'Нээх' %>">
+                  <span class="switch-knob" aria-hidden="true"></span><span class="switch-label"><%= c.codingEnabled ? 'Нээлттэй' : 'Хаалттай' %></span>
+                </button>
+              </form>
+            </td>
             <td class="actions"><a class="btn btn-sm" href="/admin/classes/<%= c._id %>">Нээх</a></td>
           </tr>
         <% }) %>
