@@ -38,7 +38,7 @@ function cloneStyle(style) {
 }
 
 function safeSheetName(name, used) {
-  let base = String(name || 'Анги').replace(/[\\/*?:[\]]/g, ' ').trim().slice(0, 28) || 'Анги';
+  let base = String(name || 'Анги').replace(/[\\/*?:[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 26) || 'Анги';
   let n = base;
   let i = 2;
   while (used.has(n.toLowerCase())) n = `${base} (${i++})`;
@@ -57,11 +57,13 @@ function formatDate(d) {
  * @param {Buffer} templateBuffer  xlsx загвар
  * @param {object} data
  *   questions: [{ points }]                  — шалгалтын асуултууд (дарааллаар)
- *   groups:    [{ className, expectedCount, students: [{ name, scores: [number|null], max }] }]
+ *   groups:    [{ className, expectedCount, students: [{ name, scores: [number|null], max }],
+ *                 questions?, date?, teacherName?, sheetName? }]
+ *              — олон шалгалтыг нэг файлд: хуудас бүр өөрийн асуулт, огноо, багштай байж болно
  *   date, teacherName
  * @returns {Promise<Buffer>}
  */
-async function buildExamAnalysis(templateBuffer, { questions, groups, date, teacherName }) {
+async function buildExamAnalysis(templateBuffer, { questions = [], groups, date, teacherName }) {
   const tpl = new ExcelJS.Workbook();
   await tpl.xlsx.load(templateBuffer);
   const T = tpl.worksheets[0];
@@ -69,32 +71,35 @@ async function buildExamAnalysis(templateBuffer, { questions, groups, date, teac
   const out = new ExcelJS.Workbook();
   out.creator = 'YeSuvd';
   out.calcProperties.fullCalcOnLoad = true; // Excel нээхэд бүх томьёог тооцно
-
-  const Q = questions.length;
-  const TC = Math.max(Q, T_TASKS); // даалгаврын баганын тоо (загвар шиг хамгийн багадаа 8)
-  const shift = TC - T_TASKS;
-  const K = T_TASK_FIRST + TC; // Авах оноо
-  const L = K + 1; // Авсан оноо
-  const M = K + 2; // Хувь
-  const N = K + 3; // Түвшин
   const c = colLetter;
   const taskCol = (j) => T_TASK_FIRST + j; // j = 0..TC-1
-  const maxes = questions.map((q) => Number(q.points) || 0);
-  const total = maxes.reduce((s, x) => s + x, 0);
-
-  // Гаралтын баганыг загварын аль баганаас хэлбэржүүлэх вэ
-  const templateCol = (oc) => {
-    if (oc < T_TASK_FIRST) return oc;
-    if (oc < K) return oc === K - 1 ? T_TASK_LAST : T_TASK_FIRST; // сүүлийн даалгавар = J (баруун хүрээтэй)
-    return oc - shift;
-  };
-  const isTaskCol = (oc) => oc >= T_TASK_FIRST && oc < K;
 
   const usedNames = new Set();
   for (const g of groups) {
     const S = g.students.length;
     if (!S) continue;
-    const ws = out.addWorksheet(safeSheetName(g.className, usedNames), {
+    const gQuestions = g.questions || questions;
+    const gDate = g.date !== undefined ? g.date : date;
+    const gTeacher = g.teacherName !== undefined ? g.teacherName : teacherName;
+
+    const Q = gQuestions.length;
+    const TC = Math.max(Q, T_TASKS); // даалгаврын баганын тоо (загвар шиг хамгийн багадаа 8)
+    const shift = TC - T_TASKS;
+    const K = T_TASK_FIRST + TC; // Авах оноо
+    const L = K + 1; // Авсан оноо
+    const M = K + 2; // Хувь
+    const N = K + 3; // Түвшин
+    const maxes = gQuestions.map((q) => Number(q.points) || 0);
+    const total = maxes.reduce((s, x) => s + x, 0);
+    // Гаралтын баганыг загварын аль баганаас хэлбэржүүлэх вэ
+    const templateCol = (oc) => {
+      if (oc < T_TASK_FIRST) return oc;
+      if (oc < K) return oc === K - 1 ? T_TASK_LAST : T_TASK_FIRST; // сүүлийн даалгавар = J (баруун хүрээтэй)
+      return oc - shift;
+    };
+    const isTaskCol = (oc) => oc >= T_TASK_FIRST && oc < K;
+
+    const ws = out.addWorksheet(safeSheetName(g.sheetName || g.className, usedNames), {
       pageSetup: cloneStyle(T.pageSetup),
       properties: cloneStyle(T.properties),
     });
@@ -135,7 +140,7 @@ async function buildExamAnalysis(templateBuffer, { questions, groups, date, teac
     const setF = (col, row, formula) => { cell(col, row).value = { formula }; };
 
     // ---- Толгой ----
-    const dateText = formatDate(date);
+    const dateText = formatDate(gDate);
     if (dateText) cell(2, 3).value = dateText;
     cell(7, 3).value = g.className; // «Анги» шошгын дараах нүд
     // «Шалгагдвал зохих» / «Шалгагдсан»: загварт J:M шошго, N утга → баруун талын 4 багана + N
@@ -209,7 +214,7 @@ async function buildExamAnalysis(templateBuffer, { questions, groups, date, teac
     setF(9, R(44), `((${lvl(1)}+${lvl(0)})*100)/${S}`);
 
     // Гарын үсэг
-    if (teacherName) cell(2, R(47)).value = `ХИЧЭЭЛ ЗААДАГ БАГШ                              /  ${teacherName}  /`;
+    if (gTeacher) cell(2, R(47)).value = `ХИЧЭЭЛ ЗААДАГ БАГШ                              /  ${gTeacher}  /`;
 
     // ---- Нэгтгэсэн нүд (загвар шиг) ----
     const merge = (c1, r1, c2, r2) => { if (c2 > c1 || r2 > r1) ws.mergeCells(r1, c1, r2, c2); };
