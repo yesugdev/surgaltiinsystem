@@ -39,14 +39,22 @@
     <% if (canCreate) { %><a href="/exams/new" class="btn btn-primary">Эхний шалгалтаа үүсгэх</a><% } %>
   </div>
 <% } else { %>
+  <% const withResults = exams.filter(function (e) { return e.submittedCount > 0; }).length; %>
   <section class="card">
+    <div class="import-toolbar analysis-bar">
+      <span class="small muted" id="analysis-hint">Шалгалтуудыг сонгоод анализыг <strong>нэг Excel</strong>-д татна — анги бүр тусдаа хуудас. Сонгоогүй бол үр дүнтэй бүх шалгалт (<%= withResults %>).</span>
+      <a class="btn btn-primary <%= withResults ? '' : 'disabled' %>" id="analysis-all"
+         href="/exams/analysis.xlsx<%= subjectFilter ? '?subject=' + subjectFilter : '' %>"
+         data-base="/exams/analysis.xlsx" data-subject="<%= subjectFilter %>">📊 Анализ (нэг Excel)</a>
+    </div>
     <table class="table">
       <thead>
-        <tr><th>Шалгалт</th><th>Хичээл</th><th>Анги</th><th class="num">Асуулт</th><th>Хугацаа</th><th>Төлөв</th><th class="num">Илгээсэн</th><th></th></tr>
+        <tr><th class="check-col"><input type="checkbox" id="pick-all" aria-label="Бүгдийг сонгох" <%= withResults ? '' : 'disabled' %>></th><th>Шалгалт</th><th>Хичээл</th><th>Анги</th><th class="num">Асуулт</th><th>Хугацаа</th><th>Төлөв</th><th class="num">Илгээсэн</th><th></th></tr>
       </thead>
       <tbody>
       <% exams.forEach(function (e) { %>
         <tr>
+          <td class="check-col"><input type="checkbox" class="pick-exam" value="<%= e._id %>" aria-label="<%= e.title %>" <%= e.submittedCount ? '' : 'disabled title="Өгсөн сурагч алга"' %>></td>
           <td><a href="/exams/<%= e._id %>"><strong><%= e.title %></strong></a>
             <% if (user.role === 'admin') { %><div class="muted small"><%= e.creatorName %></div><% } %></td>
           <td><% if (e.subjectName) { %><%= e.subjectName %><% } else { %><span class="badge badge-amber">Сонгоогүй</span><% } %></td>
@@ -67,5 +75,23 @@
       </tbody>
     </table>
   </section>
+  <script>
+    // Сонгосон шалгалтуудаар нэг Excel-ийн холбоосыг бүрдүүлнэ
+    (function () {
+      var btn = document.getElementById('analysis-all');
+      var all = document.getElementById('pick-all');
+      var picks = Array.prototype.slice.call(document.querySelectorAll('.pick-exam:not([disabled])'));
+      function update() {
+        var ids = picks.filter(function (p) { return p.checked; }).map(function (p) { return p.value; });
+        var q = ids.length ? '?ids=' + ids.join(',') : (btn.dataset.subject ? '?subject=' + btn.dataset.subject : '');
+        btn.href = btn.dataset.base + q;
+        btn.textContent = ids.length ? '📊 Сонгосон ' + ids.length + ' шалгалтын анализ (нэг Excel)' : '📊 Анализ (нэг Excel)';
+        all.checked = ids.length > 0 && ids.length === picks.length;
+        all.indeterminate = ids.length > 0 && ids.length < picks.length;
+      }
+      picks.forEach(function (p) { p.addEventListener('change', update); });
+      all.addEventListener('change', function () { picks.forEach(function (p) { p.checked = all.checked; }); update(); });
+    })();
+  </script>
 <% } %>
 <%- include('../partials/footer') %>

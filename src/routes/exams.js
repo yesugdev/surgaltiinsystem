@@ -116,6 +116,30 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// Олон шалгалтын анализыг нэг Excel-д: анги бүр (шалгалт бүрээр) тусдаа хуудас
+// ?ids=a,b,c — сонгосон шалгалтууд; хоосон бол жагсаалтад харагдаж буй (шүүлтүүртэй) бүх шалгалт
+router.get('/analysis.xlsx', async (req, res) => {
+  const filter = ownerFilter(req.user);
+  const ids = String(req.query.ids || '').split(',').filter(isId);
+  if (ids.length) filter._id = { $in: ids };
+  else if (isId(req.query.subject)) filter.subject = req.query.subject;
+  else if (req.query.subject === 'none') filter.subject = null;
+  const exams = await Exam.find(filter).sort({ startAt: 1, createdAt: 1 }).limit(100).lean();
+  const all = [];
+  for (const exam of exams) all.push(...(await analysisGroups(exam)).filter((g) => g.students.length));
+  if (!all.length) {
+    flash(req, 'error', 'Сонгосон шалгалтуудад өгсөн сурагч алга байна.');
+    return res.redirect('/exams');
+  }
+  // Нэг анги хэд хэдэн шалгалтад байвал хуудасны нэрэнд шалгалтын нэрийг нэмнэ
+  const classCount = new Map();
+  for (const g of all) classCount.set(g.className, (classCount.get(g.className) || 0) + 1);
+  for (const g of all) if (classCount.get(g.className) > 1) g.sheetName = `${g.className} ${g.examTitle}`;
+  const { buffer: template } = await getTemplate();
+  const title = exams.length === 1 ? exams[0].title : `${exams.length} шалгалт`;
+  sendXlsx(res, await buildExamAnalysis(template, { groups: all }), title);
+});
+
 router.get('/analysis-template', adminOnly, async (req, res) => {
   const t = await getTemplate();
   res.render('exams/analysis-template', { title: 'Анализын Excel загвар', template: t });
@@ -499,8 +523,8 @@ router.get('/:id/results.csv', loadExam, async (req, res) => {
 });
 
 // Сургуулийн «анализ-хөндлөн» Excel загвараар дүн шинжилгээ (анги бүр тусдаа хуудас)
-router.get('/:id/analysis.xlsx', loadExam, async (req, res) => {
-  const exam = req.exam;
+/** Нэг шалгалтын анализын хуудсууд: анги бүр нэг бүлэг (асуулт, огноо, багшийн нэртэй) */
+async function analysisGroups(exam) {
   await finalizeExpired({ exam: exam._id });
   const attempts = await Attempt.find({ exam: exam._id, submittedAt: { $ne: null } }).lean();
   const byStudent = new Map(attempts.map((a) => [String(a.student), a]));
@@ -547,17 +571,22 @@ router.get('/:id/analysis.xlsx', loadExam, async (req, res) => {
   }
 
   const firstSubmit = attempts.reduce((m, a) => (!m || a.submittedAt < m ? a.submittedAt : m), null);
-  const { buffer: template } = await getTemplate();
-  const xlsx = await buildExamAnalysis(template, {
-    questions: exam.questions,
-    groups,
-    date: exam.startAt || firstSubmit || new Date(),
-    teacherName: creator?.fullName || '',
-  });
-  const fileName = `${exam.title.replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'shalgalt'} - анализ.xlsx`;
+  const date = exam.startAt || firstSubmit || new Date();
+  const teacherName = creator?.fullName || '';
+  return groups.map((g) => ({ ...g, questions: exam.questions, date, teacherName, examTitle: exam.title }));
+}
+
+const sendXlsx = (res, buffer, title) => {
+  const fileName = `${String(title).replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'shalgalt'} - анализ.xlsx`;
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="analysis.xlsx"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
-  res.send(xlsx);
+  res.send(buffer);
+};
+
+router.get('/:id/analysis.xlsx', loadExam, async (req, res) => {
+  const groups = await analysisGroups(req.exam);
+  const { buffer: template } = await getTemplate();
+  sendXlsx(res, await buildExamAnalysis(template, { groups }), req.exam.title);
 });
 
 async function loadAttempt(req, res, next) {

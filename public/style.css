@@ -664,6 +664,13 @@ kbd { font: 0.78rem ui-monospace, Consolas, monospace; padding: 1px 6px; border:
 label.check.ai-toggle { align-items: flex-start !important; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fafbff; }
 label.check.ai-toggle input { margin-top: 3px; }
 
+/* Шалгалтын жагсаалт: олон шалгалтын анализ */
+.analysis-bar { margin-bottom: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.check-col { width: 34px; }
+.check-col input { width: 17px; height: 17px; cursor: pointer; }
+.check-col input:disabled { cursor: not-allowed; opacity: 0.4; }
+.btn.disabled { pointer-events: none; opacity: 0.5; }
+
 /* ================= Өрсөлдөөнт Coding ================= */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .mono, textarea.mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.88rem; }
