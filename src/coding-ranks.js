@@ -2,15 +2,16 @@
 // Бодлогыг БҮТЭН (100/100) бодох бүрт 25 rank оноо. Хэсэгчилсэн оноо rank-д тооцохгүй.
 const POINTS_PER_SOLVE = 25;
 
+// Босго нь дээд зэрэглэл рүү огцом өсдөг — Мастер, Домог хүрэхэд жинхэнэ хөдөлмөр шаардана
 const TIERS = [
   { key: 'newbie', name: 'Шинэ тоглогч', icon: '🌱', min: 0 },
-  { key: 'beginner', name: 'Анхлан суралцагч', icon: '🐣', min: 25 }, // 1 бодлого
-  { key: 'explorer', name: 'Эрэлч', icon: '🔍', min: 75 }, // 3
-  { key: 'coder', name: 'Програмист', icon: '💻', min: 150 }, // 6
-  { key: 'expert', name: 'Мэргэжилтэн', icon: '🧠', min: 250 }, // 10
-  { key: 'master', name: 'Мастер', icon: '👑', min: 400 }, // 16
-  { key: 'grandmaster', name: 'Их мастер', icon: '🔥', min: 625 }, // 25
-  { key: 'legend', name: 'Домог', icon: '🐉', min: 1000 }, // 40
+  { key: 'beginner', name: 'Анхлан суралцагч', icon: '🐣', min: 75 }, // 3 бодлого
+  { key: 'explorer', name: 'Эрэлч', icon: '🔍', min: 250 }, // 10
+  { key: 'coder', name: 'Програмист', icon: '💻', min: 625 }, // 25
+  { key: 'expert', name: 'Мэргэжилтэн', icon: '🧠', min: 1250 }, // 50
+  { key: 'master', name: 'Мастер', icon: '👑', min: 2500 }, // 100
+  { key: 'grandmaster', name: 'Их мастер', icon: '🔥', min: 4375 }, // 175
+  { key: 'legend', name: 'Домог', icon: '🐉', min: 7500 }, // 300
 ];
 
 /** Бүтэн бодсон бодлогын тооноос rank оноо */
