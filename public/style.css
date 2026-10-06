@@ -701,6 +701,35 @@ a.problem-card:hover { text-decoration: none; transform: translateY(-2px); borde
 .score-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--amber), var(--green)); border-radius: inherit; }
 .is-solved .score-bar span { background: var(--green); }
 
+/* Бодлогын дугаартай жагсаалт (№1 эхэнд) */
+.problem-num { display: inline-grid; place-items: center; min-width: 36px; height: 36px; padding: 0 8px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); font-weight: 800; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+h1 .problem-num { min-width: 40px; height: 40px; font-size: 1.1rem; vertical-align: middle; margin-right: 4px; }
+.problem-num-sm { min-width: 30px; height: 30px; font-size: 0.85rem; border-radius: 8px; }
+.problem-list-card { padding: 8px 0; }
+.problem-list-head, .problem-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 150px 110px; align-items: center; gap: 14px; padding: 10px 20px; }
+.problem-list-head { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--border); }
+.problem-list { list-style: none; margin: 0; padding: 0; }
+.problem-list li + li { border-top: 1px solid var(--border); }
+.problem-row { color: inherit; transition: background 0.12s; }
+a.problem-row:hover { background: #f7f9fe; text-decoration: none; }
+a.problem-row:hover .problem-title { color: var(--primary); }
+.problem-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.problem-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.problem-score { display: flex; flex-direction: column; gap: 4px; }
+.problem-score b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.problem-score small { color: var(--muted); }
+.problem-score .score-bar { margin: 0; }
+.problem-status { text-align: right; }
+.problem-row.is-solved .problem-num { background: var(--green); color: #fff; }
+.problem-row.is-tried .problem-num { background: var(--amber-soft); color: var(--amber); }
+.problem-row.is-upcoming { opacity: 0.6; }
+.badge-outline { background: transparent; border: 1px solid #cbd8fb; color: var(--primary); }
+@media (max-width: 640px) {
+  .problem-list-head { display: none; }
+  .problem-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; padding: 10px 14px; }
+  .problem-score { display: none; }
+}
+
 /* Бодох хуудас */
 .limits { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
 .solve-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 16px; align-items: start; }

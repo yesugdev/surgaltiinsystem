@@ -201,6 +201,8 @@ const settingSchema = new Schema(
 const problemSchema = new Schema(
   {
     title: { type: String, required: true, trim: true, maxlength: 200 },
+    // Бодлогын дугаар: анх нийтлэгдэх үед 1, 2, 3… (дахин ашиглахгүй)
+    number: { type: Number, default: null, index: true },
     subject: { type: Types.ObjectId, ref: 'Subject', default: null, index: true },
     createdBy: { type: Types.ObjectId, ref: 'User', index: true },
     classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },
