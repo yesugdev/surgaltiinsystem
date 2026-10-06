@@ -4,5 +4,5 @@
 <% } else if (s.status === 'error') { %>
   <span class="verdict v-muted" title="<%= s.error || '' %>">Алдаа</span>
 <% } else { const v = VERDICTS[s.verdict] || { label: s.verdict, tone: 'muted' }; %>
-  <span class="verdict v-<%= v.tone %>" title="<%= v.label %>"><%= v.label %><% if (s.verdict !== 'AC' && s.verdict !== 'CE' && s.score != null) { %> · <%= s.score %><% } %></span>
+  <span class="verdict v-<%= v.tone %>" title="<%= v.label %>"><%= v.label %><% if (s.verdict !== 'AC' && s.verdict !== 'CE' && s.score != null) { %> · <%= codingPts(s.score) %>/25<% } %></span>
 <% } %>
