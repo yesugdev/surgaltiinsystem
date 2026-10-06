@@ -69,7 +69,7 @@
               <td class="small"><a href="/coding/submissions/<%= s._id %>"><%= fmtDate(s.createdAt) %></a></td>
               <td class="small"><%= LANGUAGES[s.language] ? LANGUAGES[s.language].label : s.language %></td>
               <td><%- include('_verdict', { s: s }) %></td>
-              <td class="num"><%= s.status === 'done' ? s.score : '—' %></td>
+              <td class="num"><%= s.status === 'done' ? codingPts(s.score) : '—' %></td>
             </tr>
           <% }) %>
         </tbody>

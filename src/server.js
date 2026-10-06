@@ -52,7 +52,8 @@ async function main() {
   app.set('views', path.join(__dirname, '..', 'views'));
   if (process.env.TRUST_PROXY) app.set('trust proxy', 1);
 
-  Object.assign(app.locals, helpers, { fmtSize: files.fmtSize, viewKind: files.viewKind });
+  // codingPts: Өрсөлдөөнт Coding-ийн 0–100 хувийг 25 онооны хэмжүүрээр харуулна
+  Object.assign(app.locals, helpers, { fmtSize: files.fmtSize, viewKind: files.viewKind, codingPts: require('./coding-ranks').toPoints });
   app.disable('x-powered-by');
   // HTML, CSS, JS хариуг gzip-ээр шахна (3D дэвсгэрийн скрипт 535KB → ~140KB)
   app.use(compression());

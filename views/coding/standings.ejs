@@ -85,7 +85,7 @@
             </div>
           </td>
           <% if (!single) { r.cells.forEach(function (c) { %>
-            <td class="num cell <%= c ? (c.best === 100 ? 'cell-ok' : c.best > 0 ? 'cell-part' : 'cell-bad') : '' %>"><%= c ? (c.best === 100 ? '✓' : c.best) : '' %></td>
+            <td class="num cell <%= c ? (c.best === 100 ? 'cell-ok' : c.best > 0 ? 'cell-part' : 'cell-bad') : '' %>"><%= c ? (c.best === 100 ? '✓' : codingPts(c.best)) : '' %></td>
           <% }) } %>
           <td class="total-cell">
             <strong><%= r.total %></strong>
@@ -106,7 +106,7 @@
 
 <section class="card tier-legend">
   <h2>Зэрэглэлүүд</h2>
-  <p class="muted small">Бодлогыг <strong>бүтэн бодох</strong> (100/100) бүрт <strong><%= POINTS_PER_SOLVE %> rank оноо</strong> авч зэрэглэл ахина. Самбарын «Нийт» нь бүх бодлогын хамгийн сайн онооны нийлбэр (хэсэгчилсэн оноо орно).</p>
+  <p class="muted small">Бодлогыг <strong>бүтэн бодох</strong> (100/100) бүрт <strong><%= POINTS_PER_SOLVE %> rank оноо</strong> авч зэрэглэл ахина. Самбарын «Нийт»: бодлого бүр 25 оноо, хэсэгчилсэн нь хувиар (60% → 15), бүх бодлогын хамгийн сайн онооны нийлбэр.</p>
   <div class="tier-list">
     <% TIERS.forEach(function (t) { %>
       <span class="tier-badge tier-<%= t.key %> <%= meRow && meRow.tier.key === t.key ? 'is-current' : '' %>"><%= t.icon %> <%= t.name %> <small><%= t.min %>+ · <%= t.min / POINTS_PER_SOLVE %> бодлого</small></span>

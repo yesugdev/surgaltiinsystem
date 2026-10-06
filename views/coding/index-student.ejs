@@ -54,7 +54,7 @@
               </span>
             </span>
             <span class="problem-score">
-              <% if (m) { %><b><%= m.best %></b><small>/100</small><% } else { %><span class="muted small">—</span><% } %>
+              <% if (m) { %><b><%= codingPts(m.best) %></b><small>/25</small><% } else { %><span class="muted small">—</span><% } %>
               <span class="score-bar" aria-hidden="true"><span style="width: <%= m ? m.best : 0 %>%"></span></span>
             </span>
             <span class="problem-status">

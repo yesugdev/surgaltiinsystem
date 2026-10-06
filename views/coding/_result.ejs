@@ -5,7 +5,7 @@
     <div>
       <%- include('_verdict', { s: sub }) %>
       <% if (sub.status === 'done' && sub.verdict !== 'CE') { %>
-        <span class="result-score"><strong><%= sub.score %></strong> / 100 оноо</span>
+        <span class="result-score"><strong><%= codingPts(sub.score) %></strong> / 25 оноо</span>
         <span class="muted small"><%= sub.passed %>/<%= sub.total %> тест · <%= sub.timeMs %> мс · <%= Math.round(sub.memoryKb / 1024) %> MB</span>
       <% } %>
     </div>

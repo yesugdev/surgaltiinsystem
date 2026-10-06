@@ -16,6 +16,9 @@ const TIERS = [
 /** Бүтэн бодсон бодлогын тооноос rank оноо */
 const rankPoints = (solved) => solved * POINTS_PER_SOLVE;
 
+/** Шүүгчийн 0–100 хувийг 25 онооны хэмжүүр рүү (60% → 15; аравтын нэг орон) */
+const toPoints = (score100) => Math.round((Number(score100) || 0) * POINTS_PER_SOLVE / 10) / 10;
+
 /** Rank оноонд тохирох зэрэглэл + дараагийн зэрэглэл хүртэлх явц */
 function tierFor(points) {
   let i = 0;
@@ -27,4 +30,4 @@ function tierFor(points) {
   return { ...tier, level: i + 1, points, next, toNext, solvesToNext: Math.ceil(toNext / POINTS_PER_SOLVE), progress };
 }
 
-module.exports = { TIERS, tierFor, rankPoints, POINTS_PER_SOLVE };
+module.exports = { TIERS, tierFor, rankPoints, toPoints, POINTS_PER_SOLVE };

@@ -9,7 +9,7 @@ const { problemOwnerFilter } = require('../access');
 const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
-const { TIERS, tierFor, rankPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
+const { TIERS, tierFor, rankPoints, toPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
 
 const router = express.Router();
 router.use(requireRole());
@@ -140,7 +140,8 @@ async function buildStandings(problems, { classId = null } = {}) {
   const map = new Map(best.map((b) => [String(b._id.p) + ':' + String(b._id.u), b]));
   const rows = students.map((s) => {
     const cells = problems.map((p) => map.get(String(p._id) + ':' + String(s._id)) || null);
-    const total = cells.reduce((sum, c) => sum + (c ? c.best : 0), 0);
+    // Нийт оноо: бодлого бүр 25 (хэсэгчилсэн нь хувиар), эрэмбэ үүгээр
+    const total = Math.round(cells.reduce((sum, c) => sum + (c ? toPoints(c.best) : 0), 0) * 10) / 10;
     const solved = cells.filter((c) => c && c.best === 100).length;
     const last = cells.reduce((m, c) => (c && c.best > 0 && c.at > m ? c.at : m), new Date(0));
     return {
@@ -222,7 +223,7 @@ router.get('/submissions/:sid/status', loadSubmission, async (req, res) => {
   const ctx = await resultContext(sub, req.problem);
   res.render('coding/_result', { ...ctx, compact: req.query.compact === '1' }, (err, html) => {
     if (err) return res.status(500).json({ error: 'render' });
-    res.json({ status: sub.status, verdict: sub.verdict, score: sub.score, html });
+    res.json({ status: sub.status, verdict: sub.verdict, score: toPoints(sub.score), html });
   });
 });
 
