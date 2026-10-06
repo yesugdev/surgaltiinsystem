@@ -2,7 +2,7 @@
 <div class="page-head">
   <div>
     <a href="<%= staff ? '/coding/manage/' + problem._id : '/coding' %>" class="back">← <%= staff ? 'Бодлого удирдах' : 'Өрсөлдөөнт Coding' %></a>
-    <h1><%= problem.title %></h1>
+    <h1><% if (problem.number) { %><span class="problem-num">&numero;<%= problem.number %></span> <% } %><%= problem.title %></h1>
     <p class="limits">
       <span>⏱ <%= problem.timeLimitMs / 1000 %> сек</span>
       <span>💾 <%= problem.memoryLimitMb %> MB</span>

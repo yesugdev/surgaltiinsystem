@@ -111,6 +111,7 @@ async function main() {
   const server = app.listen(PORT, () => console.log(`YeSuvd ажиллаж байна: http://localhost:${PORT}`));
   // Өрсөлдөөнт Coding: илгээлтийн дараалал
   require('./judge').start().catch((e) => console.error('Judge дараалал:', e.message));
+  require('./problem-number').backfillNumbers().catch((e) => console.error('Бодлогын дугаар:', e.message));
 
   // docker stop / шинэчлэлийн үед эхэлсэн хүсэлтүүдийг дуусгаад унтарна
   const shutdown = (signal) => {

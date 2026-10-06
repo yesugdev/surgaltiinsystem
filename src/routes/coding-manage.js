@@ -9,6 +9,7 @@ const { problemOwnerFilter, canUseAI, requireAI } = require('../access');
 const judge = require('../judge');
 const tests = require('../coding-tests');
 const { buildTestsPrompt, parseAiTests, sameTokens } = require('../coding-prompt');
+const { ensureNumber } = require('../problem-number');
 const md = require('../markdown');
 const files = require('../files');
 
@@ -127,6 +128,7 @@ router.post('/:id/publish', loadProblem, async (req, res) => {
     }
   }
   p.published = !p.published;
+  if (p.published) await ensureNumber(p); // анх нийтлэхэд дараагийн дугаарыг авна
   await p.save();
   flash(req, 'success', p.published ? 'Бодлого нийтлэгдлээ. Бүх сурагч бодож, хоорондоо өрсөлдөнө.' : 'Бодлогыг нийтлэлээс буцаалаа.');
   res.redirect(base(p));

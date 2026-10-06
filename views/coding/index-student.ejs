@@ -37,30 +37,37 @@
 <% if (!problems.length) { %>
   <div class="card empty"><p>Одоогоор бодлого алга байна.</p></div>
 <% } else { %>
-  <div class="problem-grid">
-    <% problems.forEach(function (p) { const m = p.mine; const done = m && m.best === 100; %>
-      <% if (p.phase === 'upcoming') { %>
-        <div class="card problem-card is-upcoming">
-          <div class="problem-card-head"><strong><%= p.title %></strong><span class="badge badge-blue">Эхлээгүй</span></div>
-          <p class="muted small">Эхлэх: <%= fmtDate(p.startAt) %></p>
-        </div>
-      <% } else { %>
-        <a class="card problem-card <%= done ? 'is-solved' : '' %>" href="/coding/<%= p._id %>">
-          <div class="problem-card-head">
-            <strong><%= p.title %></strong>
-            <% if (done) { %><span class="badge badge-green">✓ Бодсон</span>
-            <% } else if (m) { %><span class="badge badge-amber"><%= m.best %> оноо</span>
-            <% } else if (p.phase === 'closed') { %><span class="badge">Дууссан</span><% } %>
-          </div>
-          <p class="muted small">
-            <%= p.timeLimitMs / 1000 %> сек
-            <% if (m) { %> · <%= m.attempts %> оролдлого<% } %>
-            <% if (p.endAt && p.phase === 'open') { %> · дуусах: <%= fmtDate(p.endAt) %><% } %>
-          </p>
-          <div class="score-bar" aria-hidden="true"><span style="width: <%= m ? m.best : 0 %>%"></span></div>
-        </a>
-      <% } %>
-    <% }) %>
-  </div>
+  <section class="card problem-list-card">
+    <div class="problem-list-head">
+      <span>№</span><span>Бодлого</span><span>Миний оноо</span><span>Төлөв</span>
+    </div>
+    <ol class="problem-list">
+      <% problems.forEach(function (p) { const m = p.mine; const done = m && m.best === 100; const tag = p.phase === 'upcoming' ? 'div' : 'a'; %>
+        <li>
+          <<%= tag %> class="problem-row <%= done ? 'is-solved' : m ? 'is-tried' : '' %> <%= p.phase === 'upcoming' ? 'is-upcoming' : '' %>" <%- tag === 'a' ? 'href="/coding/' + p._id + '"' : '' %>>
+            <span class="problem-num"><%= p.number || '—' %></span>
+            <span class="problem-main">
+              <strong class="problem-title"><%= p.title %></strong>
+              <span class="muted small">
+                <% if (p.phase === 'upcoming') { %>Эхлэх: <%= fmtDate(p.startAt) %>
+                <% } else { %>⏱ <%= p.timeLimitMs / 1000 %> сек<% if (m) { %> · <%= m.attempts %> оролдлого<% } %><% if (p.endAt && p.phase === 'open') { %> · дуусах: <%= fmtDate(p.endAt) %><% } %><% } %>
+              </span>
+            </span>
+            <span class="problem-score">
+              <% if (m) { %><b><%= m.best %></b><small>/100</small><% } else { %><span class="muted small">—</span><% } %>
+              <span class="score-bar" aria-hidden="true"><span style="width: <%= m ? m.best : 0 %>%"></span></span>
+            </span>
+            <span class="problem-status">
+              <% if (p.phase === 'upcoming') { %><span class="badge badge-blue">Эхлээгүй</span>
+              <% } else if (done) { %><span class="badge badge-green">✓ Бодсон</span>
+              <% } else if (m) { %><span class="badge badge-amber">Дутуу</span>
+              <% } else if (p.phase === 'closed') { %><span class="badge">Дууссан</span>
+              <% } else { %><span class="badge badge-outline">Бодох →</span><% } %>
+            </span>
+          </<%= tag %>>
+        </li>
+      <% }) %>
+    </ol>
+  </section>
 <% } %>
 <%- include('../partials/footer') %>

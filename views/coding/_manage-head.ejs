@@ -2,7 +2,7 @@
 <div class="page-head">
   <div>
     <a href="/coding" class="back">← Өрсөлдөөнт Coding</a>
-    <h1><%= problem.title %>
+    <h1><% if (problem.number) { %><span class="problem-num">&numero;<%= problem.number %></span> <% } %><%= problem.title %>
       <% if (problem.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber">Ноорог</span><% } %>
     </h1>
     <p class="muted small"><%= problem.timeLimitMs %> мс · <%= problem.memoryLimitMb %> MB · <%= problem.languages.map(function (l) { return LANGUAGES[l] ? LANGUAGES[l].label : l; }).join(', ') %></p>

@@ -26,10 +26,11 @@
 <% } else { %>
   <section class="card">
     <table class="table">
-      <thead><tr><th>Бодлого</th><th class="num">Тест</th><th class="num">Оролдсон</th><th class="num">Бодсон</th><th>Төлөв</th><th></th></tr></thead>
+      <thead><tr><th class="num">№</th><th>Бодлого</th><th class="num">Тест</th><th class="num">Оролдсон</th><th class="num">Бодсон</th><th>Төлөв</th><th></th></tr></thead>
       <tbody>
       <% problems.forEach(function (p) { %>
         <tr>
+          <td class="num"><% if (p.number) { %><span class="problem-num problem-num-sm"><%= p.number %></span><% } else { %><span class="muted small" title="Нийтлэхэд дугаар олгоно">—</span><% } %></td>
           <td><a href="/coding/manage/<%= p._id %>"><strong><%= p.title %></strong></a>
             <div class="muted small"><%= p.timeLimitMs %> мс<% if (user.role === 'admin') { %> · <%= p.creatorName %><% } %>
               <% if (p.endAt) { %> · дуусах: <%= fmtDate(p.endAt) %><% } %></div></td>

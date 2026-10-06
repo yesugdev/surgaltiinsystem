@@ -55,7 +55,9 @@ async function bestScores(problemIds, userFilter = {}) {
 router.get('/', async (req, res) => {
   const u = req.user;
   if (isStaff(u)) {
-    const problems = await Problem.find(problemOwnerFilter(u)).select('-statement -refCode -generatorCode').sort({ createdAt: -1 }).lean();
+    const problems = await Problem.find(problemOwnerFilter(u)).select('-statement -refCode -generatorCode').lean();
+    // №1 эхэнд; дугааргүй (ноорог) нь сүүлд, үүссэн дарааллаар
+    problems.sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity) || a.createdAt - b.createdAt);
     const ids = problems.map((p) => p._id);
     const [creators, stats, health] = await Promise.all([
       User.find({ _id: { $in: problems.map((p) => p.createdBy) } }).select('fullName').lean(),
@@ -79,7 +81,7 @@ router.get('/', async (req, res) => {
   }
 
   // Сурагч: бүх нийтлэгдсэн бодлого + өөрийн зэрэглэл, байр
-  const problems = await Problem.find({ published: true }).select('title startAt endAt testCount timeLimitMs languages createdAt').sort({ createdAt: -1 }).lean();
+  const problems = await Problem.find({ published: true }).select('number title startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
   const mine = await bestScores(problems.map((p) => p._id), { user: u._id });
   const mineMap = new Map(mine.map((m) => [String(m._id.p), m]));
   for (const p of problems) {
@@ -107,7 +109,7 @@ router.get('/', async (req, res) => {
 /** Нийт самбарт тооцох бодлогууд: нийтлэгдсэн, эхэлсэн (сурагчид showStandings-тай нь) */
 async function standingsProblems(staff) {
   const list = await Problem.find(staff ? { published: true } : { published: true, showStandings: true })
-    .select('title startAt endAt').sort({ createdAt: 1 }).lean();
+    .select('number title startAt endAt').sort({ number: 1, createdAt: 1 }).lean();
   return list.filter((p) => phase(p) !== 'upcoming');
 }
 

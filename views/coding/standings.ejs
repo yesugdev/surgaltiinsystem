@@ -66,7 +66,7 @@
       <thead>
         <tr>
           <th class="num">#</th><th>Сурагч</th>
-          <% if (!single) { problems.forEach(function (p, i) { %><th class="num prob-col" title="<%= p.title %>"><a href="/coding/<%= p._id %>"><%= letter(i) %></a></th><% }) } %>
+          <% if (!single) { problems.forEach(function (p, i) { %><th class="num prob-col" title="<%= p.title %>"><a href="/coding/<%= p._id %>">&numero;<%= p.number || letter(i) %></a></th><% }) } %>
           <th>Нийт</th><th class="num">Оролдлого</th>
         </tr>
       </thead>
@@ -98,7 +98,7 @@
     </table>
     <% if (!single) { %>
       <p class="muted small prob-legend">
-        <% problems.forEach(function (p, i) { %><span><b><%= letter(i) %></b> <%= p.title %></span><% }) %>
+        <% problems.forEach(function (p, i) { %><span><b>&numero;<%= p.number || letter(i) %></b> <%= p.title %></span><% }) %>
       </p>
     <% } %>
   </section>
