@@ -9,7 +9,7 @@ const { problemOwnerFilter } = require('../access');
 const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
-const { TIERS, tierFor } = require('../coding-ranks');
+const { TIERS, tierFor, rankPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
 
 const router = express.Router();
 router.use(requireRole());
@@ -96,13 +96,14 @@ router.get('/', async (req, res) => {
     problems,
     me: {
       total: myTotal,
-      tier: tierFor(myTotal),
+      tier: tierFor(rankPoints(meRow ? meRow.solved : 0)), // rank: бүтэн бодсон бодлого бүр 25
       rank: meRow?.rank || null,
       players: rows.filter((r) => r.total > 0).length,
       solved: mine.filter((m) => m.best === 100).length,
     },
     top: rows.filter((r) => r.rank).slice(0, 3),
     TIERS,
+    POINTS_PER_SOLVE,
   });
 });
 
@@ -145,7 +146,7 @@ async function buildStandings(problems, { classId = null } = {}) {
     return {
       student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
       cells, total, solved, last,
-      tier: tierFor(total),
+      tier: tierFor(rankPoints(solved)),
       attempts: cells.reduce((n, c) => n + (c ? c.attempts : 0), 0),
     };
   });
@@ -184,6 +185,7 @@ router.get('/standings', async (req, res) => {
     problems,
     rows: await buildStandings(problems, { classId }),
     TIERS,
+    POINTS_PER_SOLVE,
     classes,
     classId: classId ? String(classId) : '',
     single: null,
@@ -293,6 +295,7 @@ router.get('/:id/standings', loadProblem, async (req, res) => {
     problems: [p],
     rows: await attachOverallTier(await buildStandings([p], { classId })),
     TIERS,
+    POINTS_PER_SOLVE,
     classes,
     classId: classId ? String(classId) : '',
     single: p,
