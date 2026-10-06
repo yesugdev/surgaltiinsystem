@@ -15,12 +15,12 @@
       <h2 class="rank-name"><%= me.tier.name %></h2>
       <% if (me.tier.next) { %>
         <div class="tier-progress"><span style="width: <%= me.tier.progress %>%"></span></div>
-        <span class="small"><%= me.tier.next.icon %> <strong><%= me.tier.next.name %></strong> хүртэл <%= me.tier.toNext %> оноо</span>
+        <span class="small"><%= me.tier.next.icon %> <strong><%= me.tier.next.name %></strong> хүртэл <%= me.tier.toNext %> rank оноо (дахиад <%= me.tier.solvesToNext %> бодлого бүтэн бод)</span>
       <% } else { %><span class="small">Та хамгийн дээд зэрэглэлд хүрсэн! 🎉</span><% } %>
     </div>
   </div>
   <div class="rank-stats">
-    <div><strong><%= me.total %></strong><span>оноо</span></div>
+    <div title="Бодлого бүрийг бүтэн бодвол <%= POINTS_PER_SOLVE %> rank оноо"><strong><%= me.tier.points %></strong><span>rank оноо</span></div>
     <div><strong><%= me.rank ? '#' + me.rank : '—' %></strong><span><%= me.players %> оролцогчоос</span></div>
     <div><strong><%= me.solved %></strong><span>бодсон</span></div>
   </div>
