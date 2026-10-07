@@ -9,9 +9,12 @@
 
 <section class="rank-hero tier-<%= me.tier.key %>">
   <div class="rank-main">
-    <span class="rank-icon" aria-hidden="true"><%= me.tier.icon %></span>
+    <a class="rank-avatar" href="/coding/profile" title="Аватар солих">
+      <%- include('_avatar', { look: me.look, initials: me.initials, size: 'xl' }) %>
+      <span class="rank-avatar-badge" aria-hidden="true"><%= me.tier.icon %></span>
+    </a>
     <div>
-      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин</span>
+      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин · <a href="/coding/profile">🎨 Аватар солих</a></span>
       <h2 class="rank-name"><%= me.tier.name %></h2>
       <% if (me.tier.next) { %>
         <div class="tier-progress"><span style="width: <%= me.tier.progress %>%"></span></div>
@@ -71,4 +74,5 @@
     <%- include('_pager') %>
   </section>
 <% } %>
-<%- include('../partials/footer') %>
+<% if (rankUp) { %><div id="rank-up-data" data-json="<%= JSON.stringify(rankUp) %>" hidden></div><% } %>
+<%- include('../partials/footer', { scripts: ['/celebrate.js'] }) %>

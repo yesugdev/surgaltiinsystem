@@ -3,13 +3,14 @@
 // Удирдах: админ болон мэдээлэл зүйн багш (req.user.codingStaff).
 const express = require('express');
 const { Class, User, Problem, ProblemTest, CodeSubmission } = require('../models');
-const { requireRole } = require('../middleware/auth');
+const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
 const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
 const { TIERS, DIFFICULTIES, tierFor, solvePoints, toPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
+const { AVATARS, COLORS, tierName, findAvatar, findColor, cosmeticsFor, unlockedBetween } = require('../coding-cosmetics');
 
 const router = express.Router();
 router.use(requireRole());
@@ -104,13 +105,17 @@ router.get('/', async (req, res) => {
   const rows = await buildStandings(await standingsProblems(false));
   const meRow = rows.find((r) => String(r.student._id) === String(u._id));
   const myTotal = meRow ? meRow.total : 0;
+  const myTier = meRow ? meRow.tier : tierFor(0); // rank: бүтэн бодсон бодлогын хүндийн зэргийн оноо
   res.render('coding/index-student', {
     title: 'Өрсөлдөөнт Coding',
     problems,
     pager,
+    rankUp: await checkRankUp(u, myTier),
     me: {
       total: myTotal,
-      tier: meRow ? meRow.tier : tierFor(0), // rank: бүтэн бодсон бодлогын хүндийн зэргийн оноо
+      tier: myTier,
+      look: cosmeticsFor(u, myTier),
+      initials: initials(u.fullName),
       rank: meRow?.rank || null,
       players: rows.filter((r) => r.total > 0).length,
       solved: mine.filter((m) => m.best === 100).length,
@@ -121,6 +126,33 @@ router.get('/', async (req, res) => {
     POINTS_PER_SOLVE,
   });
 });
+
+/** Нэг сурагчийн одоогийн зэрэглэл (самбартай ижил тооцоо) */
+async function userTier(userId) {
+  const problems = await standingsProblems(false);
+  const best = await bestScores(problems.map((p) => p._id), { user: userId });
+  const diff = new Map(problems.map((p) => [String(p._id), p.difficulty]));
+  return tierFor(best.reduce((sum, b) => sum + (b.best === 100 ? solvePoints(diff.get(String(b._id.p))) : 0), 0));
+}
+
+/**
+ * Зэрэглэл ахисан бол (өмнө баярлуулснаас дээш) нэг удаа баярлуулах мэдээлэл буцаана.
+ * Зэрэглэл буурвал (багш хүндийн зэрэг сольсон г.м.) дахин баярлуулахгүйн тулд өмнөх хэвээр.
+ */
+async function checkRankUp(user, tier) {
+  if (user.role !== 'student') return null;
+  const seen = TIERS.findIndex((t) => t.key === user.codingTierSeen) + 1 || 1;
+  if (tier.level <= seen) return null;
+  await User.updateOne({ _id: user._id }, { $set: { codingTierSeen: tier.key } });
+  const unlocked = unlockedBetween(seen, tier.level);
+  return {
+    name: tier.name,
+    icon: tier.icon,
+    key: tier.key,
+    avatars: unlocked.avatars.map((a) => a.icon),
+    colors: unlocked.colors.map((c) => c.name),
+  };
+}
 
 /** Нийт самбарт тооцох бодлогууд: нийтлэгдсэн, эхэлсэн (сурагчид showStandings-тай нь) */
 async function standingsProblems(staff) {
@@ -141,11 +173,11 @@ async function buildStandings(problems, { classId = null } = {}) {
   let students;
   if (classId) {
     students = enabled.some((id) => String(id) === String(classId))
-      ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId').lean()
+      ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor').lean()
       : [];
   } else {
     const participants = await CodeSubmission.distinct('user', { problem: { $in: ids }, isStaff: false, status: 'done' });
-    students = await User.find({ _id: { $in: participants }, role: 'student', classId: { $in: enabled }, active: { $ne: false } }).select('fullName username classId').lean();
+    students = await User.find({ _id: { $in: participants }, role: 'student', classId: { $in: enabled }, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor').lean();
   }
   const [best, classes] = await Promise.all([
     bestScores(ids, { user: { $in: students.map((s) => s._id) } }),
@@ -165,6 +197,7 @@ async function buildStandings(problems, { classId = null } = {}) {
       student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
       cells, total, solved, last,
       tier: tierFor(rankPts),
+      look: cosmeticsFor(s, tierFor(rankPts)),
       attempts: cells.reduce((n, c) => n + (c ? c.attempts : 0), 0),
     };
   });
@@ -193,6 +226,38 @@ async function attachOverallTier(rows) {
 
 /** Нэрийн эхний үсгүүд (аватарт): «Бат Болд» → «ББ» */
 const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+// ---------------- Миний аватар (сурагч) ----------------
+router.get('/profile', async (req, res) => {
+  if (req.user.role !== 'student') return notFound(res, 'Хуудас');
+  const tier = await userTier(req.user._id);
+  res.render('coding/profile', {
+    title: 'Миний аватар',
+    tier,
+    look: cosmeticsFor(req.user, tier),
+    initials: initials(req.user.fullName),
+    AVATARS,
+    COLORS,
+    tierName,
+    selectedAvatar: req.user.codingAvatar,
+    selectedColor: req.user.codingColor || 'tier',
+  });
+});
+
+router.post('/profile', async (req, res) => {
+  if (req.user.role !== 'student') return notFound(res, 'Хуудас');
+  const tier = await userTier(req.user._id);
+  const a = findAvatar(clean(req.body.avatar, 20));
+  const c = findColor(clean(req.body.color, 20));
+  // Түгжээтэй зүйлийг сонгож болохгүй (хөтчөөс хуурсан ч)
+  const update = {};
+  if (req.body.avatar === '' || (a && a.level <= tier.level)) update.codingAvatar = a ? a.key : '';
+  if (c && c.level <= tier.level) update.codingColor = c.key === 'tier' ? '' : c.key;
+  const locked = (a && a.level > tier.level) || (c && c.level > tier.level);
+  await User.updateOne({ _id: req.user._id }, { $set: update });
+  flash(req, locked ? 'error' : 'success', locked ? 'Түгжээтэй зүйлийг сонгох боломжгүй — зэрэглэлээ ахиулаарай!' : 'Аватар хадгалагдлаа.');
+  res.redirect('/coding/profile');
+});
 
 router.get('/standings', async (req, res) => {
   const problems = await standingsProblems(isStaff(req.user));
@@ -239,9 +304,13 @@ async function resultContext(sub, problem) {
 router.get('/submissions/:sid/status', loadSubmission, async (req, res) => {
   const { sub } = req;
   const ctx = await resultContext(sub, req.problem);
+  // Өөрийн илгээлт бүтэн зөв бол зэрэглэл ахисан эсэхийг шалгана (баярын цонх)
+  const rankUp = sub.status === 'done' && sub.verdict === 'AC' && String(sub.user) === String(req.user._id)
+    ? await checkRankUp(req.user, await userTier(req.user._id))
+    : null;
   res.render('coding/_result', { ...ctx, compact: req.query.compact === '1' }, (err, html) => {
     if (err) return res.status(500).json({ error: 'render' });
-    res.json({ status: sub.status, verdict: sub.verdict, score: toPoints(sub.score, req.problem.difficulty), html });
+    res.json({ status: sub.status, verdict: sub.verdict, score: toPoints(sub.score, req.problem.difficulty), html, rankUp });
   });
 });
 

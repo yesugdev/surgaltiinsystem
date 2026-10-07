@@ -829,6 +829,62 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
 .tier-legend .tier-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .tier-legend .tier-badge.is-current { outline: 2px solid var(--tier); outline-offset: 2px; }
 
+/* ---------- Нээгддэг аватар, өнгө ---------- */
+.avatar-emoji { background: #fff; color: inherit; font-size: 1.15rem; box-shadow: 0 0 0 3px var(--tier, var(--primary)); }
+.avatar-lg.avatar-emoji { font-size: 1.7rem; }
+.avatar-xl.avatar-emoji { font-size: 2.1rem; }
+.av-color-ocean { background: linear-gradient(135deg, #1e88e5, #00bcd4) !important; color: #fff; }
+.av-color-forest { background: linear-gradient(135deg, #2e7d32, #8bc34a) !important; color: #fff; }
+.av-color-sunset { background: linear-gradient(135deg, #ff7043, #ffca28) !important; color: #fff; }
+.av-color-grape { background: linear-gradient(135deg, #6a1b9a, #ba68c8) !important; color: #fff; }
+.av-color-rose { background: linear-gradient(135deg, #d81b60, #ff8a80) !important; color: #fff; }
+.av-color-gold { background: linear-gradient(135deg, #b8860b, #ffd700, #b8860b) !important; color: #3d2b00; }
+.av-color-rainbow { background: linear-gradient(90deg, #ff5252, #ffb300, #ffee58, #66bb6a, #42a5f5, #7e57c2, #ff5252) !important; background-size: 300% 100% !important; animation: rainbow-move 4s linear infinite; color: #fff; }
+.av-color-galaxy { background: radial-gradient(circle at 30% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px), linear-gradient(135deg, #0d0b2b, #3b1d72, #0b3d91) !important; color: #fff; }
+.avatar-emoji.av-color-ocean, .avatar-emoji.av-color-forest, .avatar-emoji.av-color-sunset, .avatar-emoji.av-color-grape, .avatar-emoji.av-color-rose, .avatar-emoji.av-color-gold, .avatar-emoji.av-color-rainbow, .avatar-emoji.av-color-galaxy { box-shadow: 0 0 0 3px var(--tier-soft, #eef0f4); }
+@keyframes rainbow-move { to { background-position: 300% 0; } }
+.name-ocean { color: #1e88e5; } .name-forest { color: #2e7d32; } .name-sunset { color: #e65100; }
+.name-grape { color: #7b1fa2; } .name-rose { color: #c2185b; } .name-gold { color: #a67c00; }
+.name-rainbow, .name-galaxy { background: linear-gradient(90deg, #ff5252, #ffb300, #66bb6a, #42a5f5, #7e57c2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.name-galaxy { background: linear-gradient(90deg, #3b1d72, #0b3d91, #7a3fe0); -webkit-background-clip: text; background-clip: text; }
+@media (prefers-reduced-motion: reduce) { .av-color-rainbow { animation: none; } }
+.rank-avatar { position: relative; flex-shrink: 0; }
+.rank-avatar:hover { text-decoration: none; }
+.rank-avatar-badge { position: absolute; right: -6px; bottom: -4px; font-size: 1.3rem; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2)); }
+.profile-hero { padding: 20px 22px; margin: 6px 0 16px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--tier) 25%, transparent); background: linear-gradient(135deg, var(--tier-soft), #fff 70%); }
+.profile-preview { display: flex; align-items: center; gap: 18px; margin-bottom: 8px; }
+.profile-preview h1 { margin: 0 0 6px; }
+.cosmetic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.cosmetic { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 8px; border: 2px solid var(--border); border-radius: 14px; cursor: pointer; text-align: center; transition: border-color 0.12s, transform 0.12s; }
+.cosmetic:hover:not(.is-locked) { border-color: var(--primary); transform: translateY(-2px); }
+.cosmetic input { position: absolute; opacity: 0; pointer-events: none; }
+.cosmetic.is-selected { border-color: var(--primary); background: var(--primary-soft); }
+.cosmetic:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.cosmetic.is-locked { cursor: not-allowed; background: #f5f6f9; }
+.cosmetic.is-locked .cosmetic-face { filter: grayscale(1); opacity: 0.35; }
+.cosmetic small { font-size: 0.7rem; color: var(--muted); min-height: 1.1em; }
+.cosmetic-face { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; font-size: 1.9rem; line-height: 1; }
+.cosmetic-initials { background: var(--primary); color: #fff; font-size: 1rem; font-weight: 700; }
+.cosmetic-swatch { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.swatch-tier { background: conic-gradient(#6b7384, #1c8b52, #0e8a9a, #2f5bea, #7a3fe0, #c27a00, #e0531f, #c8203f, #6b7384); }
+
+/* ---------- Баяр: конфетти, зэрэглэл ахисан цонх ---------- */
+.confetti-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+.rankup-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(15, 20, 40, 0.55); animation: fade-in 0.2s ease; }
+.rankup-box { width: min(420px, 100%); text-align: center; padding: 28px 24px 22px; border-radius: 22px; background: linear-gradient(180deg, var(--tier-soft), #fff 55%); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.rankup-icon { font-size: 4.2rem; line-height: 1; animation: bounce-icon 1.6s ease-in-out infinite; }
+.rankup-kicker { margin: 10px 0 0; color: var(--tier); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.8rem; }
+.rankup-title { margin: 4px 0 10px; font-size: 1.5rem; }
+.rankup-sub { margin: 6px 0; color: var(--muted); font-size: 0.9rem; }
+.rankup-unlocks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+.rankup-unlock { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px; background: #fff; border: 1px solid var(--border); font-size: 1.5rem; }
+.rankup-color { font-size: 0.85rem; font-weight: 600; }
+.rankup-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.7); } }
+@keyframes bounce-icon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .rankup-overlay, .rankup-box, .rankup-icon { animation: none; } }
+
 /* Сурагчийн нүүр: зэрэглэлийн карт */
 .rank-hero { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr); gap: 20px; align-items: center; padding: 20px 22px; margin-bottom: 18px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--tier) 25%, transparent); background: linear-gradient(135deg, var(--tier-soft), #fff 70%); }
 .rank-main { display: flex; align-items: center; gap: 16px; min-width: 0; }

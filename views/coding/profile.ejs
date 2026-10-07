@@ -1,0 +1,74 @@
+<%- include('../partials/header') %>
+<a href="/coding" class="back">← Өрсөлдөөнт Coding</a>
+
+<section class="profile-hero tier-<%= tier.key %>">
+  <div class="profile-preview">
+    <%- include('_avatar', { look: look, initials: initials, size: 'xl' }) %>
+    <div>
+      <h1 class="<%= look.color ? 'name-' + look.color : '' %>"><%= user.fullName %></h1>
+      <span class="tier-badge"><%= tier.icon %> <%= tier.name %> · <%= tier.points %> rank оноо</span>
+    </div>
+  </div>
+  <p class="muted small">Зэрэглэл ахих тусам шинэ аватар, өнгө нээгдэнэ. 🔒 нь түгжээтэй — зэрэглэлээ ахиулаарай!</p>
+</section>
+
+<form method="post" action="/coding/profile" class="form">
+  <section class="card">
+    <h2>Аватар</h2>
+    <div class="cosmetic-grid">
+      <label class="cosmetic <%= !selectedAvatar ? 'is-selected' : '' %>">
+        <input type="radio" name="avatar" value="" <%= !selectedAvatar ? 'checked' : '' %>>
+        <span class="cosmetic-face cosmetic-initials"><%= initials %></span>
+        <small>Нэрийн үсэг</small>
+      </label>
+      <% AVATARS.forEach(function (a) { const locked = a.level > tier.level; %>
+        <label class="cosmetic <%= locked ? 'is-locked' : '' %> <%= selectedAvatar === a.key ? 'is-selected' : '' %>" title="<%= locked ? tierName(a.level) + ' болж нээнэ' : '' %>">
+          <input type="radio" name="avatar" value="<%= a.key %>" <%= selectedAvatar === a.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
+          <span class="cosmetic-face"><%= a.icon %></span>
+          <small><%= locked ? '🔒 ' + tierName(a.level) : ' ' %></small>
+        </label>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Өнгө</h2>
+    <div class="cosmetic-grid">
+      <% COLORS.forEach(function (c) { const locked = c.level > tier.level; %>
+        <label class="cosmetic <%= locked ? 'is-locked' : '' %> <%= selectedColor === c.key ? 'is-selected' : '' %>" title="<%= locked ? tierName(c.level) + ' болж нээнэ' : '' %>">
+          <input type="radio" name="color" value="<%= c.key %>" <%= selectedColor === c.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
+          <span class="cosmetic-face cosmetic-swatch <%= c.key === 'tier' ? 'swatch-tier' : 'av-color-' + c.key %>"></span>
+          <small><%= c.name %><%= locked ? ' · 🔒 ' + tierName(c.level) : '' %></small>
+        </label>
+      <% }) %>
+    </div>
+  </section>
+
+  <div class="btn-group sticky-actions">
+    <a class="btn btn-ghost" href="/coding">Буцах</a>
+    <button class="btn btn-primary">Хадгалах</button>
+  </div>
+</form>
+
+<script>
+  // Сонголтыг шууд харуулна
+  (function () {
+    var preview = document.querySelector('.profile-preview .avatar');
+    var initials = <%- JSON.stringify(initials) %>;
+    document.querySelectorAll('.cosmetic input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var group = document.querySelectorAll('input[name="' + input.name + '"]');
+        group.forEach(function (g) { g.closest('.cosmetic').classList.toggle('is-selected', g.checked); });
+        if (input.name === 'avatar') {
+          var face = input.closest('.cosmetic').querySelector('.cosmetic-face').textContent;
+          preview.textContent = input.value ? face : initials;
+          preview.classList.toggle('avatar-emoji', !!input.value);
+        } else {
+          preview.className = preview.className.replace(/\bav-color-\S+/g, '').trim();
+          if (input.value !== 'tier') preview.classList.add('av-color-' + input.value);
+        }
+      });
+    });
+  })();
+</script>
+<%- include('../partials/footer') %>
