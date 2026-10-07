@@ -10,7 +10,7 @@ const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
 const { TIERS, DIFFICULTIES, tierFor, solvePoints, toPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
-const { AVATARS, COLORS, tierName, findAvatar, findColor, cosmeticsFor, unlockedBetween } = require('../coding-cosmetics');
+const { AVATARS, COLORS, avatarImg, tierName, findAvatar, findColor, cosmeticsFor, unlockedBetween } = require('../coding-cosmetics');
 
 const router = express.Router();
 router.use(requireRole());
@@ -237,6 +237,7 @@ router.get('/profile', async (req, res) => {
     look: cosmeticsFor(req.user, tier),
     initials: initials(req.user.fullName),
     AVATARS,
+    avatarImg,
     COLORS,
     tierName,
     selectedAvatar: req.user.codingAvatar,
