@@ -17,7 +17,7 @@
   </div>
   <% if (meRow) { %>
     <div class="lb-me tier-<%= meRow.tier.key %>">
-      <%- include('_avatar', { look: meRow.look, initials: meRow.student.initials, size: 'lg' }) %>
+      <%- include('_avatar', { look: meRow.look, initials: meRow.student.initials, size: 'lg', animate: true }) %>
       <div class="lb-me-body">
         <div class="lb-me-top"><strong><%= meRow.rank ? meRow.rank + '-р байр' : 'Байргүй' %></strong><span class="muted small"> / <%= ranked.length %> оролцогч</span></div>
         <span class="tier-badge"><%= meRow.tier.icon %> <%= meRow.tier.name %></span>
@@ -50,7 +50,7 @@
         <% if (r) { %>
           <div class="podium-col place-<%= place %> tier-<%= r.tier.key %> <%= String(r.student._id) === String(user._id) ? 'is-me' : '' %>">
             <% if (place === 1) { %><span class="podium-crown" aria-hidden="true">👑</span><% } %>
-            <%- include('_avatar', { look: r.look, initials: r.student.initials, size: 'xl' }) %>
+            <%- include('_avatar', { look: r.look, initials: r.student.initials, size: 'xl', animate: true }) %>
             <strong class="podium-name <%= r.look.color ? 'name-' + r.look.color : '' %>"><%= r.student.fullName %></strong>
             <span class="muted small"><%= r.student.className %></span>
             <span class="tier-badge"><%= r.tier.icon %> <%= r.tier.name %></span>

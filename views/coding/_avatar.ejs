@@ -1,3 +1,3 @@
-<%# Аватар: look = { avatar: emoji|null, color: key|null }, initials, size = '' | 'lg' | 'xl' %>
+<%# Аватар: look = { avatar: emoji|null, anim, color }, initials, size = '' | 'lg' | 'xl', animate = үргэлж хөдөлнө (эс бол hover дээр) %>
 <% const lk = locals.look || {}; %>
-<span class="avatar <%= locals.size ? 'avatar-' + size : '' %> <%= lk.color ? 'av-color-' + lk.color : '' %> <%= lk.avatar ? 'avatar-emoji' : '' %>" aria-hidden="true"><%= lk.avatar || locals.initials || '?' %></span>
+<span class="avatar <%= locals.size ? 'avatar-' + size : '' %> <%= lk.color ? 'av-color-' + lk.color : '' %> <%= lk.avatar ? 'avatar-emoji' : '' %> <%= locals.animate ? 'is-animated' : '' %>" aria-hidden="true"><% if (lk.avatar) { %><span class="av-face anim-<%= lk.anim || 'none' %>"><%= lk.avatar %></span><% } else { %><%= locals.initials || '?' %><% } %></span>
