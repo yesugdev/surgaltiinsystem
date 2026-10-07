@@ -52,12 +52,23 @@ async function bestScores(problemIds, userFilter = {}) {
 }
 
 // ---------------- Жагсаалт ----------------
+const PAGE_SIZE = 20;
+
+/** Жагсаалтыг хуудаслана (?page=N); хэтэрсэн дугаарыг хамгийн сүүлийн хуудас руу */
+function paginate(list, pageParam) {
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const page = Math.min(Math.max(parseInt(pageParam, 10) || 1, 1), pages);
+  return { items: list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), page, pages, total: list.length, from: (page - 1) * PAGE_SIZE + 1 };
+}
+
 router.get('/', async (req, res) => {
   const u = req.user;
   if (isStaff(u)) {
-    const problems = await Problem.find(problemOwnerFilter(u)).select('-statement -refCode -generatorCode').lean();
+    const all = await Problem.find(problemOwnerFilter(u)).select('-statement -refCode -generatorCode').lean();
     // №1 эхэнд; дугааргүй (ноорог) нь сүүлд, үүссэн дарааллаар
-    problems.sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity) || a.createdAt - b.createdAt);
+    all.sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity) || a.createdAt - b.createdAt);
+    const pager = paginate(all, req.query.page);
+    const problems = pager.items;
     const ids = problems.map((p) => p._id);
     const [creators, stats, health] = await Promise.all([
       User.find({ _id: { $in: problems.map((p) => p.createdBy) } }).select('fullName').lean(),
@@ -77,13 +88,15 @@ router.get('/', async (req, res) => {
       p.solverCount = s ? s.solvers.filter(Boolean).length : 0;
       p.phase = phase(p);
     }
-    return res.render('coding/index-staff', { title: 'Өрсөлдөөнт Coding', problems, health });
+    return res.render('coding/index-staff', { title: 'Өрсөлдөөнт Coding', problems, health, pager });
   }
 
-  // Сурагч: бүх нийтлэгдсэн бодлого + өөрийн зэрэглэл, байр
-  const problems = await Problem.find({ published: true }).select('number title startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
-  const mine = await bestScores(problems.map((p) => p._id), { user: u._id });
+  // Сурагч: бүх нийтлэгдсэн бодлого (хуудаслан) + өөрийн зэрэглэл, байр
+  const all = await Problem.find({ published: true }).select('number title startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
+  const mine = await bestScores(all.map((p) => p._id), { user: u._id });
   const mineMap = new Map(mine.map((m) => [String(m._id.p), m]));
+  const pager = paginate(all, req.query.page);
+  const problems = pager.items;
   for (const p of problems) {
     p.phase = phase(p);
     p.mine = mineMap.get(String(p._id)) || null;
@@ -94,6 +107,7 @@ router.get('/', async (req, res) => {
   res.render('coding/index-student', {
     title: 'Өрсөлдөөнт Coding',
     problems,
+    pager,
     me: {
       total: myTotal,
       tier: tierFor(rankPoints(meRow ? meRow.solved : 0)), // rank: бүтэн бодсон бодлого бүр 25

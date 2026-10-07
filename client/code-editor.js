@@ -2,7 +2,7 @@
  * Кодын засварлагч (CodeMirror 6): <textarea data-code-editor> → мөрийн дугаар, өнгө, автомат догол.
  *   data-language="python|cpp"           — тогтмол хэл
  *   data-language-select="#language"     — хэлийг <select>-ээс (cpp17 / py38 / py3)
- *   data-draft-key="<problemId>"          — хэл бүрээр ноорог хадгална (localStorage), хоосон бол загвар код
+ *   data-draft-key="<userId>:<problemId>" — хэл бүрээр ноорог хадгална (localStorage, хэрэглэгч бүрт тусдаа), хоосон бол загвар код
  * Эх файл: client/code-editor.js → `npm run build:client` → public/js/code-editor.js
  */
 import { EditorView, basicSetup } from 'codemirror';

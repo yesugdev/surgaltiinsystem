@@ -73,10 +73,18 @@ router.post('/login', async (req, res, next) => {
   });
 });
 
+// Гарах: нэг компьютер дээр олон сурагч ээлжилдэг тул энэ сайтын cookie, cache, хадгалсан код (localStorage)-ыг
+// бүгдийг цэвэрлэнэ. Clear-Site-Data-г redirect биш 200 хариунд илгээх нь хөтчүүдэд найдвартай; дэмждэггүй
+// хөтчид (хуучин Safari) JS-ээр мөн цэвэрлэнэ.
 router.post('/logout', (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
-    res.redirect('/login');
+    res.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+    res.set('Cache-Control', 'no-store');
+    res.type('html').send(`<!doctype html><html lang="mn"><head><meta charset="utf-8"><title>Гарч байна…</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="1;url=/login"></head>
+<body style="font-family:system-ui,sans-serif;display:grid;place-items:center;height:100vh;margin:0;color:#6b7384">Гарч байна…
+<script>try{localStorage.clear()}catch(e){}try{sessionStorage.clear()}catch(e){}location.replace('/login')</script></body></html>`);
   });
 });
 

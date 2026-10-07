@@ -723,6 +723,13 @@ a.problem-row:hover .problem-title { color: var(--primary); }
 .problem-row.is-solved .problem-num { background: var(--green); color: #fff; }
 .problem-row.is-tried .problem-num { background: var(--amber-soft); color: var(--amber); }
 .problem-row.is-upcoming { opacity: 0.6; }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 20px 6px; border-top: 1px solid var(--border); }
+.pager-links { display: flex; gap: 4px; flex-wrap: wrap; }
+.pager-btn { display: inline-grid; place-items: center; min-width: 36px; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-weight: 600; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+.pager-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pager-btn.disabled { opacity: 0.4; }
+.pager-gap { display: inline-grid; place-items: center; min-width: 20px; color: var(--muted); }
 .badge-outline { background: transparent; border: 1px solid #cbd8fb; color: var(--primary); }
 @media (max-width: 640px) {
   .problem-list-head { display: none; }
@@ -860,7 +867,7 @@ a.problem-row:hover .problem-title { color: var(--primary); }
 .player { display: flex; align-items: center; gap: 10px; min-width: 180px; }
 .player-name { font-weight: 600; }
 .player-meta { font-size: 0.78rem; }
-.total-cell { min-width: 120px; }
+.total-cell, .total-col { width: 38%; min-width: 140px; }
 .total-cell strong { font-variant-numeric: tabular-nums; }
 .total-bar { height: 6px; background: #eef0f4; border-radius: 999px; overflow: hidden; margin-top: 4px; }
 .total-bar span { display: block; height: 100%; background: var(--tier, var(--primary)); border-radius: inherit; }
