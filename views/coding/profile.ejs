@@ -3,7 +3,7 @@
 
 <section class="profile-hero tier-<%= tier.key %>">
   <div class="profile-preview">
-    <%- include('_avatar', { look: look, initials: initials, size: 'xl' }) %>
+    <%- include('_avatar', { look: look, initials: initials, size: 'xl', animate: true }) %>
     <div>
       <h1 class="<%= look.color ? 'name-' + look.color : '' %>"><%= user.fullName %></h1>
       <span class="tier-badge"><%= tier.icon %> <%= tier.name %> · <%= tier.points %> rank оноо</span>
@@ -23,8 +23,8 @@
       </label>
       <% AVATARS.forEach(function (a) { const locked = a.level > tier.level; %>
         <label class="cosmetic <%= locked ? 'is-locked' : '' %> <%= selectedAvatar === a.key ? 'is-selected' : '' %>" title="<%= locked ? tierName(a.level) + ' болж нээнэ' : '' %>">
-          <input type="radio" name="avatar" value="<%= a.key %>" <%= selectedAvatar === a.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
-          <span class="cosmetic-face"><%= a.icon %></span>
+          <input type="radio" name="avatar" value="<%= a.key %>" data-anim="<%= a.anim %>" <%= selectedAvatar === a.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
+          <span class="cosmetic-face"><span class="av-face anim-<%= a.anim %>"><%= a.icon %></span></span>
           <small><%= locked ? '🔒 ' + tierName(a.level) : ' ' %></small>
         </label>
       <% }) %>
@@ -60,8 +60,14 @@
         var group = document.querySelectorAll('input[name="' + input.name + '"]');
         group.forEach(function (g) { g.closest('.cosmetic').classList.toggle('is-selected', g.checked); });
         if (input.name === 'avatar') {
-          var face = input.closest('.cosmetic').querySelector('.cosmetic-face').textContent;
-          preview.textContent = input.value ? face : initials;
+          var face = input.closest('.cosmetic').querySelector('.cosmetic-face').textContent.trim();
+          preview.textContent = '';
+          if (input.value) {
+            var span = document.createElement('span');
+            span.className = 'av-face anim-' + (input.dataset.anim || 'none');
+            span.textContent = face;
+            preview.appendChild(span);
+          } else preview.textContent = initials;
           preview.classList.toggle('avatar-emoji', !!input.value);
         } else {
           preview.className = preview.className.replace(/\bav-color-\S+/g, '').trim();

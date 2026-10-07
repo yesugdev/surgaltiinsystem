@@ -2,22 +2,23 @@
 // level = TIERS-ийн дугаар (1 Шинэ тоглогч … 8 Домог)
 const { TIERS } = require('./coding-ranks');
 
+// anim = CSS хөдөлгөөн (public/style.css «Хөдөлгөөнт аватар»); дээд зэрэглэлийнх илүү гоё
 const AVATARS = [
-  { key: 'cat', icon: '🐱', level: 1 },
-  { key: 'dog', icon: '🐶', level: 1 },
-  { key: 'frog', icon: '🐸', level: 1 },
-  { key: 'fox', icon: '🦊', level: 2 },
-  { key: 'panda', icon: '🐼', level: 2 },
-  { key: 'owl', icon: '🦉', level: 3 },
-  { key: 'robot', icon: '🤖', level: 3 },
-  { key: 'alien', icon: '👽', level: 4 },
-  { key: 'ninja', icon: '🥷', level: 4 },
-  { key: 'wizard', icon: '🧙', level: 5 },
-  { key: 'rocket', icon: '🚀', level: 5 },
-  { key: 'unicorn', icon: '🦄', level: 6 },
-  { key: 'crown', icon: '👑', level: 6 },
-  { key: 'phoenix', icon: '🔥', level: 7 },
-  { key: 'dragon', icon: '🐉', level: 8 },
+  { key: 'cat', icon: '🐱', level: 1, anim: 'wiggle' },
+  { key: 'dog', icon: '🐶', level: 1, anim: 'bounce' },
+  { key: 'frog', icon: '🐸', level: 1, anim: 'hop' },
+  { key: 'fox', icon: '🦊', level: 2, anim: 'tilt' },
+  { key: 'panda', icon: '🐼', level: 2, anim: 'sway' },
+  { key: 'owl', icon: '🦉', level: 3, anim: 'blink' },
+  { key: 'robot', icon: '🤖', level: 3, anim: 'bob' },
+  { key: 'alien', icon: '👽', level: 4, anim: 'float' },
+  { key: 'ninja', icon: '🥷', level: 4, anim: 'dash' },
+  { key: 'wizard', icon: '🧙', level: 5, anim: 'sparkle' },
+  { key: 'rocket', icon: '🚀', level: 5, anim: 'launch' },
+  { key: 'unicorn', icon: '🦄', level: 6, anim: 'gallop' },
+  { key: 'crown', icon: '👑', level: 6, anim: 'shine' },
+  { key: 'phoenix', icon: '🔥', level: 7, anim: 'flicker' },
+  { key: 'dragon', icon: '🐉', level: 8, anim: 'breathe' },
 ];
 
 // Аватарын дэвсгэр, нэрийн өнгө. 'tier' = зэрэглэлийн өөрийн өнгө (анхдагч)
@@ -41,8 +42,10 @@ const findColor = (key) => COLORS.find((c) => c.key === key) || null;
 function cosmeticsFor(user, tier) {
   const a = findAvatar(user.codingAvatar);
   const c = findColor(user.codingColor);
+  const ok = a && a.level <= tier.level;
   return {
-    avatar: a && a.level <= tier.level ? a.icon : null,
+    avatar: ok ? a.icon : null,
+    anim: ok ? a.anim : null,
     color: c && c.level <= tier.level && c.key !== 'tier' ? c.key : null,
   };
 }

@@ -868,6 +868,44 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
 .cosmetic-swatch { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
 .swatch-tier { background: conic-gradient(#6b7384, #1c8b52, #0e8a9a, #2f5bea, #7a3fe0, #c27a00, #e0531f, #c8203f, #6b7384); }
 
+/* ---------- Хөдөлгөөнт аватар ----------
+   Өөрийн том аватар (.is-animated) үргэлж, бусад нь hover дээр хөдөлнө. Профайлд hover/сонгосон үед. */
+.av-face { display: inline-block; line-height: 1; transform-origin: 50% 70%; }
+.avatar-emoji, .cosmetic-face { overflow: hidden; }
+.is-animated .av-face, .avatar:hover .av-face, .player:hover .av-face,
+.cosmetic:not(.is-locked):hover .av-face, .cosmetic.is-selected .av-face { animation-duration: var(--d, 1.6s); animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+.is-animated .anim-wiggle, .avatar:hover .anim-wiggle, .player:hover .anim-wiggle, .cosmetic:not(.is-locked):hover .anim-wiggle, .cosmetic.is-selected .anim-wiggle { animation-name: av-wiggle; }
+.is-animated .anim-bounce, .avatar:hover .anim-bounce, .player:hover .anim-bounce, .cosmetic:not(.is-locked):hover .anim-bounce, .cosmetic.is-selected .anim-bounce { animation-name: av-bounce; --d: 1s; }
+.is-animated .anim-hop, .avatar:hover .anim-hop, .player:hover .anim-hop, .cosmetic:not(.is-locked):hover .anim-hop, .cosmetic.is-selected .anim-hop { animation-name: av-hop; --d: 1.3s; }
+.is-animated .anim-tilt, .avatar:hover .anim-tilt, .player:hover .anim-tilt, .cosmetic:not(.is-locked):hover .anim-tilt, .cosmetic.is-selected .anim-tilt { animation-name: av-tilt; --d: 2.2s; }
+.is-animated .anim-sway, .avatar:hover .anim-sway, .player:hover .anim-sway, .cosmetic:not(.is-locked):hover .anim-sway, .cosmetic.is-selected .anim-sway { animation-name: av-sway; --d: 2.4s; }
+.is-animated .anim-blink, .avatar:hover .anim-blink, .player:hover .anim-blink, .cosmetic:not(.is-locked):hover .anim-blink, .cosmetic.is-selected .anim-blink { animation-name: av-blink; --d: 3s; }
+.is-animated .anim-bob, .avatar:hover .anim-bob, .player:hover .anim-bob, .cosmetic:not(.is-locked):hover .anim-bob, .cosmetic.is-selected .anim-bob { animation-name: av-bob; --d: 1.2s; animation-timing-function: steps(4, jump-none); }
+.is-animated .anim-float, .avatar:hover .anim-float, .player:hover .anim-float, .cosmetic:not(.is-locked):hover .anim-float, .cosmetic.is-selected .anim-float { animation-name: av-float; --d: 3s; }
+.is-animated .anim-dash, .avatar:hover .anim-dash, .player:hover .anim-dash, .cosmetic:not(.is-locked):hover .anim-dash, .cosmetic.is-selected .anim-dash { animation-name: av-dash; --d: 2s; }
+.is-animated .anim-sparkle, .avatar:hover .anim-sparkle, .player:hover .anim-sparkle, .cosmetic:not(.is-locked):hover .anim-sparkle, .cosmetic.is-selected .anim-sparkle { animation-name: av-sparkle; --d: 2s; }
+.is-animated .anim-launch, .avatar:hover .anim-launch, .player:hover .anim-launch, .cosmetic:not(.is-locked):hover .anim-launch, .cosmetic.is-selected .anim-launch { animation-name: av-launch; --d: 1.8s; animation-timing-function: ease-in; }
+.is-animated .anim-gallop, .avatar:hover .anim-gallop, .player:hover .anim-gallop, .cosmetic:not(.is-locked):hover .anim-gallop, .cosmetic.is-selected .anim-gallop { animation-name: av-gallop; --d: 0.9s; }
+.is-animated .anim-shine, .avatar:hover .anim-shine, .player:hover .anim-shine, .cosmetic:not(.is-locked):hover .anim-shine, .cosmetic.is-selected .anim-shine { animation-name: av-shine; --d: 2.2s; }
+.is-animated .anim-flicker, .avatar:hover .anim-flicker, .player:hover .anim-flicker, .cosmetic:not(.is-locked):hover .anim-flicker, .cosmetic.is-selected .anim-flicker { animation-name: av-flicker; --d: 0.8s; }
+.is-animated .anim-breathe, .avatar:hover .anim-breathe, .player:hover .anim-breathe, .cosmetic:not(.is-locked):hover .anim-breathe, .cosmetic.is-selected .anim-breathe { animation-name: av-breathe; --d: 2.6s; }
+@keyframes av-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(4deg); } }
+@keyframes av-bounce { 0%, 100% { transform: translateY(0) scale(1, 1); } 40% { transform: translateY(-18%) scale(0.95, 1.05); } 60% { transform: translateY(0) scale(1.08, 0.92); } }
+@keyframes av-hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-28%) rotate(-8deg); } 45% { transform: translateY(0) scale(1.1, 0.9); } }
+@keyframes av-tilt { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-15deg); } 60% { transform: rotate(8deg); } }
+@keyframes av-sway { 0%, 100% { transform: rotate(-8deg) translateX(-4%); } 50% { transform: rotate(8deg) translateX(4%); } }
+@keyframes av-blink { 0%, 44%, 52%, 100% { transform: scaleY(1); } 48% { transform: scaleY(0.1); } 70% { transform: rotate(-10deg); } 80% { transform: rotate(10deg); } }
+@keyframes av-bob { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-8%) rotate(-5deg); } 75% { transform: translateY(-8%) rotate(5deg); } }
+@keyframes av-float { 0%, 100% { transform: translateY(6%) rotate(-4deg); } 50% { transform: translateY(-12%) rotate(4deg); } }
+@keyframes av-dash { 0%, 60%, 100% { transform: translateX(0) skewX(0); } 70% { transform: translateX(-30%) skewX(12deg); opacity: 0.4; } 80% { transform: translateX(30%) skewX(-12deg); opacity: 0.4; } 90% { transform: translateX(0); opacity: 1; } }
+@keyframes av-sparkle { 0%, 100% { transform: rotate(0) scale(1); filter: drop-shadow(0 0 0 #fff0); } 50% { transform: rotate(-6deg) scale(1.08); filter: drop-shadow(0 0 6px #b388ff); } }
+@keyframes av-launch { 0% { transform: translate(0, 0); opacity: 1; } 55% { transform: translate(40%, -60%); opacity: 0; } 56% { transform: translate(-40%, 60%); opacity: 0; } 100% { transform: translate(0, 0); opacity: 1; } }
+@keyframes av-gallop { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-14%) rotate(-10deg); } 50% { transform: translateY(0) rotate(0); } 75% { transform: translateY(-6%) rotate(6deg); } }
+@keyframes av-shine { 0%, 100% { transform: scale(1) rotate(0); filter: drop-shadow(0 0 0 #ffd70000) brightness(1); } 50% { transform: scale(1.12) rotate(-6deg); filter: drop-shadow(0 0 8px #ffd700) brightness(1.2); } }
+@keyframes av-flicker { 0%, 100% { transform: scale(1, 1) rotate(0); filter: drop-shadow(0 0 4px #ff9800); } 25% { transform: scale(0.94, 1.08) rotate(-3deg); } 50% { transform: scale(1.06, 0.95) rotate(2deg); filter: drop-shadow(0 0 10px #ff5722); } 75% { transform: scale(0.97, 1.05) rotate(-2deg); } }
+@keyframes av-breathe { 0%, 100% { transform: scale(1) rotate(0); filter: drop-shadow(0 0 2px #c8203f); } 50% { transform: scale(1.14) rotate(-5deg); filter: drop-shadow(0 0 12px #ff3d00); } }
+@media (prefers-reduced-motion: reduce) { .av-face { animation: none !important; } }
+
 /* ---------- Баяр: конфетти, зэрэглэл ахисан цонх ---------- */
 .confetti-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
 .rankup-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(15, 20, 40, 0.55); animation: fade-in 0.2s ease; }

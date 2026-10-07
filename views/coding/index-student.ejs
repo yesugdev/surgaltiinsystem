@@ -10,7 +10,7 @@
 <section class="rank-hero tier-<%= me.tier.key %>">
   <div class="rank-main">
     <a class="rank-avatar" href="/coding/profile" title="Аватар солих">
-      <%- include('_avatar', { look: me.look, initials: me.initials, size: 'xl' }) %>
+      <%- include('_avatar', { look: me.look, initials: me.initials, size: 'xl', animate: true }) %>
       <span class="rank-avatar-badge" aria-hidden="true"><%= me.tier.icon %></span>
     </a>
     <div>
