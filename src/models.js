@@ -203,6 +203,8 @@ const problemSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 200 },
     // Бодлогын дугаар: анх нийтлэгдэх үед 1, 2, 3… (дахин ашиглахгүй)
     number: { type: Number, default: null, index: true },
+    // Хүндийн зэрэг: бүтэн бодвол хялбар 25, дунд 50, хүнд 100 оноо (src/coding-ranks.js)
+    difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' },
     subject: { type: Types.ObjectId, ref: 'Subject', default: null, index: true },
     createdBy: { type: Types.ObjectId, ref: 'User', index: true },
     classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },

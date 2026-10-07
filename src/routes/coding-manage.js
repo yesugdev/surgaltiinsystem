@@ -10,6 +10,7 @@ const judge = require('../judge');
 const tests = require('../coding-tests');
 const { buildTestsPrompt, parseAiTests, sameTokens } = require('../coding-prompt');
 const { ensureNumber } = require('../problem-number');
+const { DIFFICULTIES, DEFAULT_DIFFICULTY } = require('../coding-ranks');
 const md = require('../markdown');
 const files = require('../files');
 
@@ -69,6 +70,7 @@ async function parseForm(req) {
       title, subject: null, classIds: [], timeLimitMs, memoryLimitMb, languages, startAt, endAt,
       statement: String(req.body.statement ?? '').slice(0, 200000),
       showStandings: req.body.showStandings === 'on',
+      difficulty: Object.hasOwn(DIFFICULTIES, req.body.difficulty) ? req.body.difficulty : DEFAULT_DIFFICULTY,
     },
   };
 }
@@ -80,12 +82,13 @@ async function renderForm(req, res, { problem, errors = [], status = 200 }) {
     errors,
     statementHtml: md.render(problem.statement || ''),
     LANGUAGES: judge.LANGUAGES,
+    DIFFICULTIES,
   });
 }
 
 router.get('/new', async (req, res) => {
   await renderForm(req, res, {
-    problem: { classIds: [], languages: LANG_KEYS, timeLimitMs: 1000, memoryLimitMb: 256, showStandings: true, statement: STATEMENT_TEMPLATE },
+    problem: { classIds: [], languages: LANG_KEYS, timeLimitMs: 1000, memoryLimitMb: 256, showStandings: true, difficulty: DEFAULT_DIFFICULTY, statement: STATEMENT_TEMPLATE },
   });
 });
 

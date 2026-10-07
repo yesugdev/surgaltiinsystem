@@ -23,6 +23,21 @@
   </section>
 
   <section class="card form">
+    <h2>Хүндийн зэрэг</h2>
+    <p class="muted small">Сурагч бүтэн бодвол авах оноо. Rank, онооны самбарт үүгээр тооцно.</p>
+    <div class="diff-picker" role="radiogroup" aria-label="Хүндийн зэрэг">
+      <% Object.values(DIFFICULTIES).forEach(function (d) { %>
+        <label class="diff-option diff-<%= d.key %>">
+          <input type="radio" name="difficulty" value="<%= d.key %>" <%= (problem.difficulty || 'easy') === d.key ? 'checked' : '' %>>
+          <span class="diff-option-icon"><%= d.icon %></span>
+          <strong><%= d.label %></strong>
+          <span class="diff-option-pts"><%= d.points %> оноо</span>
+        </label>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="card form">
     <h2>Шалгах тохиргоо</h2>
     <div class="row">
       <label>Хугацааны хязгаар (мс) <input type="number" name="timeLimitMs" min="100" max="10000" step="100" value="<%= problem.timeLimitMs %>" required>

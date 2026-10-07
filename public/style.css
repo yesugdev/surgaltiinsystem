@@ -723,6 +723,21 @@ a.problem-row:hover .problem-title { color: var(--primary); }
 .problem-row.is-solved .problem-num { background: var(--green); color: #fff; }
 .problem-row.is-tried .problem-num { background: var(--amber-soft); color: var(--amber); }
 .problem-row.is-upcoming { opacity: 0.6; }
+/* Хүндийн зэрэг */
+.diff-easy { --diff: #1c8b52; --diff-soft: #e3f5ea; }
+.diff-medium { --diff: #b07800; --diff-soft: #fdf1d9; }
+.diff-hard { --diff: #c93434; --diff-soft: #fde6e6; }
+.diff-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 999px; background: var(--diff-soft); color: var(--diff); font-weight: 700; font-size: 0.75rem; white-space: nowrap; }
+.limits .diff-chip { font-size: 0.82rem; padding: 2px 10px; }
+.diff-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.diff-option { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 10px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; text-align: center; transition: border-color 0.12s, background 0.12s; }
+.diff-option input { position: absolute; opacity: 0; pointer-events: none; }
+.diff-option:hover { border-color: var(--diff); }
+.diff-option:has(input:checked) { border-color: var(--diff); background: var(--diff-soft); }
+.diff-option:has(input:focus-visible) { outline: 2px solid var(--diff); outline-offset: 2px; }
+.diff-option-icon { font-size: 1.4rem; }
+.diff-option-pts { color: var(--diff); font-weight: 700; font-size: 0.9rem; }
+
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 20px 6px; border-top: 1px solid var(--border); }
 .pager-links { display: flex; gap: 4px; flex-wrap: wrap; }
 .pager-btn { display: inline-grid; place-items: center; min-width: 36px; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-weight: 600; font-size: 0.88rem; font-variant-numeric: tabular-nums; }

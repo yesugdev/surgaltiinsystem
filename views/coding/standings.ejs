@@ -23,7 +23,7 @@
         <span class="tier-badge"><%= meRow.tier.icon %> <%= meRow.tier.name %></span>
         <% if (meRow.tier.next) { %>
           <div class="tier-progress" title="<%= meRow.tier.points %> rank оноо"><span style="width: <%= meRow.tier.progress %>%"></span></div>
-          <span class="small muted"><%= meRow.tier.next.icon %> <%= meRow.tier.next.name %> хүртэл <strong><%= meRow.tier.toNext %></strong> rank оноо (<%= meRow.tier.solvesToNext %> бодлого)</span>
+          <span class="small muted"><%= meRow.tier.next.icon %> <%= meRow.tier.next.name %> хүртэл <strong><%= meRow.tier.toNext %></strong> rank оноо (хүнд <%= meRow.tier.hardToNext %> эсвэл хялбар <%= meRow.tier.solvesToNext %> бодлого)</span>
         <% } else { %><span class="small">Хамгийн дээд зэрэглэл! 🎉</span><% } %>
       </div>
     </div>
@@ -95,10 +95,10 @@
 
 <section class="card tier-legend">
   <h2>Зэрэглэлүүд</h2>
-  <p class="muted small">Бодлогыг <strong>бүтэн бодох</strong> (100/100) бүрт <strong><%= POINTS_PER_SOLVE %> rank оноо</strong> авч зэрэглэл ахина. Самбарын «Нийт»: бодлого бүр 25 оноо, хэсэгчилсэн нь хувиар (60% → 15), бүх бодлогын хамгийн сайн онооны нийлбэр.</p>
+  <p class="muted small">Бодлогыг <strong>бүтэн бодох</strong> (100/100) бүрт хүндийн зэргээр rank оноо авна: <span class="diff-chip diff-easy">🟢 Хялбар 25</span> <span class="diff-chip diff-medium">🟡 Дунд 50</span> <span class="diff-chip diff-hard">🔴 Хүнд 100</span>. Самбарын «Нийт оноо» нь мөн эдгээр оноогоор, хэсэгчилсэн нь хувиар (хүнд бодлогын 60% → 60).</p>
   <div class="tier-list">
     <% TIERS.forEach(function (t) { %>
-      <span class="tier-badge tier-<%= t.key %> <%= meRow && meRow.tier.key === t.key ? 'is-current' : '' %>"><%= t.icon %> <%= t.name %> <small><%= t.min %>+ · <%= t.min / POINTS_PER_SOLVE %> бодлого</small></span>
+      <span class="tier-badge tier-<%= t.key %> <%= meRow && meRow.tier.key === t.key ? 'is-current' : '' %>"><%= t.icon %> <%= t.name %> <small><%= t.min %>+ оноо</small></span>
     <% }) %>
   </div>
 </section>

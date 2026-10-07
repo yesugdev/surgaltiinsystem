@@ -52,8 +52,8 @@ async function main() {
   app.set('views', path.join(__dirname, '..', 'views'));
   if (process.env.TRUST_PROXY) app.set('trust proxy', 1);
 
-  // codingPts: Өрсөлдөөнт Coding-ийн 0–100 хувийг 25 онооны хэмжүүрээр харуулна
-  Object.assign(app.locals, helpers, { fmtSize: files.fmtSize, viewKind: files.viewKind, codingPts: require('./coding-ranks').toPoints });
+  // codingPts: Өрсөлдөөнт Coding-ийн 0–100 хувийг бодлогын хүндийн зэргийн оноогоор; codingDiff: зэргийн мэдээлэл
+  Object.assign(app.locals, helpers, { fmtSize: files.fmtSize, viewKind: files.viewKind, codingPts: require('./coding-ranks').toPoints, codingDiff: require('./coding-ranks').difficultyOf });
   app.disable('x-powered-by');
   // HTML, CSS, JS хариуг gzip-ээр шахна (3D дэвсгэрийн скрипт 535KB → ~140KB)
   app.use(compression());
