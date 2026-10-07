@@ -32,7 +32,7 @@
         <tr>
           <td class="num"><% if (p.number) { %><span class="problem-num problem-num-sm"><%= p.number %></span><% } else { %><span class="muted small" title="Нийтлэхэд дугаар олгоно">—</span><% } %></td>
           <td><a href="/coding/manage/<%= p._id %>"><strong><%= p.title %></strong></a>
-            <div class="muted small"><%= p.timeLimitMs %> мс<% if (user.role === 'admin') { %> · <%= p.creatorName %><% } %>
+            <div class="muted small"><% const d = codingDiff(p.difficulty); %><span class="diff-chip diff-<%= d.key %>"><%= d.icon %> <%= d.label %> · <%= d.points %></span> <%= p.timeLimitMs %> мс<% if (user.role === 'admin') { %> · <%= p.creatorName %><% } %>
               <% if (p.endAt) { %> · дуусах: <%= fmtDate(p.endAt) %><% } %></div></td>
           <td class="num"><%= p.testCount %><% if (!p.testCount) { %> <span class="badge badge-amber">алга</span><% } %></td>
           <td class="num"><%= p.userCount %></td>

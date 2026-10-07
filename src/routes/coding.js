@@ -9,7 +9,7 @@ const { problemOwnerFilter } = require('../access');
 const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
-const { TIERS, tierFor, rankPoints, toPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
+const { TIERS, DIFFICULTIES, tierFor, solvePoints, toPoints, POINTS_PER_SOLVE } = require('../coding-ranks');
 
 const router = express.Router();
 router.use(requireRole());
@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
   }
 
   // Сурагч: бүх нийтлэгдсэн бодлого (хуудаслан) + өөрийн зэрэглэл, байр
-  const all = await Problem.find({ published: true }).select('number title startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
+  const all = await Problem.find({ published: true }).select('number title difficulty startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
   const mine = await bestScores(all.map((p) => p._id), { user: u._id });
   const mineMap = new Map(mine.map((m) => [String(m._id.p), m]));
   const pager = paginate(all, req.query.page);
@@ -110,13 +110,14 @@ router.get('/', async (req, res) => {
     pager,
     me: {
       total: myTotal,
-      tier: tierFor(rankPoints(meRow ? meRow.solved : 0)), // rank: бүтэн бодсон бодлого бүр 25
+      tier: meRow ? meRow.tier : tierFor(0), // rank: бүтэн бодсон бодлогын хүндийн зэргийн оноо
       rank: meRow?.rank || null,
       players: rows.filter((r) => r.total > 0).length,
       solved: mine.filter((m) => m.best === 100).length,
     },
     top: rows.filter((r) => r.rank).slice(0, 3),
     TIERS,
+    DIFFICULTIES,
     POINTS_PER_SOLVE,
   });
 });
@@ -124,7 +125,7 @@ router.get('/', async (req, res) => {
 /** Нийт самбарт тооцох бодлогууд: нийтлэгдсэн, эхэлсэн (сурагчид showStandings-тай нь) */
 async function standingsProblems(staff) {
   const list = await Problem.find(staff ? { published: true } : { published: true, showStandings: true })
-    .select('number title startAt endAt').sort({ number: 1, createdAt: 1 }).lean();
+    .select('number title difficulty startAt endAt').sort({ number: 1, createdAt: 1 }).lean();
   return list.filter((p) => phase(p) !== 'upcoming');
 }
 
@@ -154,14 +155,16 @@ async function buildStandings(problems, { classId = null } = {}) {
   const map = new Map(best.map((b) => [String(b._id.p) + ':' + String(b._id.u), b]));
   const rows = students.map((s) => {
     const cells = problems.map((p) => map.get(String(p._id) + ':' + String(s._id)) || null);
-    // Нийт оноо: бодлого бүр 25 (хэсэгчилсэн нь хувиар), эрэмбэ үүгээр
-    const total = Math.round(cells.reduce((sum, c) => sum + (c ? toPoints(c.best) : 0), 0) * 10) / 10;
+    // Нийт оноо: хүндийн зэргийн оноогоор (хэсэгчилсэн нь хувиар), эрэмбэ үүгээр
+    const total = Math.round(cells.reduce((sum, c, i) => sum + (c ? toPoints(c.best, problems[i].difficulty) : 0), 0) * 10) / 10;
     const solved = cells.filter((c) => c && c.best === 100).length;
+    // Rank оноо: зөвхөн бүтэн бодсон бодлогын хүндийн зэргийн оноо
+    const rankPts = cells.reduce((sum, c, i) => sum + (c && c.best === 100 ? solvePoints(problems[i].difficulty) : 0), 0);
     const last = cells.reduce((m, c) => (c && c.best > 0 && c.at > m ? c.at : m), new Date(0));
     return {
       student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
       cells, total, solved, last,
-      tier: tierFor(rankPoints(solved)),
+      tier: tierFor(rankPts),
       attempts: cells.reduce((n, c) => n + (c ? c.attempts : 0), 0),
     };
   });
@@ -200,6 +203,7 @@ router.get('/standings', async (req, res) => {
     problems,
     rows: await buildStandings(problems, { classId }),
     TIERS,
+    DIFFICULTIES,
     POINTS_PER_SOLVE,
     classes,
     classId: classId ? String(classId) : '',
@@ -237,7 +241,7 @@ router.get('/submissions/:sid/status', loadSubmission, async (req, res) => {
   const ctx = await resultContext(sub, req.problem);
   res.render('coding/_result', { ...ctx, compact: req.query.compact === '1' }, (err, html) => {
     if (err) return res.status(500).json({ error: 'render' });
-    res.json({ status: sub.status, verdict: sub.verdict, score: toPoints(sub.score), html });
+    res.json({ status: sub.status, verdict: sub.verdict, score: toPoints(sub.score, req.problem.difficulty), html });
   });
 });
 
@@ -310,6 +314,7 @@ router.get('/:id/standings', loadProblem, async (req, res) => {
     problems: [p],
     rows: await attachOverallTier(await buildStandings([p], { classId })),
     TIERS,
+    DIFFICULTIES,
     POINTS_PER_SOLVE,
     classes,
     classId: classId ? String(classId) : '',
