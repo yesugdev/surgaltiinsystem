@@ -2,24 +2,36 @@
 // level = TIERS-ийн дугаар (1 Шинэ тоглогч … 8 Домог)
 const { TIERS } = require('./coding-ranks');
 
-// anim = CSS хөдөлгөөн (public/style.css «Хөдөлгөөнт аватар»); дээд зэрэглэлийнх илүү гоё
+// Хөдөлгөөнт зураг: Google Noto Animated Emoji (CC BY 4.0) → public/img/avatars/<key>.webp (160px).
+// icon = зураг ачаалагдаагүй / «хөдөлгөөн багасгах» үед харуулах emoji, anim = түүний CSS хөдөлгөөн.
+// Зэрэглэл ахих тусам илүү гайхалтай аватар нээгдэнэ.
 const AVATARS = [
+  { key: 'hatch', icon: '🐣', level: 1, anim: 'hop' },
   { key: 'cat', icon: '🐱', level: 1, anim: 'wiggle' },
-  { key: 'dog', icon: '🐶', level: 1, anim: 'bounce' },
   { key: 'frog', icon: '🐸', level: 1, anim: 'hop' },
   { key: 'fox', icon: '🦊', level: 2, anim: 'tilt' },
-  { key: 'panda', icon: '🐼', level: 2, anim: 'sway' },
+  { key: 'penguin', icon: '🐧', level: 2, anim: 'sway' },
+  { key: 'monkey', icon: '🙈', level: 2, anim: 'wiggle' },
   { key: 'owl', icon: '🦉', level: 3, anim: 'blink' },
-  { key: 'robot', icon: '🤖', level: 3, anim: 'bob' },
-  { key: 'alien', icon: '👽', level: 4, anim: 'float' },
-  { key: 'ninja', icon: '🥷', level: 4, anim: 'dash' },
-  { key: 'wizard', icon: '🧙', level: 5, anim: 'sparkle' },
+  { key: 'octopus', icon: '🐙', level: 3, anim: 'float' },
+  { key: 'butterfly', icon: '🦋', level: 3, anim: 'float' },
+  { key: 'robot', icon: '🤖', level: 4, anim: 'bob' },
+  { key: 'invader', icon: '👾', level: 4, anim: 'bob' },
+  { key: 'ghost', icon: '👻', level: 4, anim: 'float' },
   { key: 'rocket', icon: '🚀', level: 5, anim: 'launch' },
+  { key: 'shark', icon: '🦈', level: 5, anim: 'sway' },
+  { key: 'mindblown', icon: '🤯', level: 5, anim: 'shine' },
   { key: 'unicorn', icon: '🦄', level: 6, anim: 'gallop' },
+  { key: 'lion', icon: '🦁', level: 6, anim: 'shine' },
   { key: 'crown', icon: '👑', level: 6, anim: 'shine' },
-  { key: 'phoenix', icon: '🔥', level: 7, anim: 'flicker' },
+  { key: 'trex', icon: '🦖', level: 7, anim: 'gallop' },
+  { key: 'comet', icon: '☄️', level: 7, anim: 'launch' },
+  { key: 'phoenix', icon: '🐦‍🔥', level: 7, anim: 'flicker' },
   { key: 'dragon', icon: '🐉', level: 8, anim: 'breathe' },
+  { key: 'volcano', icon: '🌋', level: 8, anim: 'flicker' },
+  { key: 'planet', icon: '🪐', level: 8, anim: 'float' },
 ];
+const avatarImg = (key) => `/img/avatars/${key}.webp`;
 
 // Аватарын дэвсгэр, нэрийн өнгө. 'tier' = зэрэглэлийн өөрийн өнгө (анхдагч)
 const COLORS = [
@@ -45,6 +57,7 @@ function cosmeticsFor(user, tier) {
   const ok = a && a.level <= tier.level;
   return {
     avatar: ok ? a.icon : null,
+    img: ok ? avatarImg(a.key) : null,
     anim: ok ? a.anim : null,
     color: c && c.level <= tier.level && c.key !== 'tier' ? c.key : null,
   };
@@ -56,4 +69,4 @@ function unlockedBetween(fromLevel, toLevel) {
   return { avatars: AVATARS.filter(inRange), colors: COLORS.filter(inRange) };
 }
 
-module.exports = { AVATARS, COLORS, tierName, findAvatar, findColor, cosmeticsFor, unlockedBetween };
+module.exports = { AVATARS, COLORS, avatarImg, tierName, findAvatar, findColor, cosmeticsFor, unlockedBetween };

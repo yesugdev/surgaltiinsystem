@@ -24,7 +24,7 @@
       <% AVATARS.forEach(function (a) { const locked = a.level > tier.level; %>
         <label class="cosmetic <%= locked ? 'is-locked' : '' %> <%= selectedAvatar === a.key ? 'is-selected' : '' %>" title="<%= locked ? tierName(a.level) + ' болж нээнэ' : '' %>">
           <input type="radio" name="avatar" value="<%= a.key %>" data-anim="<%= a.anim %>" <%= selectedAvatar === a.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
-          <span class="cosmetic-face"><span class="av-face anim-<%= a.anim %>"><%= a.icon %></span></span>
+          <span class="cosmetic-face"><% if (!locked) { %><img class="av-img" src="<%= avatarImg(a.key) %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><% } %><span class="av-face anim-<%= a.anim %>"><%= a.icon %></span></span>
           <small><%= locked ? '🔒 ' + tierName(a.level) : ' ' %></small>
         </label>
       <% }) %>
@@ -60,9 +60,15 @@
         var group = document.querySelectorAll('input[name="' + input.name + '"]');
         group.forEach(function (g) { g.closest('.cosmetic').classList.toggle('is-selected', g.checked); });
         if (input.name === 'avatar') {
-          var face = input.closest('.cosmetic').querySelector('.cosmetic-face').textContent.trim();
+          var face = input.closest('.cosmetic').querySelector('.av-face, .cosmetic-initials').textContent.trim();
           preview.textContent = '';
           if (input.value) {
+            var img = document.createElement('img');
+            img.className = 'av-img';
+            img.src = '/img/avatars/' + input.value + '.webp';
+            img.alt = '';
+            img.onerror = function () { img.remove(); };
+            preview.appendChild(img);
             var span = document.createElement('span');
             span.className = 'av-face anim-' + (input.dataset.anim || 'none');
             span.textContent = face;
@@ -77,4 +83,5 @@
     });
   })();
 </script>
+<p class="muted small attribution">Хөдөлгөөнт аватар: <a href="https://googlefonts.github.io/noto-emoji-animation/" target="_blank" rel="noopener">Google Noto Animated Emoji</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
 <%- include('../partials/footer') %>

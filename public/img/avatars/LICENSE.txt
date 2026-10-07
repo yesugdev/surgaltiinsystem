@@ -1,0 +1,6 @@
+Хөдөлгөөнт аватарууд: Google Noto Animated Emoji
+https://googlefonts.github.io/noto-emoji-animation/
+Лиценз: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+
+Өөрчлөлт: 128x128 болгож багасгасан, 60-аас олон кадртай зургийн кадрыг хоёр тутмаас нэгийг авч шахсан.

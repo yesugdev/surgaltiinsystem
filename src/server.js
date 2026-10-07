@@ -64,6 +64,8 @@ async function main() {
     res.status(ok ? 200 : 503).json({ ok });
   });
 
+  // Хөдөлгөөнт аватар (өөрчлөгддөггүй, ~100KB тус бүр) — хөтөч 30 хоног кэшилнэ
+  app.use('/img/avatars', express.static(path.join(__dirname, '..', 'public', 'img', 'avatars'), { maxAge: '30d', immutable: true }));
   app.use(express.static(path.join(__dirname, '..', 'public')));
   // PowerPoint-ийг хөтөч дотор зурах сан
   app.get('/vendor/pptx-preview.js', (req, res) =>

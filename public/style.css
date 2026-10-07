@@ -872,6 +872,13 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
    Өөрийн том аватар (.is-animated) үргэлж, бусад нь hover дээр хөдөлнө. Профайлд hover/сонгосон үед. */
 .av-face { display: inline-block; line-height: 1; transform-origin: 50% 70%; }
 .avatar-emoji, .cosmetic-face { overflow: hidden; }
+/* Noto Animated Emoji зураг: байвал emoji-г нууна; ачаалагдахгүй бол (onerror → устгана) emoji харагдана */
+.av-img { display: block; width: 84%; height: 84%; object-fit: contain; }
+.av-img + .av-face { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .av-img { display: none; }
+  .av-img + .av-face { display: inline-block; }
+}
 .is-animated .av-face, .avatar:hover .av-face, .player:hover .av-face,
 .cosmetic:not(.is-locked):hover .av-face, .cosmetic.is-selected .av-face { animation-duration: var(--d, 1.6s); animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
 .is-animated .anim-wiggle, .avatar:hover .anim-wiggle, .player:hover .anim-wiggle, .cosmetic:not(.is-locked):hover .anim-wiggle, .cosmetic.is-selected .anim-wiggle { animation-name: av-wiggle; }
