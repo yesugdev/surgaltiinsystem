@@ -1,0 +1,3 @@
+<%# Аватар: look = { avatar: emoji|null, color: key|null }, initials, size = '' | 'lg' | 'xl' %>
+<% const lk = locals.look || {}; %>
+<span class="avatar <%= locals.size ? 'avatar-' + size : '' %> <%= lk.color ? 'av-color-' + lk.color : '' %> <%= lk.avatar ? 'avatar-emoji' : '' %>" aria-hidden="true"><%= lk.avatar || locals.initials || '?' %></span>

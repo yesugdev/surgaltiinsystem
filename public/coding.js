@@ -122,6 +122,11 @@
           var v = resultBox.querySelector('.result-head .verdict');
           if (v) row.children[2].innerHTML = v.outerHTML;
           row.children[3].textContent = d.status === 'done' ? d.score : '—';
+          // 🎉 Бүтэн зөв бол конфетти, зэрэглэл ахисан бол баярын цонх
+          if (window.Celebrate) {
+            if (d.rankUp) window.Celebrate.rankUp(d.rankUp);
+            else if (d.verdict === 'AC') window.Celebrate.confetti();
+          }
         });
       })
       .catch(function (err) {

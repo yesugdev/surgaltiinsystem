@@ -42,6 +42,10 @@ const userSchema = new Schema(
     subjectIds: { type: [{ type: Types.ObjectId, ref: 'Subject' }], default: [], index: true },
     // Багш AI prompt, текстээр олноор оруулах боломжийг ашиглах эрх (админд үргэлж нээлттэй)
     aiEnabled: { type: Boolean, default: false },
+    // Өрсөлдөөнт Coding: зэрэглэлээр нээгддэг аватар, өнгө; хамгийн сүүлд баярлуулсан зэрэглэл
+    codingAvatar: { type: String, default: '' },
+    codingColor: { type: String, default: '' },
+    codingTierSeen: { type: String, default: 'newbie' },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }
