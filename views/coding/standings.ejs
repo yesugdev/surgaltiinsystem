@@ -65,9 +65,7 @@
     <table class="table standings">
       <thead>
         <tr>
-          <th class="num">#</th><th>Сурагч</th>
-          <% if (!single) { problems.forEach(function (p, i) { %><th class="num prob-col" title="<%= p.title %>"><a href="/coding/<%= p._id %>">&numero;<%= p.number || letter(i) %></a></th><% }) } %>
-          <th>Нийт</th><th class="num">Оролдлого</th>
+          <th class="num">#</th><th>Сурагч</th><th class="total-col">Нийт оноо</th>
         </tr>
       </thead>
       <tbody>
@@ -84,23 +82,14 @@
               </div>
             </div>
           </td>
-          <% if (!single) { r.cells.forEach(function (c) { %>
-            <td class="num cell <%= c ? (c.best === 100 ? 'cell-ok' : c.best > 0 ? 'cell-part' : 'cell-bad') : '' %>"><%= c ? (c.best === 100 ? '✓' : codingPts(c.best)) : '' %></td>
-          <% }) } %>
           <td class="total-cell">
-            <strong><%= r.total %></strong>
+            <strong><%= r.total %></strong> <span class="muted small">оноо</span>
             <div class="total-bar"><span style="width: <%= Math.round(r.total / maxTotal * 100) %>%"></span></div>
           </td>
-          <td class="num muted"><%= r.attempts || '' %></td>
         </tr>
       <% }) %>
       </tbody>
     </table>
-    <% if (!single) { %>
-      <p class="muted small prob-legend">
-        <% problems.forEach(function (p, i) { %><span><b>&numero;<%= p.number || letter(i) %></b> <%= p.title %></span><% }) %>
-      </p>
-    <% } %>
   </section>
 <% } %>
 

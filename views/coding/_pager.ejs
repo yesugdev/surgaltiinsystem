@@ -1,0 +1,22 @@
+<%# Хуудаслалт: pager = { page, pages, total, from, items } %>
+<% if (pager.pages > 1) {
+     const link = function (n) { return '?page=' + n; };
+     // Одоогийн хуудасны орчмын дугаарууд + эхний, сүүлийнх
+     const nums = [];
+     for (let n = 1; n <= pager.pages; n++) {
+       if (n === 1 || n === pager.pages || Math.abs(n - pager.page) <= 2) nums.push(n);
+       else if (nums[nums.length - 1] !== '…') nums.push('…');
+     } %>
+  <nav class="pager" aria-label="Хуудас">
+    <span class="muted small"><%= pager.page %>/<%= pager.pages %>-р хуудас · нийт <%= pager.total %> бодлого</span>
+    <div class="pager-links">
+      <% if (pager.page > 1) { %><a class="pager-btn" href="<%= link(pager.page - 1) %>" aria-label="Өмнөх хуудас">‹ Өмнөх</a><% } else { %><span class="pager-btn disabled">‹ Өмнөх</span><% } %>
+      <% nums.forEach(function (n) { %>
+        <% if (n === '…') { %><span class="pager-gap">…</span>
+        <% } else if (n === pager.page) { %><span class="pager-btn active" aria-current="page"><%= n %></span>
+        <% } else { %><a class="pager-btn" href="<%= link(n) %>"><%= n %></a><% } %>
+      <% }) %>
+      <% if (pager.page < pager.pages) { %><a class="pager-btn" href="<%= link(pager.page + 1) %>" aria-label="Дараах хуудас">Дараах ›</a><% } else { %><span class="pager-btn disabled">Дараах ›</span><% } %>
+    </div>
+  </nav>
+<% } %>

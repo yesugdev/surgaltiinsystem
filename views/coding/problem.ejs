@@ -47,7 +47,7 @@
           </label>
           <span class="muted small editor-hint">Ctrl+Enter — илгээх</span>
         </div>
-        <textarea name="code" id="code" rows="16" class="mono code-input" spellcheck="false" data-code-editor data-language-select="#language" data-draft-key="<%= problem._id %>"></textarea>
+        <textarea name="code" id="code" rows="16" class="mono code-input" spellcheck="false" data-code-editor data-language-select="#language" data-draft-key="<%= user._id %>:<%= problem._id %>"></textarea>
         <div class="btn-group submit-row">
           <button class="btn btn-primary" id="submit-btn" <%= phase === 'closed' && !staff ? 'disabled' : '' %>>Илгээх</button>
           <span class="small" id="submit-msg" role="status"></span>
