@@ -1,7 +1,8 @@
 // Хичээлийн хавсралт болон сурагчийн илгээсэн файлыг эрх шалгаж харуулна
 const express = require('express');
 const mammoth = require('mammoth');
-const { Lesson, Problem } = require('../models');
+const { Lesson, Problem, CpTopic } = require('../models');
+const { cpAccess } = require('../cp');
 const { requireRole } = require('../middleware/auth');
 const { isId } = require('../helpers');
 const files = require('../files');
@@ -23,7 +24,12 @@ async function loadFile(req, res, next) {
   const meta = doc?.metadata;
   const u = req.user;
   let ok = false;
-  if (meta?.kind === 'problem' && meta.problemId) {
+  if (meta?.kind === 'cptopic' && meta.topicId) {
+    // Гүнзгий бэлтгэлийн онол доторх зураг
+    const topic = await CpTopic.findById(meta.topicId).select('published').lean();
+    if (!topic) return deny();
+    ok = !!u.codingStaff || (cpAccess(u) && topic.published);
+  } else if (meta?.kind === 'problem' && meta.problemId) {
     // Өрсөлдөөнт Coding бодлогын өгүүлбэр доторх зураг
     // Нийтлэгдсэн бодлого бүх сурагчид нээлттэй; удирдах: админ эсвэл үүсгэсэн мэдээлэл зүйн багш
     const problem = await Problem.findById(meta.problemId).select('createdBy published').lean();

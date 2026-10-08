@@ -29,6 +29,9 @@
         <% if (locals.canCoding) { %>
           <a href="/coding" class="<%= on('/coding') %>">Өрсөлдөөнт Coding</a>
         <% } %>
+        <% if (locals.canCp) { %>
+          <a href="/cp" class="<%= on('/cp') %>">🎯 Гүнзгий бэлтгэл</a>
+        <% } %>
         <% if (u.role === 'admin') { const adminOn = ['/admin/subjects', '/admin/classes', '/admin/users'].some(function (x) { return on(x); }); %>
           <details class="nav-menu">
             <summary class="<%= adminOn ? 'active' : '' %>">Удирдлага</summary>

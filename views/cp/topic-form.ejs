@@ -1,0 +1,48 @@
+<%- include('../partials/header') %>
+<% const isNew = !topic._id; %>
+<a href="<%= isNew ? '/cp' : '/cp/topics/' + topic._id %>" class="back">← <%= isNew ? 'Гүнзгий бэлтгэл' : topic.title %></a>
+<h1><%= isNew ? 'Шинэ сэдэв' : 'Сэдэв засах' %></h1>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+<% } %>
+
+<form method="post" action="<%= isNew ? '/cp/topics' : '/cp/topics/' + topic._id %>" class="form">
+  <section class="card form">
+    <div class="row">
+      <label>Сэдвийн нэр <input name="title" value="<%= topic.title || '' %>" required maxlength="200" placeholder="жишээ: Динамик программчлал"></label>
+      <label>Хэсэг
+        <select name="section">
+          <% SECTIONS.forEach(function (s) { %><option value="<%= s.key %>" <%= topic.section === s.key ? 'selected' : '' %>><%= s.icon %> <%= s.name %></option><% }) %>
+        </select>
+      </label>
+      <label class="cp-icon-field">Дүрс <input name="icon" value="<%= topic.icon || '📘' %>" maxlength="16"></label>
+    </div>
+    <label>Товч тайлбар <input name="summary" value="<%= topic.summary || '' %>" maxlength="500" placeholder="Жагсаалтад харагдана"></label>
+    <label class="check"><input type="checkbox" name="published" <%= topic.published ? 'checked' : '' %>> Сурагчдад харуулах</label>
+  </section>
+
+  <section class="card form">
+    <h2>📖 Онол</h2>
+    <p class="muted small">Санаа, нарийн төвөгшил, C++/Python загвар код, жишээ. «Код» товчоор код оруулбал өнгөтэй харагдана.</p>
+    <textarea name="theory" id="theory" rows="20" data-rich data-html-source="#theory-html"
+              <%= isNew ? '' : 'data-upload=/cp/topics/' + topic._id + '/attachments' %> <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+              placeholder="Сэдвийн онолыг энд бичнэ үү"><%= topic.theory || '' %></textarea>
+    <template id="theory-html"><%- theoryHtml %></template>
+    <% if (isNew) { %><p class="muted small">Зураг оруулах боломж сэдэв үүссэний дараа нээгдэнэ.</p><% } %>
+  </section>
+
+  <div class="btn-group sticky-actions">
+    <a class="btn btn-ghost" href="<%= isNew ? '/cp' : '/cp/topics/' + topic._id %>">Болих</a>
+    <button class="btn btn-primary"><%= isNew ? 'Үүсгэх' : 'Хадгалах' %></button>
+  </div>
+</form>
+
+<% if (!isNew) { %>
+  <section class="card danger-zone">
+    <h2>Сэдэв устгах</h2>
+    <p class="muted small">Сэдвийн бодлогууд устахгүй — ноорог болж «Өрсөлдөөнт Coding»-ийн жагсаалтад шилжинэ.</p>
+    <form method="post" action="/cp/topics/<%= topic._id %>/delete" data-confirm="Сэдвийг устгах уу?"><button class="btn btn-danger">Устгах</button></form>
+  </section>
+<% } %>
+<%- include('../partials/footer', { scripts: ['/js/rich-editor.js'] }) %>

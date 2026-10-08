@@ -1,7 +1,8 @@
 <%- include('../partials/header', { bodyClass: 'wide' }) %>
 <div class="page-head">
   <div>
-    <a href="<%= staff ? '/coding/manage/' + problem._id : '/coding' %>" class="back">← <%= staff ? 'Бодлого удирдах' : 'Өрсөлдөөнт Coding' %></a>
+    <% if (problem.topic && !staff) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← 🎯 <%= problem.topicDoc ? problem.topicDoc.title : 'Гүнзгий бэлтгэл' %></a>
+    <% } else { %><a href="<%= staff ? '/coding/manage/' + problem._id : '/coding' %>" class="back">← <%= staff ? 'Бодлого удирдах' : 'Өрсөлдөөнт Coding' %></a><% } %>
     <h1><% if (problem.number) { %><span class="problem-num">&numero;<%= problem.number %></span> <% } %><%= problem.title %></h1>
     <p class="limits">
       <% const pd = codingDiff(problem.difficulty); %><span class="diff-chip diff-<%= pd.key %>" title="Бүтэн бодвол <%= pd.points %> оноо"><%= pd.icon %> <%= pd.label %> · <%= pd.points %> оноо</span>
@@ -10,7 +11,7 @@
       <% if (problem.endAt) { %><span>⌛ <%= phase === 'closed' ? 'Дууссан' : 'Дуусах' %>: <%= fmtDate(problem.endAt) %></span><% } %>
     </p>
   </div>
-  <% if (problem.showStandings || staff) { %><a class="btn" href="/coding/<%= problem._id %>/standings">🏆 Онооны самбар</a><% } %>
+  <% if (!problem.topic && (problem.showStandings || staff)) { %><a class="btn" href="/coding/<%= problem._id %>/standings">🏆 Онооны самбар</a><% } %>
 </div>
 
 <% if (staff) { %><div class="flash flash-info">Та сурагчийн харагдацыг үзэж байна. Таны илгээлт онооны самбарт тооцогдохгүй.</div><% } %>

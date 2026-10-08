@@ -2,7 +2,7 @@
 const express = require('express');
 const multer = require('multer');
 const JSZip = require('jszip');
-const { Class, User, Problem, ProblemTest, CodeSubmission } = require('../models');
+const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate } = require('../helpers');
 const { problemOwnerFilter, canUseAI, requireAI } = require('../access');
@@ -63,11 +63,13 @@ async function parseForm(req) {
   if (!(memoryLimitMb >= 16 && memoryLimitMb <= 1024)) errors.push('Санах ойн хязгаар 16–1024 MB байна.');
   if (!languages.length) errors.push('Дор хаяж нэг програмчлалын хэл сонгоно уу.');
   if (startAt && endAt && endAt <= startAt) errors.push('Дуусах хугацаа эхлэхээс хойш байх ёстой.');
+  // Гүнзгий бэлтгэлийн сэдэв (хоосон = үндсэн тэмцээн)
+  const topic = isId(req.body.topic) ? (await CpTopic.findById(req.body.topic).select('_id').lean())?._id || null : null;
   return {
     errors,
     data: {
       // Хичээлийн төрөл, анги хэрэглэхгүй — бүх сурагчид нээлттэй
-      title, subject: null, classIds: [], timeLimitMs, memoryLimitMb, languages, startAt, endAt,
+      title, subject: null, classIds: [], timeLimitMs, memoryLimitMb, languages, startAt, endAt, topic,
       statement: String(req.body.statement ?? '').slice(0, 200000),
       showStandings: req.body.showStandings === 'on',
       difficulty: Object.hasOwn(DIFFICULTIES, req.body.difficulty) ? req.body.difficulty : DEFAULT_DIFFICULTY,
@@ -83,12 +85,17 @@ async function renderForm(req, res, { problem, errors = [], status = 200 }) {
     statementHtml: md.render(problem.statement || ''),
     LANGUAGES: judge.LANGUAGES,
     DIFFICULTIES,
+    topics: await CpTopic.find().select('title icon section order').sort({ order: 1, createdAt: 1 }).lean(),
   });
 }
 
 router.get('/new', async (req, res) => {
   await renderForm(req, res, {
-    problem: { classIds: [], languages: LANG_KEYS, timeLimitMs: 1000, memoryLimitMb: 256, showStandings: true, difficulty: DEFAULT_DIFFICULTY, statement: STATEMENT_TEMPLATE },
+    problem: {
+      classIds: [], languages: LANG_KEYS, timeLimitMs: 1000, memoryLimitMb: 256, showStandings: true,
+      difficulty: DEFAULT_DIFFICULTY, statement: STATEMENT_TEMPLATE,
+      topic: isId(req.query.topic) ? req.query.topic : null, // Гүнзгий бэлтгэлийн сэдвээс «+ Бодлого»
+    },
   });
 });
 
@@ -131,9 +138,9 @@ router.post('/:id/publish', loadProblem, async (req, res) => {
     }
   }
   p.published = !p.published;
-  if (p.published) await ensureNumber(p); // анх нийтлэхэд дараагийн дугаарыг авна
+  if (p.published && !p.topic) await ensureNumber(p); // анх нийтлэхэд дараагийн дугаар (зөвхөн үндсэн тэмцээн)
   await p.save();
-  flash(req, 'success', p.published ? 'Бодлого нийтлэгдлээ. Бүх сурагч бодож, хоорондоо өрсөлдөнө.' : 'Бодлогыг нийтлэлээс буцаалаа.');
+  flash(req, 'success', p.published ? (p.topic ? 'Бодлого нийтлэгдлээ. Гүнзгий бэлтгэлийн сурагчдад харагдана.' : 'Бодлого нийтлэгдлээ. Бүх сурагч бодож, хоорондоо өрсөлдөнө.') : 'Бодлогыг нийтлэлээс буцаалаа.');
   res.redirect(base(p));
 });
 
@@ -145,7 +152,7 @@ router.post('/:id/delete', loadProblem, async (req, res) => {
   ]);
   await Problem.deleteOne({ _id: req.problem._id });
   flash(req, 'success', `"${req.problem.title}" бодлого устгагдлаа.`);
-  res.redirect('/coding');
+  res.redirect(req.problem.topic ? '/cp/topics/' + req.problem.topic : '/coding');
 });
 
 // Өгүүлбэрт зураг оруулах (засварлагчийн «Зураг» товч)
