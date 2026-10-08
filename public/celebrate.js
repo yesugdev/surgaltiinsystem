@@ -88,6 +88,12 @@
       (info.colors || []).forEach(function (c) { list.appendChild(el('span', 'rankup-unlock rankup-color', '🎨 ' + c)); });
       box.appendChild(list);
     }
+    if (info.cp) {
+      // Програмист болоход Гүнзгий бэлтгэл нээгдэнэ
+      var cp = el('a', 'rankup-cp', '🎯 Гүнзгий бэлтгэл нээгдлээ! Олимпиадын сэдвүүдийг онолтой нь судлаарай →');
+      cp.href = '/cp';
+      box.appendChild(cp);
+    }
     var actions = el('div', 'rankup-actions');
     var go = el('a', 'btn btn-primary', '🎨 Аватар сонгох');
     go.href = '/coding/profile';

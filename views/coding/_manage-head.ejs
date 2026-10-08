@@ -1,7 +1,7 @@
 <% const mb = '/coding/manage/' + problem._id; %>
 <div class="page-head">
   <div>
-    <a href="/coding" class="back">← Өрсөлдөөнт Coding</a>
+    <% if (problem.topic) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← 🎯 Гүнзгий бэлтгэл</a><% } else { %><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><% } %>
     <h1><% if (problem.number) { %><span class="problem-num">&numero;<%= problem.number %></span> <% } %><%= problem.title %>
       <% if (problem.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber">Ноорог</span><% } %>
     </h1>

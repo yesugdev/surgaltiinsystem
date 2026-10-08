@@ -26,7 +26,7 @@ async function ensureNumber(problem) {
 
 /** Сервер асахад: нийтлэгдсэн боловч дугааргүй (хуучин) бодлогуудад үүссэн дарааллаар дугаар олгоно */
 async function backfillNumbers() {
-  const missing = await Problem.find({ published: true, number: null }).sort({ createdAt: 1 }).select('_id').lean();
+  const missing = await Problem.find({ published: true, number: null, topic: null }).sort({ createdAt: 1 }).select('_id').lean();
   for (const p of missing) await Problem.updateOne({ _id: p._id, number: null }, { $set: { number: await nextNumber() } });
 }
 

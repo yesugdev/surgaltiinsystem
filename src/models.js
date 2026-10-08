@@ -46,6 +46,9 @@ const userSchema = new Schema(
     codingAvatar: { type: String, default: '' },
     codingColor: { type: String, default: '' },
     codingTierSeen: { type: String, default: 'newbie' },
+    // Гүнзгий бэлтгэл: админ сонгосон, эсвэл Програмист зэрэглэлд хүрч нээгдсэн
+    cpSelected: { type: Boolean, default: false },
+    cpRankUnlocked: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }
@@ -209,6 +212,8 @@ const problemSchema = new Schema(
     number: { type: Number, default: null, index: true },
     // Хүндийн зэрэг: бүтэн бодвол хялбар 25, дунд 50, хүнд 100 оноо (src/coding-ranks.js)
     difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' },
+    // Гүнзгий бэлтгэлийн сэдэв (null = үндсэн тэмцээн). Сэдэвтэй бодлого үндсэн самбарт орохгүй, дугааргүй.
+    topic: { type: Types.ObjectId, ref: 'CpTopic', default: null, index: true },
     subject: { type: Types.ObjectId, ref: 'Subject', default: null, index: true },
     createdBy: { type: Types.ObjectId, ref: 'User', index: true },
     classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },
@@ -278,7 +283,24 @@ const codeSubmissionSchema = new Schema(
 codeSubmissionSchema.index({ problem: 1, user: 1, createdAt: -1 });
 codeSubmissionSchema.index({ status: 1, createdAt: 1 });
 
+// ---------- Гүнзгий бэлтгэл (competitive programming): сэдэв = онол + бодлогууд ----------
+const cpTopicSchema = new Schema(
+  {
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    section: { type: String, default: 'basics' }, // src/cp.js SECTIONS
+    icon: { type: String, default: '📘', maxlength: 16 },
+    order: { type: Number, default: 0, index: true },
+    summary: { type: String, default: '', maxlength: 500 },
+    theory: { type: String, default: '', maxlength: 300000 }, // markdown
+    attachments: { type: [fileRefSchema], default: [] }, // онол доторх зураг
+    published: { type: Boolean, default: true },
+    createdBy: { type: Types.ObjectId, ref: 'User' },
+  },
+  { timestamps: true }
+);
+
 module.exports = {
+  CpTopic: mongoose.model('CpTopic', cpTopicSchema),
   Problem: mongoose.model('Problem', problemSchema),
   ProblemTest: mongoose.model('ProblemTest', problemTestSchema),
   CodeSubmission: mongoose.model('CodeSubmission', codeSubmissionSchema),

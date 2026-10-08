@@ -2,7 +2,8 @@
 // Нийтлэгдсэн бодлого бүх сурагчид нээлттэй, бүх сурагч нэг самбарт өрсөлдөнө.
 // Удирдах: админ болон мэдээлэл зүйн багш (req.user.codingStaff).
 const express = require('express');
-const { Class, User, Problem, ProblemTest, CodeSubmission } = require('../models');
+const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic } = require('../models');
+const { cpAccess, syncCpUnlock } = require('../cp');
 const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
@@ -19,7 +20,10 @@ const notFound = (res, what = 'Бодлого') => res.status(404).render('error
 const isStaff = (u) => !!u.codingStaff;
 
 // Мэдээлэл зүйн бус багш, админ нээгээгүй ангийн сурагчид энэ хэсэг байхгүй мэт
-router.use((req, res, next) => (req.user.codingPlayer || isStaff(req.user) ? next() : notFound(res, 'Хуудас')));
+// Мэдээлэл зүйн бус багш, Coding нээгдээгүй сурагчид байхгүй мэт. Гүнзгий бэлтгэлийн сурагч зөвхөн сэдвийн бодлогоо бодно.
+router.use((req, res, next) => (req.user.codingPlayer || isStaff(req.user) || cpAccess(req.user) ? next() : notFound(res, 'Хуудас')));
+// Үндсэн тэмцээний хуудсууд (жагсаалт, самбар, аватар) — Coding нээгдсэн сурагч, багш
+const mainOnly = (req, res, next) => (req.user.codingPlayer || isStaff(req.user) ? next() : notFound(res, 'Хуудас'));
 
 /** Бодлогын төлөв: upcoming | open | closed */
 function phase(p, now = new Date()) {
@@ -33,7 +37,14 @@ async function findVisibleProblem(user, id) {
   if (!isId(id)) return null;
   if (isStaff(user)) return Problem.findOne({ _id: id, ...problemOwnerFilter(user) }).lean();
   const p = await Problem.findOne({ _id: id, published: true }).lean();
-  return p && phase(p) !== 'upcoming' ? p : null;
+  if (!p || phase(p) === 'upcoming') return null;
+  if (p.topic) {
+    // Гүнзгий бэлтгэлийн бодлого: эрхтэй сурагч, нийтлэгдсэн сэдэв
+    if (!cpAccess(user) || !(await CpTopic.exists({ _id: p.topic, published: true }))) return null;
+    p.topicDoc = await CpTopic.findById(p.topic).select('title icon').lean();
+    return p;
+  }
+  return user.codingPlayer ? p : null;
 }
 
 async function loadProblem(req, res, next) {
@@ -62,10 +73,11 @@ function paginate(list, pageParam) {
   return { items: list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), page, pages, total: list.length, from: (page - 1) * PAGE_SIZE + 1 };
 }
 
-router.get('/', async (req, res) => {
+router.get('/', mainOnly, async (req, res) => {
   const u = req.user;
   if (isStaff(u)) {
-    const all = await Problem.find(problemOwnerFilter(u)).select('-statement -refCode -generatorCode').lean();
+    // Үндсэн тэмцээн (сэдэвтэй бодлого Гүнзгий бэлтгэлд удирдагдана)
+    const all = await Problem.find({ ...problemOwnerFilter(u), topic: null }).select('-statement -refCode -generatorCode').lean();
     // №1 эхэнд; дугааргүй (ноорог) нь сүүлд, үүссэн дарааллаар
     all.sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity) || a.createdAt - b.createdAt);
     const pager = paginate(all, req.query.page);
@@ -93,7 +105,7 @@ router.get('/', async (req, res) => {
   }
 
   // Сурагч: бүх нийтлэгдсэн бодлого (хуудаслан) + өөрийн зэрэглэл, байр
-  const all = await Problem.find({ published: true }).select('number title difficulty startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
+  const all = await Problem.find({ published: true, topic: null }).select('number title difficulty startAt endAt testCount timeLimitMs languages createdAt').sort({ number: 1, createdAt: 1 }).lean();
   const mine = await bestScores(all.map((p) => p._id), { user: u._id });
   const mineMap = new Map(mine.map((m) => [String(m._id.p), m]));
   const pager = paginate(all, req.query.page);
@@ -141,6 +153,8 @@ async function userTier(userId) {
  */
 async function checkRankUp(user, tier) {
   if (user.role !== 'student') return null;
+  // Програмист болсон бол Гүнзгий бэлтгэл нээгдэнэ (нэг удаа)
+  const cpNew = await syncCpUnlock(user, tier);
   const seen = TIERS.findIndex((t) => t.key === user.codingTierSeen) + 1 || 1;
   if (tier.level <= seen) return null;
   await User.updateOne({ _id: user._id }, { $set: { codingTierSeen: tier.key } });
@@ -151,12 +165,13 @@ async function checkRankUp(user, tier) {
     key: tier.key,
     avatars: unlocked.avatars.map((a) => a.icon),
     colors: unlocked.colors.map((c) => c.name),
+    cp: cpNew,
   };
 }
 
 /** Нийт самбарт тооцох бодлогууд: нийтлэгдсэн, эхэлсэн (сурагчид showStandings-тай нь) */
 async function standingsProblems(staff) {
-  const list = await Problem.find(staff ? { published: true } : { published: true, showStandings: true })
+  const list = await Problem.find(staff ? { published: true, topic: null } : { published: true, showStandings: true, topic: null })
     .select('number title difficulty startAt endAt').sort({ number: 1, createdAt: 1 }).lean();
   return list.filter((p) => phase(p) !== 'upcoming');
 }
@@ -228,7 +243,7 @@ async function attachOverallTier(rows) {
 const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 // ---------------- Миний аватар (сурагч) ----------------
-router.get('/profile', async (req, res) => {
+router.get('/profile', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const tier = await userTier(req.user._id);
   res.render('coding/profile', {
@@ -245,7 +260,7 @@ router.get('/profile', async (req, res) => {
   });
 });
 
-router.post('/profile', async (req, res) => {
+router.post('/profile', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const tier = await userTier(req.user._id);
   const a = findAvatar(clean(req.body.avatar, 20));
@@ -260,7 +275,7 @@ router.post('/profile', async (req, res) => {
   res.redirect('/coding/profile');
 });
 
-router.get('/standings', async (req, res) => {
+router.get('/standings', mainOnly, async (req, res) => {
   const problems = await standingsProblems(isStaff(req.user));
   const classes = await standingsClasses();
   const classId = classes.find((c) => String(c._id) === req.query.class)?._id || null;

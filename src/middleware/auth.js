@@ -1,5 +1,6 @@
 const { User, Class } = require('../models');
 const { isCodingStaff } = require('../access');
+const { cpAccess } = require('../cp');
 
 /** Сессээс хэрэглэгчийг ачаалж, идэвхгүй болсон бол гаргана */
 async function loadUser(req, res, next) {
@@ -19,6 +20,7 @@ async function loadUser(req, res, next) {
       user.codingStaff = await isCodingStaff(user);
       user.codingPlayer = user.role === 'student' && !!user.classId && !!(await Class.exists({ _id: user.classId, codingEnabled: true }));
       res.locals.canCoding = user.codingPlayer || user.codingStaff;
+      res.locals.canCp = cpAccess(user);
     } else {
       delete req.session.userId;
     }

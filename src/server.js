@@ -100,6 +100,7 @@ async function main() {
   app.use('/lessons', require('./routes/lessons'));
   app.use('/learn', require('./routes/learn'));
   app.use('/files', require('./routes/files'));
+  app.use('/cp', require('./routes/cp'));
   app.use('/coding/manage', require('./routes/coding-manage'));
   app.use('/coding', require('./routes/coding'));
 
@@ -115,6 +116,7 @@ async function main() {
   // Өрсөлдөөнт Coding: илгээлтийн дараалал
   require('./judge').start().catch((e) => console.error('Judge дараалал:', e.message));
   require('./problem-number').backfillNumbers().catch((e) => console.error('Бодлогын дугаар:', e.message));
+  require('./cp').seedDefaultTopics().catch((e) => console.error('Гүнзгий бэлтгэлийн сэдэв:', e.message));
 
   // docker stop / шинэчлэлийн үед эхэлсэн хүсэлтүүдийг дуусгаад унтарна
   const shutdown = (signal) => {

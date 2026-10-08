@@ -3,7 +3,7 @@
 <% if (!isNew) { %>
   <%- include('_manage-head', { problem: problem, tab: 'edit' }) %>
 <% } else { %>
-  <div class="page-head"><div><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><h1>Шинэ бодлого</h1></div></div>
+  <div class="page-head"><div><% if (problem.topic) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← 🎯 Гүнзгий бэлтгэл</a><% } else { %><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><% } %><h1>Шинэ бодлого</h1></div></div>
 <% } %>
 
 <% if (errors.length) { %>
@@ -12,7 +12,20 @@
 
 <form method="post" action="<%= isNew ? '/coding/manage' : '/coding/manage/' + problem._id %>" class="form">
   <section class="card form">
-    <label>Бодлогын нэр <input name="title" value="<%= problem.title || '' %>" required maxlength="200" placeholder="жишээ: Хоёр тооны нийлбэр"></label>
+    <div class="row">
+      <label>Бодлогын нэр <input name="title" value="<%= problem.title || '' %>" required maxlength="200" placeholder="жишээ: Хоёр тооны нийлбэр"></label>
+      <label>Хаана
+        <select name="topic">
+          <option value="">🏆 Үндсэн тэмцээн (бүх сурагч)</option>
+          <% if (topics.length) { %><optgroup label="🎯 Гүнзгий бэлтгэлийн сэдэв">
+            <% topics.forEach(function (t) { %>
+              <option value="<%= t._id %>" <%= String(problem.topic || '') === String(t._id) ? 'selected' : '' %>><%= t.icon %> <%= t.title %></option>
+            <% }) %>
+          </optgroup><% } %>
+        </select>
+        <small class="muted">Сэдэвтэй бодлого үндсэн самбарт орохгүй, зөвхөн Гүнзгий бэлтгэлийн сурагчдад харагдана.</small>
+      </label>
+    </div>
 
     <label for="statement">Өгүүлбэр</label>
     <textarea name="statement" id="statement" rows="14" data-rich data-html-source="#statement-html"
@@ -65,7 +78,7 @@
   </section>
 
   <div class="btn-group sticky-actions">
-    <a class="btn btn-ghost" href="<%= isNew ? '/coding' : '/coding/manage/' + problem._id %>">Болих</a>
+    <a class="btn btn-ghost" href="<%= isNew ? (problem.topic ? '/cp/topics/' + problem.topic : '/coding') : '/coding/manage/' + problem._id %>">Болих</a>
     <button class="btn btn-primary"><%= isNew ? 'Үүсгээд тест оруулах →' : 'Хадгалах' %></button>
   </div>
 </form>

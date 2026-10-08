@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+<a href="/cp" class="back">← 🎯 Гүнзгий бэлтгэл</a>
+<div class="page-head">
+  <div>
+    <h1>👥 Гүнзгий бэлтгэлийн сурагчид</h1>
+    <p class="muted">Сонгосон сурагчдад Гүнзгий бэлтгэл нээгдэнэ. <%= unlockTier.icon %> <%= unlockTier.name %> зэрэглэлд хүрсэн сурагчдад автоматаар нээгддэг.</p>
+  </div>
+</div>
+
+<form method="get" class="card cp-filter">
+  <input name="q" value="<%= query.q %>" placeholder="Нэр эсвэл нэвтрэх нэрээр хайх">
+  <select name="class">
+    <option value="">Бүх анги</option>
+    <% classes.forEach(function (c) { %><option value="<%= c._id %>" <%= query.class === String(c._id) ? 'selected' : '' %>><%= c.name %></option><% }) %>
+  </select>
+  <label class="check"><input type="checkbox" name="only" value="1" <%= query.only ? 'checked' : '' %>> Зөвхөн эрхтэй</label>
+  <button class="btn">Шүүх</button>
+</form>
+
+<section class="card">
+  <% if (!students.length) { %>
+    <p class="muted">Сурагч олдсонгүй.</p>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th>Сурагч</th><th>Анги</th><th>Эрх</th><th></th></tr></thead>
+      <tbody>
+      <% students.forEach(function (s) { const has = s.cpSelected || s.cpRankUnlocked; %>
+        <tr>
+          <td><strong><%= s.fullName %></strong><div class="muted small"><%= s.username %></div></td>
+          <td><%= s.className %></td>
+          <td>
+            <% if (s.cpSelected) { %><span class="badge badge-blue">✓ Сонгосон</span><% } %>
+            <% if (s.cpRankUnlocked) { %><span class="badge badge-green"><%= unlockTier.icon %> Зэрэглэлээр</span><% } %>
+            <% if (!has) { %><span class="muted small">—</span><% } %>
+          </td>
+          <td class="actions">
+            <form method="post" action="/cp/students/<%= s._id %>/toggle">
+              <input type="hidden" name="back" value="<%= '/cp/students?q=' + encodeURIComponent(query.q) + '&class=' + query.class + (query.only ? '&only=1' : '') %>">
+              <button class="switch <%= s.cpSelected ? 'on' : '' %>" role="switch" aria-checked="<%= s.cpSelected ? 'true' : 'false' %>">
+                <span class="switch-knob" aria-hidden="true"></span><span class="switch-label"><%= s.cpSelected ? 'Сонгосон' : 'Сонгох' %></span>
+              </button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

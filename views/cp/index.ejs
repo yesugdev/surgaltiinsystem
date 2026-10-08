@@ -1,0 +1,59 @@
+<%- include('../partials/header') %>
+<section class="cp-hero">
+  <div>
+    <h1>🎯 Гүнзгий бэлтгэл</h1>
+    <p>Олимпиадын програмчлалын сэдвүүдийг дарааллаар нь: эхлээд <strong>онолыг</strong> уншаад, дараа нь тухайн сэдвийн <strong>бодлогуудыг</strong> бодоорой.</p>
+  </div>
+  <div class="cp-hero-stat">
+    <strong><%= totals.solved %></strong><span>/ <%= totals.total %> бодлого бодсон</span>
+    <div class="score-bar"><span style="width: <%= totals.total ? Math.round(totals.solved / totals.total * 100) : 0 %>%"></span></div>
+  </div>
+</section>
+
+<% if (staff) { %>
+  <div class="import-toolbar cp-staff-bar">
+    <span class="small muted">Сонгогдсон эсвэл <%= unlockTier.icon %> <%= unlockTier.name %> зэрэглэлд хүрсэн <strong><%= selectedCount %></strong> сурагчид нээлттэй.</span>
+    <div class="btn-group">
+      <a class="btn" href="/cp/students">👥 Сурагч сонгох</a>
+      <a class="btn btn-primary" href="/cp/topics/new">+ Шинэ сэдэв</a>
+    </div>
+  </div>
+<% } %>
+
+<% if (!sections.length) { %>
+  <div class="card empty"><p>Одоогоор сэдэв алга байна.</p></div>
+<% } %>
+
+<% let n = 0; sections.forEach(function (sec) { %>
+  <section class="cp-section">
+    <h2 class="cp-section-title"><span><%= sec.icon %></span> <%= sec.name %></h2>
+    <div class="cp-topic-grid">
+      <% sec.topics.forEach(function (t) { n++; const s = t.stat; const pct = s.total ? Math.round(s.solved / s.total * 100) : 0; const done = s.total && s.solved === s.total; %>
+        <div class="cp-topic-card <%= done ? 'is-done' : '' %> <%= t.published ? '' : 'is-draft' %>" id="topic-<%= t._id %>">
+          <a class="cp-topic-link" href="/cp/topics/<%= t._id %>">
+            <span class="cp-topic-num"><%= n %></span>
+            <span class="cp-topic-icon"><%= t.icon %></span>
+            <span class="cp-topic-body">
+              <strong><%= t.title %></strong>
+              <% if (t.summary) { %><span class="muted small"><%= t.summary %></span><% } %>
+              <span class="cp-topic-meta small">
+                <% if (done) { %><span class="badge badge-green">✓ Дууссан</span><% } %>
+                <% if (!t.published) { %><span class="badge badge-amber">Ноорог</span><% } %>
+                <span class="muted"><%= s.solved %>/<%= s.total %> бодлого<% if (staff && s.drafts) { %> · <%= s.drafts %> ноорог<% } %></span>
+              </span>
+              <span class="score-bar"><span style="width: <%= pct %>%"></span></span>
+            </span>
+          </a>
+          <% if (staff) { %>
+            <div class="cp-topic-tools">
+              <form method="post" action="/cp/topics/<%= t._id %>/move"><input type="hidden" name="dir" value="up"><button class="btn btn-sm btn-ghost" title="Дээш">↑</button></form>
+              <form method="post" action="/cp/topics/<%= t._id %>/move"><input type="hidden" name="dir" value="down"><button class="btn btn-sm btn-ghost" title="Доош">↓</button></form>
+              <a class="btn btn-sm btn-ghost" href="/cp/topics/<%= t._id %>/edit" title="Засах">✎</a>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+<% }) %>
+<%- include('../partials/footer') %>

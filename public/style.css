@@ -913,6 +913,63 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
 @keyframes av-breathe { 0%, 100% { transform: scale(1) rotate(0); filter: drop-shadow(0 0 2px #c8203f); } 50% { transform: scale(1.14) rotate(-5deg); filter: drop-shadow(0 0 12px #ff3d00); } }
 @media (prefers-reduced-motion: reduce) { .av-face { animation: none !important; } }
 
+/* ---------- 🎯 Гүнзгий бэлтгэл ---------- */
+.cp-hero { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding: 22px 24px; margin: 6px 0 16px; border-radius: 18px; color: #fff; background: radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.16), transparent 40%), linear-gradient(135deg, #0f172a, #1e3a8a 55%, #0e8a9a); box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25); }
+.cp-hero h1 { margin: 0 0 6px; color: #fff; }
+.cp-hero p { margin: 0; opacity: 0.9; max-width: 620px; }
+.cp-hero-stat { min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.12); }
+.cp-hero-stat strong { font-size: 1.8rem; line-height: 1; }
+.cp-hero-stat .score-bar { background: rgba(255, 255, 255, 0.25); }
+.cp-staff-bar { margin-bottom: 14px; }
+.cp-section { margin-bottom: 22px; }
+.cp-section-title { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; margin: 0 0 10px; }
+.cp-topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.cp-topic-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s; }
+.cp-topic-card:hover { transform: translateY(-2px); border-color: #cbd8fb; box-shadow: 0 8px 22px rgba(30, 50, 110, 0.1); }
+.cp-topic-card.is-done { border-color: #bfe5cf; background: linear-gradient(180deg, #f6fcf8, #fff); }
+.cp-topic-card.is-draft { opacity: 0.7; border-style: dashed; }
+.cp-topic-link { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 14px 16px; color: inherit; }
+.cp-topic-link:hover { text-decoration: none; }
+.cp-topic-num { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); font-weight: 800; font-size: 0.8rem; }
+.is-done .cp-topic-num { background: var(--green); color: #fff; }
+.cp-topic-icon { font-size: 1.6rem; line-height: 1; }
+.cp-topic-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cp-topic-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cp-topic-tools { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.12s; }
+.cp-topic-card:hover .cp-topic-tools, .cp-topic-tools:focus-within { opacity: 1; }
+.cp-topic-tools form { margin: 0; }
+.cp-crumb { margin: 0; }
+.cp-title-icon { font-size: 1.6rem; }
+.cp-topic-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.cp-block-title { font-size: 1.05rem; margin: 0 0 12px; }
+.cp-side { position: sticky; top: 72px; display: flex; flex-direction: column; }
+.cp-toc { display: flex; flex-direction: column; gap: 4px; }
+.cp-toc a { font-size: 0.88rem; color: var(--muted); }
+.cp-toc a.toc-l3 { padding-left: 12px; }
+.cp-problem-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cp-problem-list li > a { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); color: inherit; }
+.cp-problem-list li > a:hover { border-color: var(--primary); text-decoration: none; background: #f7f9fe; }
+.cp-p-num { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); font-weight: 800; font-size: 0.8rem; }
+.cp-problem-list li.is-solved .cp-p-num { background: var(--green); color: #fff; }
+.cp-p-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.cp-p-staff { display: flex; gap: 6px; align-items: center; padding: 2px 10px 0; }
+.cp-pager { display: flex; justify-content: space-between; gap: 10px; margin: 6px 0 16px; flex-wrap: wrap; }
+.cp-filter { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cp-filter input[name=q] { flex: 1; min-width: 200px; }
+.cp-filter select { width: auto; }
+.cp-icon-field { max-width: 110px; }
+.cp-banner { display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin-bottom: 16px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #1e3a8a, #0e8a9a); box-shadow: 0 6px 18px rgba(30, 58, 138, 0.2); }
+.cp-banner:hover { text-decoration: none; filter: brightness(1.08); }
+.cp-banner .muted { color: rgba(255, 255, 255, 0.85); }
+.cp-banner-icon { font-size: 1.8rem; }
+.cp-banner-go { margin-left: auto; font-weight: 700; white-space: nowrap; }
+.rankup-cp { display: block; margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg, #1e3a8a, #0e8a9a); color: #fff; font-weight: 700; font-size: 0.9rem; }
+.rankup-cp:hover { text-decoration: none; filter: brightness(1.1); }
+@media (max-width: 900px) {
+  .cp-topic-layout { grid-template-columns: 1fr; }
+  .cp-side { position: static; order: -1; }
+}
+
 /* ---------- Баяр: конфетти, зэрэглэл ахисан цонх ---------- */
 .confetti-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
 .rankup-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(15, 20, 40, 0.55); animation: fade-in 0.2s ease; }

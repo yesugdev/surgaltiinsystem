@@ -37,6 +37,14 @@
   <% } %>
 </section>
 
+<% if (locals.canCp) { %>
+  <a class="cp-banner" href="/cp">
+    <span class="cp-banner-icon">🎯</span>
+    <span><strong>Гүнзгий бэлтгэл нээлттэй!</strong><span class="muted small"> Олимпиадын сэдвүүдийг онолтой нь, сэдэв тус бүрийн бодлоготой нь судлаарай.</span></span>
+    <span class="cp-banner-go">Орох →</span>
+  </a>
+<% } %>
+
 <% if (!problems.length) { %>
   <div class="card empty"><p>Одоогоор бодлого алга байна.</p></div>
 <% } else { %>
