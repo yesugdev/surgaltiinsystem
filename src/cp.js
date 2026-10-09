@@ -25,270 +25,88 @@ async function syncCpUnlock(user, tier) {
   return true;
 }
 
-// ---------------- Анхдагч сэдвүүд (эхлэлийн онол — багш засварлана) ----------------
-const T = (title, section, icon, summary, theory) => ({ title, section, icon, summary, theory: theory.trim() });
+// ---------------- Анхдагч сэдвүүд ----------------
+// Онол нь src/cp-content/<key>.md файлд (засварлахад хялбар). Эх сурвалж: Competitive Programmer's
+// Handbook (A. Laaksonen), USACO Guide, cp-algorithms.com, CSES Problem Set — өөрийн үгээр, монголоор.
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { Setting } = require('./models');
 
+// legacyTitle: өмнөх хувилбарын (key-гүй) анхдагч сэдвийг таних нэр
 const DEFAULT_TOPICS = [
-  T('Нарийн төвөгшил ба хурдан оролт/гаралт', 'basics', '⏱️', 'Big-O, хугацааны хязгаарт багтах эсэхийг урьдчилан тооцох', `
-## Санаа
-Шүүгч ихэвчлэн **1 секундэд ~10⁸ энгийн үйлдэл** гүйцэтгэдэг (Python ~10⁷). Бодлогын хязгаараас алгоритмын нарийн төвөгшлийг тааж болно:
-
-| n-ийн хязгаар | Тохирох нарийн төвөгшил |
-|---|---|
-| n ≤ 10 | O(n!) — бүх сэлгэмэл |
-| n ≤ 20 | O(2ⁿ) — бүх дэд олонлог |
-| n ≤ 500 | O(n³) |
-| n ≤ 5000 | O(n²) |
-| n ≤ 10⁶ | O(n log n) эсвэл O(n) |
-| n ≤ 10¹⁸ | O(log n) эсвэл O(1) |
-
-## Хурдан оролт/гаралт
-C++:
-\`\`\`cpp
-ios::sync_with_stdio(false);
-cin.tie(nullptr);
-\`\`\`
-Python:
-\`\`\`python
-import sys
-input = sys.stdin.readline
-data = sys.stdin.buffer.read().split()   # бүх оролтыг нэг дор
-\`\`\`
-
-## Анхаарах
-- Том тоонд C++-д \`long long\` (≈9·10¹⁸) ашигла.
-- Олон мөр хэвлэхдээ Python-д \`"\\n".join(...)\` ашигла.`),
-
-  T('Эрэмбэлэлт ба хоёртын хайлт', 'algo', '🔍', 'sort, lower_bound, хариуг хоёртын хайлтаар олох', `
-## Эрэмбэлэлт
-- C++: \`sort(a.begin(), a.end());\` — O(n log n)
-- Python: \`a.sort()\`, \`sorted(a, key=...)\`
-
-## Хоёртын хайлт
-Эрэмбэлэгдсэн массивт утгыг **O(log n)**-д хайна.
-\`\`\`cpp
-int i = lower_bound(a.begin(), a.end(), x) - a.begin(); // x-ээс багагүй эхний байрлал
-\`\`\`
-\`\`\`python
-from bisect import bisect_left
-i = bisect_left(a, x)
-\`\`\`
-
-## Хариуг хоёртын хайлтаар олох
-«Хамгийн бага X-ийг ол» төрлийн бодлогод \`ok(X)\` нь монотон (X өсөхөд false → true) бол:
-\`\`\`python
-lo, hi = 0, 10**18
-while lo < hi:
-    mid = (lo + hi) // 2
-    if ok(mid): hi = mid
-    else: lo = mid + 1
-print(lo)
-\`\`\``),
-
-  T('Prefix sum ба хоёр заагч', 'algo', '➕', 'Хэрчмийн нийлбэрийг O(1)-д, хоёр заагчийн арга', `
-## Prefix sum
-\`p[i] = a[0] + … + a[i-1]\` гэж урьдчилан тооцвол [l, r] хэрчмийн нийлбэр = \`p[r+1] - p[l]\` — **O(1)**.
-\`\`\`python
-p = [0]
-for x in a: p.append(p[-1] + x)
-s = p[r + 1] - p[l]
-\`\`\`
-
-## Хоёр заагч (two pointers)
-Эрэмбэлэгдсэн массивт нийлбэр нь S байх хос, нийлбэр нь ≤ S байх хамгийн урт хэрчим зэргийг **O(n)**-д олно.
-\`\`\`python
-best = l = cur = 0
-for r in range(n):
-    cur += a[r]
-    while cur > S:
-        cur -= a[l]; l += 1
-    best = max(best, r - l + 1)
-\`\`\``),
-
-  T('Шуналт алгоритм (Greedy)', 'algo', '🪙', 'Алхам бүрт хамгийн сайныг сонгох — хэзээ зөв бэ?', `
-## Санаа
-Алхам бүрт **тухайн үеийн хамгийн сайн** сонголтыг хийж, буцаж засахгүй. Хурдан, гэхдээ **зөв гэдгийг батлах** хэрэгтэй.
-
-## Сонгодог жишээ: ажлуудыг сонгох
-Хамгийн олон давхцахгүй ажил сонгохын тулд **хамгийн эрт дуусдаг**-ийг түрүүлж ав.
-\`\`\`python
-jobs.sort(key=lambda x: x[1])      # дуусах хугацаагаар
-cnt, end = 0, -1
-for s, e in jobs:
-    if s >= end:
-        cnt += 1; end = e
-\`\`\`
-
-## Зөвлөгөө
-- Эхлээд жижиг жишээн дээр шуналт буруу болох эсрэг жишээ хайж үз.
-- Ихэнх greedy бодлого **эрэмбэлэлтээр** эхэлдэг.`),
-
-  T('Рекурс ба бүрэн хайлт', 'algo', '🌀', 'Рекурс, backtracking, бүх хувилбарыг шалгах', `
-## Рекурс
-Функц өөрийгөө дуудна. **Суурь тохиолдол**-ыг мартаж болохгүй.
-
-## Бүх дэд олонлог (n ≤ 20)
-\`\`\`python
-def go(i, chosen):
-    if i == n:
-        check(chosen); return
-    go(i + 1, chosen)               # i-г авахгүй
-    go(i + 1, chosen + [a[i]])      # i-г авна
-\`\`\`
-
-## Backtracking
-Нөхцөл зөрчигдвөл тэр салааг цааш үргэлжлүүлэхгүй — жишээ нь N хатан.
-
-## Анхаар
-- Python-д рекурсийн гүн: \`sys.setrecursionlimit(10**6)\`
-- O(2ⁿ) нь n ≈ 20 хүртэл л багтана.`),
-
-  T('Динамик программчлал (DP)', 'algo', '🧩', 'Дэд бодлогын хариуг хадгалж дахин ашиглах', `
-## Санаа
-Том бодлогыг **давхцдаг дэд бодлогууд**-д хувааж, хариуг нь хүснэгтэд хадгална.
-1. **Төлөв**-ийг тодорхойл: \`dp[i]\` юуг илэрхийлэх вэ?
-2. **Шилжилт**: \`dp[i]\` өмнөх төлвөөс яаж гарах вэ?
-3. **Суурь** утга ба **хариу** хаана байна?
-
-## Жишээ: шат (1 эсвэл 2 алхам)
-\`\`\`python
-dp = [0] * (n + 1)
-dp[0] = 1
-for i in range(1, n + 1):
-    dp[i] = dp[i - 1] + (dp[i - 2] if i >= 2 else 0)
-\`\`\`
-
-## Сонгодог DP
-- Үүргэвч (knapsack): \`dp[w] = max(dp[w], dp[w - wt] + val)\`
-- Хамгийн урт өсөх дэд дараалал (LIS)
-- Хоёр мөрийн хамгийн урт ерөнхий дэд дараалал (LCS)`),
-
-  T('Тоон онол', 'math', '🔢', 'ХИЕХ, анхны тоо, модулийн арифметик', `
-## ХИЕХ (gcd)
-\`\`\`python
-from math import gcd
-\`\`\`
-\`lcm(a, b) = a // gcd(a, b) * b\`
-
-## Эратосфений шигшүүр — n хүртэлх анхны тоо, O(n log log n)
-\`\`\`python
-is_p = [True] * (n + 1); is_p[0] = is_p[1] = False
-for i in range(2, int(n ** 0.5) + 1):
-    if is_p[i]:
-        for j in range(i * i, n + 1, i): is_p[j] = False
-\`\`\`
-
-## Модулийн арифметик
-Хариу их том бол \`10⁹+7\`-оор хуваасан үлдэгдлийг хэвлэ. Нэмэх, үржих бүрт \`% MOD\`.
-Хурдан зэрэг: Python \`pow(a, b, MOD)\` — O(log b).`),
-
-  T('Stack, queue, set, map', 'ds', '🗂️', 'Стандарт өгөгдлийн бүтцийг зөв сонгох', `
-| Бүтэц | C++ | Python | Хурд |
-|---|---|---|---|
-| Stack | \`stack\`, \`vector\` | \`list\` (append/pop) | O(1) |
-| Queue | \`queue\`, \`deque\` | \`collections.deque\` | O(1) |
-| Эрэмбэтэй олонлог | \`set\`, \`map\` | — (\`sorted\` + bisect) | O(log n) |
-| Хэш | \`unordered_map\` | \`dict\`, \`set\` | O(1) дунджаар |
-| Priority queue | \`priority_queue\` | \`heapq\` | O(log n) |
-
-## Жишээ: хаалтын зөв эсэх (stack)
-\`\`\`python
-st = []
-for ch in s:
-    if ch in '([{': st.append(ch)
-    elif not st or '([{'[')]}'.index(ch)] != st.pop(): print('NO'); break
-\`\`\`
-
-## Анхаар
-Python-д \`list.pop(0)\` нь O(n) — оронд нь \`deque.popleft()\`.`),
-
-  T('Граф: BFS ба DFS', 'graph', '🕸️', 'Графыг хадгалах, нэвтрэх, холбоост бүрэлдэхүүн', `
-## Хадгалах — хөршийн жагсаалт
-\`\`\`python
-g = [[] for _ in range(n)]
-for _ in range(m):
-    u, v = map(int, input().split())
-    g[u].append(v); g[v].append(u)
-\`\`\`
-
-## BFS — жингүй графын хамгийн богино зам, O(n + m)
-\`\`\`python
-from collections import deque
-dist = [-1] * n; dist[s] = 0; q = deque([s])
-while q:
-    u = q.popleft()
-    for v in g[u]:
-        if dist[v] == -1:
-            dist[v] = dist[u] + 1; q.append(v)
-\`\`\`
-
-## DFS
-Холбоост бүрэлдэхүүн, мөчлөг илрүүлэх, торон (grid) дээрх «арал» тоолоход.`),
-
-  T('Хамгийн богино зам (Dijkstra)', 'graph', '🗺️', 'Жинтэй графын хамгийн богино зам', `
-## Dijkstra — сөрөг биш жинтэй граф, O((n + m) log n)
-\`\`\`python
-import heapq
-INF = float('inf')
-dist = [INF] * n; dist[s] = 0
-pq = [(0, s)]
-while pq:
-    d, u = heapq.heappop(pq)
-    if d > dist[u]: continue
-    for v, w in g[u]:
-        if d + w < dist[v]:
-            dist[v] = d + w
-            heapq.heappush(pq, (dist[v], v))
-\`\`\`
-
-## Бусад
-- Жин бүгд 1 бол BFS хангалттай.
-- Сөрөг жин бол Bellman–Ford, бүх хосын зай (n ≤ 400) бол Floyd–Warshall.`),
-
-  T('Мод ба DSU', 'graph', '🌳', 'Модны шинж, нэгтгэх-олох (Disjoint Set Union)', `
-## Мод
-n оройтой, n−1 ирмэгтэй, мөчлөггүй холбоост граф. DFS-ээр эцэг, гүн, дэд модны хэмжээг олно.
-
-## DSU — бүлгүүдийг нэгтгэх, нэг бүлэгт эсэхийг шалгах (бараг O(1))
-\`\`\`python
-parent = list(range(n))
-def find(x):
-    while parent[x] != x:
-        parent[x] = parent[parent[x]]; x = parent[x]
-    return x
-def union(a, b):
-    a, b = find(a), find(b)
-    if a != b: parent[a] = b
-\`\`\`
-
-## Kruskal — хамгийн бага нийт жинтэй тулгуур мод
-Ирмэгүүдийг жингээр эрэмбэлж, мөчлөг үүсгэхгүй бол DSU-гаар нэгтгэнэ.`),
-
-  T('Segment tree ба Fenwick tree', 'adv', '🌲', 'Хэрчмийн асуулга, шинэчлэлийг O(log n)-д', `
-## Хэзээ хэрэгтэй вэ?
-Массивын утга **өөрчлөгдөх** бөгөөд хэрчмийн нийлбэр/мин/макс-ыг олон удаа асуух үед prefix sum хангалтгүй.
-
-## Fenwick (BIT) — нийлбэр, O(log n)
-\`\`\`python
-bit = [0] * (n + 1)
-def add(i, v):            # i: 1-ээс эхэлсэн
-    while i <= n: bit[i] += v; i += i & -i
-def total(i):             # a[1..i] нийлбэр
-    s = 0
-    while i > 0: s += bit[i]; i -= i & -i
-    return s
-\`\`\`
-Хэрчим [l, r] = \`total(r) - total(l - 1)\`.
-
-## Segment tree
-Мин, макс, ХИЕХ зэрэг ямар ч «нэгтгэх» үйлдэлд ажиллана. Хэрчмийн шинэчлэлд lazy propagation.`),
+  { key: 'complexity', order: 10, section: 'basics', icon: '⏱️', title: 'Нарийн төвөгшил ба хурдан оролт/гаралт', legacyTitle: 'Нарийн төвөгшил ба хурдан оролт/гаралт', summary: 'Big-O, хязгаараас алгоритмыг таах, хурдан I/O' },
+  { key: 'bits', order: 15, section: 'basics', icon: '🔢', title: 'Бит үйлдэл ба bitmask', summary: 'AND/OR/XOR, бүх дэд олонлогийг давтах' },
+  { key: 'sorting-search', order: 20, section: 'algo', icon: '🔍', title: 'Эрэмбэлэлт ба хоёртын хайлт', legacyTitle: 'Эрэмбэлэлт ба хоёртын хайлт', summary: 'sort, lower_bound, хариуг хоёртын хайлтаар олох' },
+  { key: 'prefix-two-pointers', order: 30, section: 'algo', icon: '➕', title: 'Prefix sum ба хоёр заагч', legacyTitle: 'Prefix sum ба хоёр заагч', summary: 'Хэрчмийн нийлбэр O(1)-д, 2D prefix sum, хоёр заагч' },
+  { key: 'greedy', order: 40, section: 'algo', icon: '🪙', title: 'Шуналт алгоритм (Greedy)', legacyTitle: 'Шуналт алгоритм (Greedy)', summary: 'Хэзээ зөв, хэзээ буруу; солих аргумент' },
+  { key: 'complete-search', order: 50, section: 'algo', icon: '🌀', title: 'Рекурс ба бүрэн хайлт', legacyTitle: 'Рекурс ба бүрэн хайлт', summary: 'Рекурс, дэд олонлог, сэлгэмэл, backtracking' },
+  { key: 'dp', order: 60, section: 'algo', icon: '🧩', title: 'Динамик программчлал (DP)', legacyTitle: 'Динамик программчлал (DP)', summary: 'Төлөв → шилжилт → суурь; зоос, үүргэвч, засварын зай' },
+  { key: 'number-theory', order: 70, section: 'math', icon: '🧮', title: 'Тоон онол', legacyTitle: 'Тоон онол', summary: 'Анхны тоо, шигшүүр, ХИЕХ, модулийн арифметик, хурдан зэрэг' },
+  { key: 'data-structures', order: 80, section: 'ds', icon: '🗂️', title: 'Stack, queue, set, map', legacyTitle: 'Stack, queue, set, map', summary: 'Стандарт бүтцийг зөв сонгох, монотон stack' },
+  { key: 'graph-traversal', order: 90, section: 'graph', icon: '🕸️', title: 'Граф: BFS ба DFS', legacyTitle: 'Граф: BFS ба DFS', summary: 'Хадгалах, нэвтрэх, бүрэлдэхүүн, торон дээрх бодлого' },
+  { key: 'shortest-paths', order: 100, section: 'graph', icon: '🗺️', title: 'Хамгийн богино зам (Dijkstra)', legacyTitle: 'Хамгийн богино зам (Dijkstra)', summary: 'Dijkstra, Floyd–Warshall, аль алгоритмыг хэзээ' },
+  { key: 'trees-dsu', order: 110, section: 'graph', icon: '🌳', title: 'Мод ба DSU', legacyTitle: 'Мод ба DSU', summary: 'Дэд модны хэмжээ, диаметр, Union-Find, Kruskal' },
+  { key: 'range-queries', order: 120, section: 'adv', icon: '🌲', title: 'Segment tree ба Fenwick tree', legacyTitle: 'Segment tree ба Fenwick tree', summary: 'Өөрчлөгддөг массив дээрх хэрчмийн асуулга O(log n)' },
+  { key: 'strings', order: 130, section: 'adv', icon: '🔤', title: 'Тэмдэгт мөр: KMP ба hash', summary: 'Хэв маяг хайх O(n + m), полиномын hash' },
 ];
 
-/** Анхны ачаалалт: сэдэв огт байхгүй бол анхдагч 12 сэдвийг үүсгэнэ */
+// Өмнөх хувилбарын эхлэлийн онолуудын hash — багш засаагүй бол шинэчилнэ
+const LEGACY_HASHES = new Set([
+  'c8e8cc9dc90a20a7', '7c93876c44b2da53', 'c4bbb213d57dc4aa', 'cba93d150458901f', '9faa2266562c6a5e', 'e51d3d9dd7a308f5',
+  'c655c088ee4173a6', 'd2e9c9a7d318e585', 'cab23e0cae8d58da', '990f6539c25974c4', 'd01422788dfaad9a', '89dfc7233ed19227',
+]);
+
+const hashOf = (text) => crypto.createHash('sha1').update(String(text || '').trim()).digest('hex').slice(0, 16);
+const theoryOf = (key) => fs.readFileSync(path.join(__dirname, 'cp-content', key + '.md'), 'utf8').trim();
+
+/**
+ * Сервер асахад анхдагч сэдвүүдийг шалгана:
+ *  - огт байхгүй бол үүсгэнэ (багш санаатай устгасныг дахин үүсгэхгүй — Setting-д тэмдэглэнэ);
+ *  - багш засаагүй (hash таарсан) онолыг шинэ хувилбараар шинэчилнэ; засварласныг хөндөхгүй.
+ */
 async function seedDefaultTopics() {
-  if (await CpTopic.exists({})) return 0;
-  await CpTopic.insertMany(DEFAULT_TOPICS.map((t, i) => ({ ...t, order: (i + 1) * 10, published: true })));
-  return DEFAULT_TOPICS.length;
+  const setting = await Setting.findOne({ key: 'cpDefaultKeys' }).lean();
+  const known = new Set(setting?.value || []);
+  const firstRun = !(await CpTopic.exists({}));
+  let created = 0;
+  let updated = 0;
+  for (const def of DEFAULT_TOPICS) {
+    const theory = theoryOf(def.key);
+    const newHash = hashOf(theory);
+    let doc = await CpTopic.findOne({ key: def.key });
+    if (!doc && def.legacyTitle) doc = await CpTopic.findOne({ key: null, title: def.legacyTitle });
+    if (doc) {
+      const cur = hashOf(doc.theory);
+      const untouched = !doc.theory.trim() || cur === doc.seedHash || LEGACY_HASHES.has(cur);
+      doc.key = def.key;
+      if (untouched && cur !== newHash) {
+        doc.theory = theory;
+        doc.seedHash = newHash;
+        if (doc.title === def.legacyTitle) doc.title = def.title;
+        if (!doc.summary || DEFAULT_SUMMARIES_OLD.has(doc.summary)) doc.summary = def.summary;
+        updated++;
+      }
+      await doc.save();
+    } else if (firstRun || !known.has(def.key)) {
+      await CpTopic.create({ key: def.key, title: def.title, section: def.section, icon: def.icon, summary: def.summary, theory, seedHash: newHash, order: def.order, published: true });
+      created++;
+    }
+    known.add(def.key);
+  }
+  await Setting.updateOne({ key: 'cpDefaultKeys' }, { $set: { value: [...known] } }, { upsert: true });
+  if (created || updated) console.log(`Гүнзгий бэлтгэл: ${created} сэдэв нэмж, ${updated} сэдвийн онолыг шинэчиллээ.`);
+  return { created, updated };
 }
+
+// Өмнөх хувилбарын товч тайлбарууд (багш засаагүй бол шинээр солино)
+const DEFAULT_SUMMARIES_OLD = new Set([
+  'Big-O, хугацааны хязгаарт багтах эсэхийг урьдчилан тооцох', 'sort, lower_bound, хариуг хоёртын хайлтаар олох',
+  'Хэрчмийн нийлбэрийг O(1)-д, хоёр заагчийн арга', 'Алхам бүрт хамгийн сайныг сонгох — хэзээ зөв бэ?',
+  'Рекурс, backtracking, бүх хувилбарыг шалгах', 'Дэд бодлогын хариуг хадгалж дахин ашиглах',
+  'ХИЕХ, анхны тоо, модулийн арифметик', 'Стандарт өгөгдлийн бүтцийг зөв сонгох',
+  'Графыг хадгалах, нэвтрэх, холбоост бүрэлдэхүүн', 'Жинтэй графын хамгийн богино зам',
+  'Модны шинж, нэгтгэх-олох (Disjoint Set Union)', 'Хэрчмийн асуулга, шинэчлэлийг O(log n)-д',
+]);
 
 module.exports = { CP_UNLOCK_LEVEL, SECTIONS, sectionOf, cpAccess, syncCpUnlock, seedDefaultTopics, DEFAULT_TOPICS };
