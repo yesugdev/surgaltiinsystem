@@ -295,6 +295,10 @@ const cpTopicSchema = new Schema(
     attachments: { type: [fileRefSchema], default: [] }, // онол доторх зураг
     published: { type: Boolean, default: true },
     createdBy: { type: Types.ObjectId, ref: 'User' },
+    // Анхдагч сэдэв (src/cp-content/<key>.md): seedHash = системийн оруулсан онолын hash.
+    // Багш засаагүй бол (hash таарвал) шинэ хувилбараар автоматаар шинэчилнэ.
+    key: { type: String, default: null, index: true },
+    seedHash: { type: String, default: null },
   },
   { timestamps: true }
 );
