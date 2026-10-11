@@ -62,6 +62,24 @@ while (l < r) {
 }
 ```
 
+## 📕 Номоос нэмэлт: Гулсах цонхны минимум (х. 81)
+k урттай цонх бүрийн хамгийн бага утгыг O(n)-д олох. **deque**-д индексүүдийг утга нь **өсөх** дарааллаар хадгална:
+- шинэ элемент ирэхэд ардаас өөрөөсөө их буюу тэнцүүг хасна (тэд хэзээ ч минимум болохгүй);
+- цонхноос гарсан индексийг урдаас хасна;
+- deque-ийн урд элемент = цонхны минимум.
+
+Энэ нь номын 8.2 «Nearest smaller elements»-тэй ижил санаа (монотон stack).
+```cpp
+deque<int> dq;                       // индексүүд, a[dq] өсөх дараалалтай
+for (int i = 0; i < n; i++) {
+    while (!dq.empty() && a[dq.back()] >= a[i]) dq.pop_back();
+    dq.push_back(i);
+    if (dq.front() <= i - k) dq.pop_front();          // цонхноос гарсан
+    if (i >= k - 1) cout << a[dq.front()] << " ";     // [i-k+1, i] цонхны минимум
+}
+```
+Элемент бүр deque-д нэг орж, нэг гарна → **O(n)** (amortized).
+
 ## ⏱️ Нарийн төвөгшил
 - Prefix sum: бэлтгэл O(n), асуулга бүр O(1)
 - Хоёр заагч: O(n) (эрэмбэлэлт хэрэгтэй бол O(n log n))
@@ -80,5 +98,5 @@ while (l < r) {
 6. **Maximum Subarray Sum** — Kadane-ийн арга
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 8 «Amortized analysis» (two pointers), Бүлэг 9.1 «Static array queries» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 9.1 «Static array queries» (х. 84; prefix sum, sparse table), Бүлэг 8 «Amortized analysis» (х. 77; 8.1 Two pointers, 8.2 Nearest smaller elements х. 79, 8.3 Sliding window minimum х. 81) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Silver → «Prefix Sums», «Two Pointers» · [usaco.guide](https://usaco.guide/)

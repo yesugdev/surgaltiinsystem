@@ -65,6 +65,39 @@ void place(int r) {
 }
 ```
 
+## 📕 Номоос нэмэлт: Meet in the middle (х. 54)
+n ≤ 40 үед 2⁴⁰ дэд олонлог хэт олон. Харин массивыг **хоёр хагас** болгоод хагас бүрийн дэд олонлогийн нийлбэрийг (2²⁰ ≈ 10⁶) тус тусад нь гаргавал:
+1. A хагасын нийлбэрүүд, B хагасын нийлбэрүүдийг жагсаана.
+2. B-г эрэмбэлнэ.
+3. A-гийн нийлбэр s бүрт B дотор **x − s** хэд байгааг хоёртын хайлтаар тоолно.
+
+Нийт **O(2^(n/2) · n)** — 2ⁿ-ээс хамаагүй хурдан.
+```cpp
+// нийлбэр нь x болох дэд олонлогийн тоо (n ≤ 40)
+vector<long long> sums(const vector<long long>& v) {
+    int k = v.size();
+    vector<long long> s(1 << k, 0);
+    for (int mask = 1; mask < (1 << k); mask++) {
+        int b = __builtin_ctz(mask);                 // хамгийн бага битийг салгаад
+        s[mask] = s[mask ^ (1 << b)] + v[b];         // өмнөх нийлбэр дээр нэмнэ
+    }
+    return s;
+}
+long long countSubsets(vector<long long>& a, long long x) {
+    int h = a.size() / 2;
+    auto L = sums(vector<long long>(a.begin(), a.begin() + h));
+    auto R = sums(vector<long long>(a.begin() + h, a.end()));
+    sort(R.begin(), R.end());
+    long long cnt = 0;
+    for (long long s : L) {
+        auto range = equal_range(R.begin(), R.end(), x - s);
+        cnt += range.second - range.first;
+    }
+    return cnt;
+}
+```
+CSES дасгал: **Meet in the Middle**.
+
 ## ⏱️ Нарийн төвөгшил
 - Дэд олонлог: O(2ⁿ) — n ≤ 20
 - Сэлгэмэл: O(n!) — n ≤ 10
@@ -82,5 +115,5 @@ void place(int r) {
 5. **Grid Paths** (Introductory) — хүчтэй тасдалттай backtracking (хүнд!)
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 5 «Complete search» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 5 «Complete search» (х. 47; 5.1 Subsets, 5.2 Permutations х. 49, 5.3 Backtracking х. 50, 5.4 Pruning х. 51, 5.5 Meet in the middle х. 54) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Bronze → «Complete Search», «Complete Search with Recursion» · [usaco.guide](https://usaco.guide/)

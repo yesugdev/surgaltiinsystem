@@ -55,6 +55,6 @@ cout << cnt << "\n";
 5. **Restaurant Customers** — үйл явдлыг эрэмбэлэх
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 6 «Greedy algorithms» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 6 «Greedy algorithms» (х. 57; 6.1 Coin problem, 6.2 Scheduling х. 58, 6.3 Tasks and deadlines х. 60, 6.4 Minimizing sums х. 61, 6.5 Data compression х. 62) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Silver → «Greedy Algorithms with Sorting» · [usaco.guide](https://usaco.guide/)
 - 📗 *Introduction to Algorithms* (CLRS) — «Greedy Algorithms» бүлэг (activity selection)

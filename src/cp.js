@@ -47,6 +47,9 @@ const DEFAULT_TOPICS = [
   { key: 'graph-traversal', order: 90, section: 'graph', icon: '🕸️', title: 'Граф: BFS ба DFS', legacyTitle: 'Граф: BFS ба DFS', summary: 'Хадгалах, нэвтрэх, бүрэлдэхүүн, торон дээрх бодлого' },
   { key: 'shortest-paths', order: 100, section: 'graph', icon: '🗺️', title: 'Хамгийн богино зам (Dijkstra)', legacyTitle: 'Хамгийн богино зам (Dijkstra)', summary: 'Dijkstra, Floyd–Warshall, аль алгоритмыг хэзээ' },
   { key: 'trees-dsu', order: 110, section: 'graph', icon: '🌳', title: 'Мод ба DSU', legacyTitle: 'Мод ба DSU', summary: 'Дэд модны хэмжээ, диаметр, Union-Find, Kruskal' },
+  { key: 'directed-graphs', order: 104, section: 'graph', icon: '➡️', title: 'Чиглэлтэй граф ба топологи эрэмбэ', summary: 'Топологи эрэмбэ, мөчлөг илрүүлэх, DAG дээрх DP, binary lifting' },
+  { key: 'tree-queries', order: 115, section: 'graph', icon: '🧬', title: 'Модон дээрх асуулга ба LCA', summary: 'k-р өвөг, хамгийн ойрын нийтлэг өвөг, оройн зай' },
+  { key: 'combinatorics', order: 75, section: 'math', icon: '🎲', title: 'Комбинаторик', summary: 'C(n, k) модулиор, Каталаны тоо, оруулах-хасах зарчим' },
   { key: 'range-queries', order: 120, section: 'adv', icon: '🌲', title: 'Segment tree ба Fenwick tree', legacyTitle: 'Segment tree ба Fenwick tree', summary: 'Өөрчлөгддөг массив дээрх хэрчмийн асуулга O(log n)' },
   { key: 'strings', order: 130, section: 'adv', icon: '🔤', title: 'Тэмдэгт мөр: KMP ба hash', summary: 'Хэв маяг хайх O(n + m), полиномын hash' },
 ];

@@ -116,7 +116,9 @@ async function main() {
   // Өрсөлдөөнт Coding: илгээлтийн дараалал
   require('./judge').start().catch((e) => console.error('Judge дараалал:', e.message));
   require('./problem-number').backfillNumbers().catch((e) => console.error('Бодлогын дугаар:', e.message));
-  require('./cp').seedDefaultTopics().catch((e) => console.error('Гүнзгий бэлтгэлийн сэдэв:', e.message));
+  require('./cp').seedDefaultTopics()
+    .then(() => require('./cp-problems').seedDefaultProblems())
+    .catch((e) => console.error('Гүнзгий бэлтгэлийн сэдэв:', e.message));
 
   // docker stop / шинэчлэлийн үед эхэлсэн хүсэлтүүдийг дуусгаад унтарна
   const shutdown = (signal) => {

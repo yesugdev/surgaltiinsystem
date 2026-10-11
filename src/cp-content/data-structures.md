@@ -78,6 +78,6 @@ for (auto &w : words) cnt[w]++;       // тоолох (түлхүүрээр эр
 5. **Playlist** — гулсах цонх + set/map
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 4 «Data structures» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 4 «Data structures» (х. 35; 4.1 Dynamic arrays, 4.2 Set structures х. 37, 4.3 Map structures х. 38, 4.5 Other structures х. 41, 4.6 Comparison to sorting х. 44) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Bronze → «Introduction to Data Structures», Silver → «Introduction to Sets & Maps», Gold → «Stacks» · [usaco.guide](https://usaco.guide/)
 - 🌐 *cp-algorithms* — «Minimum stack / Minimum queue» · [cp-algorithms.com](https://cp-algorithms.com/)
