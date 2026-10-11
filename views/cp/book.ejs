@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<a href="/cp" class="back">← 🎯 Гүнзгий бэлтгэл</a>
+<div class="page-head">
+  <div>
+    <h1>📕 Competitive Programmer's Handbook</h1>
+    <p class="muted">Antti Laaksonen · Монгол орчуулга · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+  </div>
+  <% if (info) { %>
+    <div class="btn-group">
+      <a class="btn" href="/cp/book.pdf#page=<%= page %>" target="_blank" rel="noopener">↗ Шинэ цонхонд</a>
+      <a class="btn" href="/cp/book.pdf?download=1">⬇ Татах</a>
+      <a class="btn btn-primary" href="/cp/notes/new">📝 Тэмдэглэл бичих</a>
+    </div>
+  <% } %>
+</div>
+
+<% if (staff) { %>
+  <details class="card cp-book-admin" <%= info ? '' : 'open' %>>
+    <summary><strong><%= info ? '⚙ Номын файл' : '📤 Ном оруулах' %></strong>
+      <% if (info) { %><span class="muted small"> · <%= info.name %> · <%= fmtSize(info.size) %> · <%= fmtDate(info.uploadedAt) %></span><% } %></summary>
+    <form method="post" action="/cp/book" enctype="multipart/form-data" class="form cp-book-upload">
+      <label><%= info ? 'Шинэ хувилбараар солих' : 'PDF файл' %> (≤ <%= maxMb %>MB)
+        <input type="file" name="file" accept=".pdf,application/pdf" required></label>
+      <button class="btn btn-primary"><%= info ? 'Солих' : 'Оруулах' %></button>
+    </form>
+    <p class="muted small">Бүлгийн холбоосууд Монгол орчуулгын хуудасны дугаараар тохируулагдсан. Гүнзгий бэлтгэлийн сурагчид болон багш нар л уншина.</p>
+    <% if (info) { %>
+      <form method="post" action="/cp/book/delete" data-confirm="Номыг системээс устгах уу?"><button class="btn btn-sm btn-danger">Устгах</button></form>
+    <% } %>
+  </details>
+<% } %>
+
+<% if (!info) { %>
+  <div class="card empty"><p>Ном хараахан оруулаагүй байна.<% if (!staff) { %> Багш удахгүй оруулна.<% } %></p></div>
+<% } else { %>
+  <div class="cp-book-layout">
+    <nav class="card cp-book-toc" aria-label="Бүлгүүд">
+      <% parts.forEach(function (p) { %>
+        <strong class="small"><%= p.title %></strong>
+        <% p.chapters.forEach(function (c) { %>
+          <a href="/cp/book?ch=<%= c.n %>" class="<%= current && current.n === c.n ? 'is-active' : '' %>">
+            <span class="cp-book-n"><%= c.n %></span><span><%= c.title %></span><span class="muted small">х. <%= c.page %></span>
+          </a>
+        <% }) %>
+      <% }) %>
+    </nav>
+    <div class="cp-book-view">
+      <iframe src="/cp/book.pdf#page=<%= page %>&view=FitH&navpanes=0" title="Competitive Programmer's Handbook" class="cp-book-frame"></iframe>
+      <p class="muted small cp-book-hint">Утсан дээр харагдахгүй бол «↗ Шинэ цонхонд» товчийг дарна уу.</p>
+    </div>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

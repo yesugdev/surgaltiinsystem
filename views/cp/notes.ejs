@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+<a href="/cp" class="back">← 🎯 Гүнзгий бэлтгэл</a>
+<div class="page-head">
+  <div>
+    <h1>📝 Миний тэмдэглэл</h1>
+    <p class="muted">Сэдэв бүрээр санаа, алдаа, загвар кодоо тэмдэглэ. Зөвхөн чи харна. <span class="small">(<%= total %> / <%= limit %>)</span></p>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="/cp/book">📕 Ном</a>
+    <a class="btn btn-primary" href="/cp/notes/new<%= query.topic && query.topic !== 'general' ? '?topic=' + query.topic : '' %>">+ Шинэ тэмдэглэл</a>
+  </div>
+</div>
+
+<form method="get" action="/cp/notes" class="import-toolbar cp-notes-filter">
+  <select name="topic" onchange="this.form.submit()">
+    <option value="">Бүх сэдэв</option>
+    <option value="general" <%= query.topic === 'general' ? 'selected' : '' %>>📌 Ерөнхий</option>
+    <% topics.forEach(function (t) { %><option value="<%= t._id %>" <%= String(t._id) === query.topic ? 'selected' : '' %>><%= t.icon %> <%= t.title %></option><% }) %>
+  </select>
+  <input type="search" name="q" value="<%= query.q %>" placeholder="Хайх…" maxlength="100">
+  <button class="btn">Хайх</button>
+  <% if (query.q || query.topic) { %><a class="btn btn-ghost" href="/cp/notes">Цэвэрлэх</a><% } %>
+</form>
+
+<% if (!notes.length) { %>
+  <div class="card empty">
+    <p><%= total ? 'Тохирох тэмдэглэл олдсонгүй.' : 'Одоогоор тэмдэглэл алга. Онол уншиж байхдаа чухал санаа, өөрийн гаргасан алдаагаа тэмдэглэж аваарай.' %></p>
+  </div>
+<% } %>
+
+<div class="cp-note-list">
+  <% notes.forEach(function (n) { %>
+    <article class="card cp-note" id="note-<%= n._id %>">
+      <header class="cp-note-head">
+        <div>
+          <h2><%= n.title || 'Гарчиггүй тэмдэглэл' %></h2>
+          <p class="muted small">
+            <% if (n.topicDoc) { %><a href="/cp/topics/<%= n.topicDoc._id %>"><%= n.topicDoc.icon %> <%= n.topicDoc.title %></a><% } else { %>📌 Ерөнхий<% } %>
+            · <%= fmtDate(n.updatedAt) %>
+          </p>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-sm btn-ghost" href="/cp/notes/<%= n._id %>/edit">✎ Засах</a>
+          <form method="post" action="/cp/notes/<%= n._id %>/delete" data-confirm="Тэмдэглэлийг устгах уу?"><button class="btn btn-sm btn-ghost">🗑</button></form>
+        </div>
+      </header>
+      <div class="markdown cp-note-body"><%- n.html %></div>
+    </article>
+  <% }) %>
+</div>
+<%- include('../partials/footer') %>

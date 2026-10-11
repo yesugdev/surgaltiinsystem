@@ -965,9 +965,44 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
 .cp-banner-go { margin-left: auto; font-weight: 700; white-space: nowrap; }
 .rankup-cp { display: block; margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg, #1e3a8a, #0e8a9a); color: #fff; font-weight: 700; font-size: 0.9rem; }
 .rankup-cp:hover { text-decoration: none; filter: brightness(1.1); }
+.cp-side { max-height: calc(100vh - 88px); overflow-y: auto; scrollbar-width: thin; }
+.cp-hero-links { margin-top: 10px; }
+/* 📕 Ном */
+.cp-book-admin summary { cursor: pointer; }
+.cp-book-upload { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin: 12px 0 6px; }
+.cp-book-upload label { flex: 1; min-width: 240px; }
+.cp-book-layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 16px; align-items: start; }
+.cp-book-toc { display: flex; flex-direction: column; gap: 2px; padding: 14px; position: sticky; top: 72px; max-height: calc(100vh - 88px); overflow-y: auto; }
+.cp-book-toc strong { margin: 8px 0 4px; }
+.cp-book-toc strong:first-child { margin-top: 0; }
+.cp-book-toc a, .cp-book-links a { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 8px; color: inherit; font-size: 0.9rem; }
+.cp-book-toc a:hover, .cp-book-links a:hover { background: var(--primary-soft); text-decoration: none; }
+.cp-book-toc a.is-active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.cp-book-n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: var(--primary-soft); color: var(--primary); font-weight: 800; font-size: 0.75rem; }
+.cp-book-links { display: flex; flex-direction: column; gap: 2px; }
+.cp-book-frame { width: 100%; height: calc(100vh - 150px); min-height: 520px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+.cp-book-hint { margin: 6px 0 0; }
+/* 📝 Тэмдэглэл */
+.cp-notes-filter { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cp-notes-filter select { width: auto; max-width: 100%; }
+.cp-notes-filter input[type=search] { flex: 1; min-width: 180px; }
+.cp-note-list { display: flex; flex-direction: column; }
+.cp-note-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; flex-wrap: wrap; }
+.cp-note-head h2 { margin: 0; font-size: 1.1rem; }
+.cp-note-head p { margin: 2px 0 0; }
+.cp-note-head form { margin: 0; }
+.cp-note-body { margin-top: 10px; }
+.cp-my-notes { display: flex; flex-direction: column; gap: 8px; }
+.cp-note-mini { border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+.cp-note-mini summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; }
+.cp-note-mini .markdown { margin: 6px 0; }
+.cp-quick-note { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 0; }
 @media (max-width: 900px) {
   .cp-topic-layout { grid-template-columns: 1fr; }
-  .cp-side { position: static; order: -1; }
+  .cp-side { position: static; order: -1; max-height: none; overflow: visible; }
+  .cp-book-layout { grid-template-columns: 1fr; }
+  .cp-book-toc { position: static; max-height: 260px; }
+  .cp-book-frame { height: 70vh; min-height: 360px; }
 }
 
 /* ---------- Баяр: конфетти, зэрэглэл ахисан цонх ---------- */

@@ -58,6 +58,38 @@
         </ol>
       <% } %>
     </section>
+
+    <% if (chapters.length) { %>
+      <section class="card cp-book-links">
+        <h2 class="cp-block-title">📕 Номоос унших</h2>
+        <% chapters.forEach(function (c) { %>
+          <a href="/cp/book?ch=<%= c.n %>"><span class="cp-book-n"><%= c.n %></span> <%= c.title %> <span class="muted small">х. <%= c.page %></span></a>
+        <% }) %>
+      </section>
+    <% } %>
+
+    <section class="card cp-my-notes" id="my-notes">
+      <h2 class="cp-block-title">📝 Миний тэмдэглэл</h2>
+      <% notes.forEach(function (n) { %>
+        <details class="cp-note-mini">
+          <summary><%= n.title || 'Гарчиггүй тэмдэглэл' %> <span class="muted small">· <%= fmtDate(n.updatedAt) %></span></summary>
+          <div class="markdown small"><%- n.html %></div>
+          <a class="small" href="/cp/notes/<%= n._id %>/edit">✎ Засах</a>
+        </details>
+      <% }) %>
+      <form method="post" action="/cp/notes" class="cp-quick-note">
+        <input type="hidden" name="topic" value="<%= topic._id %>">
+        <input type="hidden" name="quick" value="1">
+        <input type="hidden" name="back" value="/cp/topics/<%= topic._id %>#my-notes">
+        <input name="title" maxlength="200" placeholder="Гарчиг (заавал биш)">
+        <textarea name="body" rows="3" maxlength="50000" placeholder="Энэ сэдвээс юу ойлгосон, юунд анхаарах вэ…"></textarea>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-primary">Хадгалах</button>
+          <a class="btn btn-sm btn-ghost" href="/cp/notes/new?topic=<%= topic._id %>">Дэлгэрэнгүй засварлагч</a>
+        </div>
+      </form>
+      <a class="small" href="/cp/notes?topic=<%= topic._id %>">Бүх тэмдэглэл →</a>
+    </section>
   </aside>
 </div>
 

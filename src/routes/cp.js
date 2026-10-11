@@ -1,7 +1,7 @@
 // 🎯 Гүнзгий бэлтгэл (competitive programming): сэдэв = онол + бодлогууд
 // Сурагч: админ сонгосон эсвэл Програмист зэрэглэлд хүрсэн. Удирдах: админ, мэдээлэл зүйн багш.
 const express = require('express');
-const { Class, User, Problem, CodeSubmission, CpTopic } = require('../models');
+const { Class, User, Problem, CodeSubmission, CpTopic, CpNote, Setting } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean, escapeRegex } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
@@ -9,6 +9,7 @@ const { SECTIONS, sectionOf, cpAccess, CP_UNLOCK_LEVEL } = require('../cp');
 const { TIERS, difficultyOf } = require('../coding-ranks');
 const md = require('../markdown');
 const files = require('../files');
+const book = require('../cp-book');
 
 const router = express.Router();
 router.use(requireRole());
@@ -124,6 +125,9 @@ router.get('/topics/:id', loadTopic, async (req, res) => {
     staff,
     prev: all[idx - 1] || null,
     next: all[idx + 1] || null,
+    chapters: (await bookInfo()) ? book.chaptersFor(t.key) : [],
+    notes: (await CpNote.find({ user: req.user._id, topic: t._id }).sort({ updatedAt: -1 }).limit(20).lean())
+      .map((n) => ({ ...n, html: md.render(n.body) })),
   });
 });
 
@@ -158,6 +162,7 @@ router.post('/topics/:id/delete', staffOnly, loadTopic, async (req, res) => {
   // Бодлогуудыг устгахгүй — сэдэвгүй ноорог болгоно (үндсэн тэмцээнд санамсаргүй орохгүй)
   const r = await Problem.updateMany({ topic: req.topic._id }, { $set: { topic: null, published: false } });
   await files.deleteFiles(req.topic.attachments.map((a) => a.fileId));
+  await CpNote.updateMany({ topic: req.topic._id }, { $set: { topic: null } }); // сурагчдын тэмдэглэл ерөнхий болно
   await CpTopic.deleteOne({ _id: req.topic._id });
   flash(req, 'success', `"${req.topic.title}" сэдэв устгагдлаа.${r.modifiedCount ? ` ${r.modifiedCount} бодлого ноорог болж Өрсөлдөөнт Coding-ийн жагсаалтад шилжлээ.` : ''}`);
   res.redirect('/cp');
@@ -173,6 +178,154 @@ router.post('/topics/:id/attachments', staffOnly, loadTopic, files.uploader('fil
   req.topic.attachments.push(...saved);
   await req.topic.save();
   res.json({ files: saved.map((f) => ({ url: '/files/' + f.fileId, name: f.name })) });
+});
+
+// ---------------- 📕 Ном (PDF) ----------------
+async function bookInfo() {
+  const s = await Setting.findOne({ key: 'cpBook' }).lean();
+  return s?.value?.fileId ? s.value : null;
+}
+
+router.get('/book', async (req, res) => {
+  const info = await bookInfo();
+  const ch = book.chapter(req.query.ch);
+  const page = ch ? book.pdfPage(ch.page) : Math.min(Math.max(1, parseInt(req.query.page, 10) || 1), 2000);
+  res.render('cp/book', {
+    title: 'Ном',
+    info,
+    page,
+    current: ch,
+    parts: book.PARTS.map((p, i) => ({ ...p, chapters: book.CHAPTERS.filter((c) => c.n >= p.from && c.n < (book.PARTS[i + 1]?.from || Infinity)) })),
+    pdfPage: book.pdfPage,
+    staff: isStaff(req.user),
+    maxMb: files.MAX_FILE_MB,
+  });
+});
+
+router.get('/book.pdf', async (req, res) => {
+  const info = await bookInfo();
+  const doc = info && (await files.findFile(info.fileId));
+  if (!doc) return notFound(res, 'Ном');
+  files.streamFile(res, doc, { download: req.query.download === '1' });
+});
+
+router.post('/book', staffOnly, files.uploader('file', 1), async (req, res) => {
+  const f = req.files[0];
+  const err = req.uploadError || (!f ? 'PDF файл сонгоно уу.' : null)
+    || (files.typeFor(f.originalname) !== 'application/pdf' || f.buffer.subarray(0, 5).toString() !== '%PDF-' ? 'Зөвхөн PDF файл оруулна.' : null);
+  if (err) {
+    flash(req, 'error', err);
+    return res.redirect('/cp/book');
+  }
+  const old = await bookInfo();
+  const [saved] = await files.saveFiles([f], { kind: 'cpbook', uploadedBy: req.user._id });
+  await Setting.updateOne({ key: 'cpBook' }, { $set: { value: { ...saved, uploadedAt: new Date() } } }, { upsert: true });
+  if (old) await files.deleteFiles([old.fileId]);
+  flash(req, 'success', old ? 'Номыг шинэчиллээ.' : 'Ном орлоо. Гүнзгий бэлтгэлийн сурагчид одоо уншиж болно.');
+  res.redirect('/cp/book');
+});
+
+router.post('/book/delete', staffOnly, async (req, res) => {
+  const old = await bookInfo();
+  if (old) {
+    await Setting.deleteOne({ key: 'cpBook' });
+    await files.deleteFiles([old.fileId]);
+  }
+  flash(req, 'success', 'Ном устгагдлаа.');
+  res.redirect('/cp/book');
+});
+
+// ---------------- 📝 Миний тэмдэглэл (зөвхөн эзэн нь харна) ----------------
+const NOTE_LIMIT = 300;
+
+async function visibleTopics(user) {
+  return CpTopic.find(isStaff(user) ? {} : { published: true }).select('title icon').sort({ order: 1, createdAt: 1 }).lean();
+}
+
+async function noteForm(req, res, title, note, errors, status = 200) {
+  res.status(status).render('cp/note-form', { title, note, bodyHtml: md.render(note.body || ''), topics: await visibleTopics(req.user), errors });
+}
+
+async function loadNote(req, res, next) {
+  const note = isId(req.params.id) ? await CpNote.findOne({ _id: req.params.id, user: req.user._id }) : null;
+  if (!note) return notFound(res, 'Тэмдэглэл');
+  req.note = note;
+  next();
+}
+
+/** Маягтаас тэмдэглэл уншина; сэдэв нь хэрэглэгчид харагдах ёстой */
+async function parseNote(req) {
+  const title = clean(req.body.title, 200);
+  const body = String(req.body.body ?? '').replace(/\r\n/g, '\n').slice(0, 50000);
+  let topic = null;
+  if (isId(req.body.topic)) {
+    const t = await CpTopic.findOne(isStaff(req.user) ? { _id: req.body.topic } : { _id: req.body.topic, published: true }).select('_id').lean();
+    topic = t?._id || null;
+  }
+  return { errors: title || body.trim() ? [] : ['Тэмдэглэл хоосон байна.'], data: { title, body, topic } };
+}
+
+/** Буцах хаяг: зөвхөн /cp доторх зам */
+const backTo = (req, fallback) => (/^\/cp(\/[\w\-/]*)?(#[\w-]*)?$/.test(String(req.body.back || '')) ? req.body.back : fallback);
+
+router.get('/notes', async (req, res) => {
+  const filter = { user: req.user._id };
+  const topicQ = req.query.topic === 'general' ? 'general' : isId(req.query.topic) ? req.query.topic : '';
+  if (topicQ) filter.topic = topicQ === 'general' ? null : topicQ;
+  const q = clean(req.query.q, 100);
+  if (q) filter.$or = [{ title: new RegExp(escapeRegex(q), 'i') }, { body: new RegExp(escapeRegex(q), 'i') }];
+  const [notes, topics, total] = await Promise.all([
+    CpNote.find(filter).sort({ updatedAt: -1 }).limit(NOTE_LIMIT).lean(),
+    visibleTopics(req.user),
+    CpNote.countDocuments({ user: req.user._id }),
+  ]);
+  const topicMap = new Map(topics.map((t) => [String(t._id), t]));
+  res.render('cp/notes', {
+    title: 'Миний тэмдэглэл',
+    notes: notes.map((n) => ({ ...n, html: md.render(n.body), topicDoc: n.topic ? topicMap.get(String(n.topic)) || null : null })),
+    topics,
+    query: { topic: topicQ, q },
+    total,
+    limit: NOTE_LIMIT,
+  });
+});
+
+router.get('/notes/new', async (req, res) => {
+  return noteForm(req, res, 'Шинэ тэмдэглэл', { topic: isId(req.query.topic) ? req.query.topic : null, title: '', body: '' }, []);
+});
+
+router.post('/notes', async (req, res) => {
+  const { errors, data } = await parseNote(req);
+  if (await CpNote.countDocuments({ user: req.user._id }) >= NOTE_LIMIT) errors.push(`Хамгийн ихдээ ${NOTE_LIMIT} тэмдэглэл хадгална. Хуучныгаа устгана уу.`);
+  if (errors.length) {
+    if (req.body.quick) {
+      flash(req, 'error', errors.join(' '));
+      return res.redirect(backTo(req, '/cp/notes'));
+    }
+    return noteForm(req, res, 'Шинэ тэмдэглэл', data, errors, 400);
+  }
+  const note = await CpNote.create({ ...data, user: req.user._id });
+  flash(req, 'success', 'Тэмдэглэл хадгалагдлаа.');
+  res.redirect(backTo(req, '/cp/notes#note-' + note._id));
+});
+
+router.get('/notes/:id/edit', loadNote, async (req, res) => {
+  return noteForm(req, res, 'Тэмдэглэл засах', req.note, []);
+});
+
+router.post('/notes/:id', loadNote, async (req, res) => {
+  const { errors, data } = await parseNote(req);
+  if (errors.length) return noteForm(req, res, 'Тэмдэглэл засах', { ...data, _id: req.note._id }, errors, 400);
+  Object.assign(req.note, data);
+  await req.note.save();
+  flash(req, 'success', 'Тэмдэглэл хадгалагдлаа.');
+  res.redirect(backTo(req, '/cp/notes#note-' + req.note._id));
+});
+
+router.post('/notes/:id/delete', loadNote, async (req, res) => {
+  await CpNote.deleteOne({ _id: req.note._id });
+  flash(req, 'success', 'Тэмдэглэл устгагдлаа.');
+  res.redirect(backTo(req, '/cp/notes'));
 });
 
 // ---------------- Сурагч сонгох (админ, мэдээлэл зүйн багш) ----------------

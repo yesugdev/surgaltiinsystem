@@ -303,8 +303,21 @@ const cpTopicSchema = new Schema(
   { timestamps: true }
 );
 
+// Гүнзгий бэлтгэлийн сурагчийн хувийн тэмдэглэл (зөвхөн эзэн нь харна)
+const cpNoteSchema = new Schema(
+  {
+    user: { type: Types.ObjectId, ref: 'User', required: true },
+    topic: { type: Types.ObjectId, ref: 'CpTopic', default: null }, // null = ерөнхий тэмдэглэл
+    title: { type: String, default: '', trim: true, maxlength: 200 },
+    body: { type: String, default: '', maxlength: 50000 }, // markdown
+  },
+  { timestamps: true }
+);
+cpNoteSchema.index({ user: 1, updatedAt: -1 });
+
 module.exports = {
   CpTopic: mongoose.model('CpTopic', cpTopicSchema),
+  CpNote: mongoose.model('CpNote', cpNoteSchema),
   Problem: mongoose.model('Problem', problemSchema),
   ProblemTest: mongoose.model('ProblemTest', problemTestSchema),
   CodeSubmission: mongoose.model('CodeSubmission', codeSubmissionSchema),
