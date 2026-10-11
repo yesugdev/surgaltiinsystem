@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+<% const isNew = !note._id; %>
+<a href="/cp/notes" class="back">← 📝 Миний тэмдэглэл</a>
+<h1><%= isNew ? 'Шинэ тэмдэглэл' : 'Тэмдэглэл засах' %></h1>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+<% } %>
+
+<form method="post" action="<%= isNew ? '/cp/notes' : '/cp/notes/' + note._id %>" class="form">
+  <section class="card form">
+    <div class="row">
+      <label>Гарчиг <input name="title" value="<%= note.title || '' %>" maxlength="200" placeholder="жишээ: Dijkstra-д анхаарах зүйл"></label>
+      <label>Сэдэв
+        <select name="topic">
+          <option value="">📌 Ерөнхий</option>
+          <% topics.forEach(function (t) { %><option value="<%= t._id %>" <%= String(t._id) === String(note.topic || '') ? 'selected' : '' %>><%= t.icon %> <%= t.title %></option><% }) %>
+        </select>
+      </label>
+    </div>
+    <textarea name="body" id="note-body" rows="16" data-rich data-html-source="#note-html" placeholder="Санаа, томьёо, загвар код, гаргасан алдаа…"><%= note.body || '' %></textarea>
+    <template id="note-html"><%- bodyHtml %></template>
+    <p class="muted small">«Код» товчоор C++ код оруулбал өнгөтэй харагдана. Тэмдэглэлийг зөвхөн чи харна.</p>
+  </section>
+  <div class="btn-group sticky-actions">
+    <a class="btn btn-ghost" href="/cp/notes">Болих</a>
+    <button class="btn btn-primary">Хадгалах</button>
+  </div>
+</form>
+<%- include('../partials/footer', { scripts: ['/js/rich-editor.js'] }) %>
