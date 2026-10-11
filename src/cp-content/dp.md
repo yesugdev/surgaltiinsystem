@@ -64,6 +64,20 @@ for (int s = 1; s <= x; s++)
 | Edit Distance | `dp[i][j]` = эхний i ба j тэмдэгтийн засварын зай |
 | LIS | `dp[i]` = i-ээр төгсөх хамгийн урт өсөх дараалал |
 
+## 📕 Номоос нэмэлт: LIS-ийг O(n log n)-д (х. 70)
+O(n²) DP n = 2·10⁵ үед удаан. Илүү хурдан арга: `tail[len]` = **len+1 урттай өсөх дарааллын хамгийн бага сүүлийн элемент**. Энэ массив үргэлж өсөх дараалалтай тул шинэ элемент бүрийн байрыг `lower_bound`-аар олно.
+```cpp
+vector<int> tail;
+for (int x : a) {
+    auto it = lower_bound(tail.begin(), tail.end(), x);   // хатуу өсөх дараалал
+    if (it == tail.end()) tail.push_back(x);              // дарааллыг уртасгана
+    else *it = x;                                          // сүүлийг багасгана
+}
+cout << tail.size() << "\n";                              // LIS-ийн урт
+```
+⚠️ `tail` нь LIS **өөрөө биш** — зөвхөн урт нь зөв. «Буурахгүй» дараалал бол `upper_bound` ашигла.
+CSES дасгал: **Increasing Subsequence**.
+
 ## ⏱️ Нарийн төвөгшил
 **Төлвийн тоо × нэг төлвийн шилжилтийн тоо.** Зоос: O(x · k). Үүргэвч: O(n · W).
 
@@ -83,7 +97,7 @@ for (int s = 1; s <= x; s++)
 7. **Edit Distance** — хоёр мөрийн DP
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 7 «Dynamic programming» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 7 «Dynamic programming» (х. 65; 7.1 Coin problem, 7.2 LIS х. 70, 7.3 Paths in a grid х. 71, 7.4 Knapsack х. 72, 7.5 Edit distance х. 74, 7.6 Counting tilings х. 75) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Gold → «Introduction to DP», «Knapsack DP», «Paths on Grids» · [usaco.guide](https://usaco.guide/)
 - 🌐 *cp-algorithms* — «Dynamic Programming» хэсэг · [cp-algorithms.com](https://cp-algorithms.com/)
 - 📗 *Introduction to Algorithms* (CLRS) — «Dynamic Programming» бүлэг

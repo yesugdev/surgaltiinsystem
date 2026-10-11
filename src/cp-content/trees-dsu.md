@@ -79,6 +79,24 @@ int a = bfs(1).first;
 cout << bfs(a).second << "\n";                 // диаметр
 ```
 
+## 📕 Номоос нэмэлт: Prim-ийн алгоритм (х. 147)
+Kruskal-ийн өөр хувилбар: дурын оройгоос эхлээд, модонд **хамгийн хямд ирмэгээр** холбогдох шинэ оройг нэг нэгээр нэмнэ. Dijkstra-тай бараг ижил — зөвхөн `dist + w`-ийн оронд **w**-г харьцуулна.
+```cpp
+// g[u] = {(v, w)}; холбоост граф гэж үзнэ
+vector<bool> inTree(n + 1, false);
+priority_queue<pair<long long,int>, vector<pair<long long,int>>, greater<>> pq;
+pq.push({0, 1});
+long long total = 0;
+while (!pq.empty()) {
+    auto [w, u] = pq.top(); pq.pop();
+    if (inTree[u]) continue;
+    inTree[u] = true; total += w;
+    for (auto [v, c] : g[u]) if (!inTree[v]) pq.push({c, v});
+}
+cout << total << "\n";
+```
+Нарийн төвөгшил **O(m log m)**. Kruskal ирмэгийн жагсаалттай үед, Prim хөршийн жагсаалттай үед тохиромжтой.
+
 ## ⏱️ Нарийн төвөгшил
 - Модон дээрх DFS/BFS: O(n)
 - DSU үйлдэл: бараг O(1)
@@ -98,6 +116,6 @@ cout << bfs(a).second << "\n";                 // диаметр
 5. **Tree Distances I** — орой бүрээс хамгийн хол зай
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 14 «Tree algorithms», Бүлэг 15 «Spanning trees» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 14 «Tree algorithms» (х. 133; 14.2 Diameter х. 135, 14.3 All longest paths х. 137), Бүлэг 15 «Spanning trees» (х. 141; 15.1 Kruskal, 15.2 Union-find х. 145, 15.3 Prim х. 147) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Silver → «Introduction to Tree Algorithms», Gold → «Disjoint Set Union», «Minimum Spanning Trees» · [usaco.guide](https://usaco.guide/)
 - 🌐 *cp-algorithms* — «Disjoint Set Union» · [cp-algorithms.com/data_structures/disjoint_set_union.html](https://cp-algorithms.com/data_structures/disjoint_set_union.html)

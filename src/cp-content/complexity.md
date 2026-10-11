@@ -77,6 +77,6 @@ int main() {
 4. **Increasing Array** — шуналт, `long long`
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 1 «Introduction», Бүлэг 2 «Time complexity» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 1 «Introduction» (х. 3; 1.4 Shortening code, 1.5 Mathematics), Бүлэг 2 «Time complexity» (х. 17; 2.2 Complexity classes х. 20, 2.3 Estimating efficiency х. 21, 2.4 Maximum subarray sum х. 21) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Bronze → «Time Complexity», «Fast Input and Output» · [usaco.guide](https://usaco.guide/)
 - 🏋️ [CSES Problem Set](https://cses.fi/problemset/)

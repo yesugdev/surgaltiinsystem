@@ -77,6 +77,6 @@ cout << lo << "\n";
 5. **Array Division** — хариуг хоёртын хайлтаар
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 3 «Sorting» (3.3 Binary search) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 3 «Sorting» (х. 25; 3.1 Sorting theory, 3.2 Sorting in C++ х. 29, 3.3 Binary search х. 31) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Silver → «Sorting with Custom Comparators», «Binary Search» · [usaco.guide](https://usaco.guide/)
 - 🌐 *cp-algorithms* — «Binary search» · [cp-algorithms.com](https://cp-algorithms.com/)

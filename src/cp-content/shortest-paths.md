@@ -59,6 +59,22 @@ for (int k = 1; k <= n; k++)
                 d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
 ```
 
+## 📕 Номоос нэмэлт: Bellman–Ford (х. 123)
+Сөрөг жинтэй ирмэг байвал Dijkstra буруу ажиллана. Bellman–Ford бүх ирмэгийг **n − 1 удаа** «сулруулна» (`dist[b] = min(dist[b], dist[a] + w)`). n-р удаад ч дахин багасвал графт **сөрөг мөчлөг** бий.
+```cpp
+const long long INF = LLONG_MAX / 4;
+vector<long long> dist(n + 1, INF);
+dist[s] = 0;
+for (int i = 1; i <= n; i++) {
+    bool changed = false;
+    for (auto [a, b, w] : edges)                  // edges: vector<array<long long,3>>
+        if (dist[a] != INF && dist[a] + w < dist[b]) { dist[b] = dist[a] + w; changed = true; }
+    if (!changed) break;                          // эрт зогсоно
+    if (i == n) cout << "Сөрөг мөчлөг бий\n";     // n-р удаад өөрчлөгдсөн
+}
+```
+Нарийн төвөгшил **O(n · m)**. CSES дасгал: **High Score**, **Cycle Finding**.
+
 ## ⏱️ Нарийн төвөгшил
 Dijkstra: **O((n + m) log n)**. Floyd: O(n³).
 
@@ -75,7 +91,7 @@ Dijkstra: **O((n + m) log n)**. Floyd: O(n³).
 4. **Investigation** — Dijkstra + DP (хүнд)
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 13 «Shortest paths» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 13 «Shortest paths» (х. 123; 13.1 Bellman–Ford, 13.2 Dijkstra х. 126, 13.3 Floyd–Warshall х. 129) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Gold → «Shortest Paths with Non-Negative Edge Weights» · [usaco.guide](https://usaco.guide/)
 - 🌐 *cp-algorithms* — «Dijkstra Algorithm» · [cp-algorithms.com/graph/dijkstra.html](https://cp-algorithms.com/graph/dijkstra.html)
 - 📗 *Introduction to Algorithms* (CLRS) — «Single-Source Shortest Paths»

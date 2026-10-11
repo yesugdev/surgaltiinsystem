@@ -97,6 +97,6 @@ DFS ба BFS: **O(n + m)** (орой + ирмэг).
 6. **Round Trip** — мөчлөг олох
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 11 «Basics of graphs», Бүлэг 12 «Graph traversal» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 11 «Basics of graphs» (х. 109; 11.2 Graph representation х. 113), Бүлэг 12 «Graph traversal» (х. 117; 12.1 DFS, 12.2 BFS х. 119, 12.3 Applications х. 121) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *USACO Guide* — Silver → «Graph Traversal», «Flood Fill» · [usaco.guide](https://usaco.guide/)
 - 🌐 *cp-algorithms* — «Breadth-first search», «Depth First Search» · [cp-algorithms.com](https://cp-algorithms.com/)

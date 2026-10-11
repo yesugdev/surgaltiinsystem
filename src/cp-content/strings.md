@@ -78,6 +78,6 @@ auto get = [&](int l, int r) {
 4. **Finding Periods** — префикс функц / Z-функц
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 26 «String algorithms» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 26 «String algorithms» (х. 243; 26.2 Trie х. 244, 26.3 String hashing х. 245, 26.4 Z-algorithm х. 247) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *cp-algorithms* — «Prefix function. Knuth–Morris–Pratt», «String Hashing» · [cp-algorithms.com/string/prefix-function.html](https://cp-algorithms.com/string/prefix-function.html)
 - 🌐 *USACO Guide* — Gold → «String Hashing» · [usaco.guide](https://usaco.guide/)

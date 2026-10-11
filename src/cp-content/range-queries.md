@@ -71,6 +71,6 @@ long long query(int l, int r) {             // [l, r] хаалттай
 5. **Hotel Queries** — segment tree дээр «хайлт» (хүнд)
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 9 «Range queries» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 9 «Range queries» (х. 83; 9.2 Binary indexed tree х. 86, 9.3 Segment tree х. 89), Бүлэг 28 «Segment trees revisited» (х. 257; lazy propagation) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *cp-algorithms* — «Fenwick Tree», «Segment Tree» · [cp-algorithms.com/data_structures/segment_tree.html](https://cp-algorithms.com/data_structures/segment_tree.html)
 - 🌐 *USACO Guide* — Gold → «Point Update Range Sum», Platinum → «Segment Tree» · [usaco.guide](https://usaco.guide/)

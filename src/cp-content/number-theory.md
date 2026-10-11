@@ -74,6 +74,6 @@ long long power(long long a, long long b) {
 5. **Bit Strings** (Introductory) — 2ⁿ mod m
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 21 «Number theory» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 21 «Number theory» (х. 197; 21.1 Primes and factors, 21.2 Modular arithmetic х. 201, 21.3 Solving equations х. 204) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *cp-algorithms* — «Sieve of Eratosthenes», «Euclidean algorithm», «Binary Exponentiation», «Modular Multiplicative Inverse» · [cp-algorithms.com](https://cp-algorithms.com/)
 - 🌐 *USACO Guide* — Gold → «Divisibility», «Modular Arithmetic» · [usaco.guide](https://usaco.guide/)

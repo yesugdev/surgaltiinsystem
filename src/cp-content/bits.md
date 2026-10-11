@@ -58,5 +58,5 @@ for (int mask = 0; mask < (1 << n); mask++) {
 3. **Missing Number** — XOR-оор шийдэж үз
 
 ## 📚 Цааш унших
-- 📕 *Competitive Programmer's Handbook* — Бүлэг 10 «Bit manipulation» · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
+- 📕 *Competitive Programmer's Handbook* (A. Laaksonen) — Бүлэг 10 «Bit manipulation» (х. 95; 10.2 Bit operations х. 96, 10.3 Representing sets х. 98, 10.4 Bit optimizations х. 100, 10.5 DP over subsets х. 102) · [cses.fi/book/book.pdf](https://cses.fi/book/book.pdf)
 - 🌐 *cp-algorithms* — «Bit manipulation» · [cp-algorithms.com](https://cp-algorithms.com/)
