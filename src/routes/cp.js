@@ -5,7 +5,7 @@ const { Class, User, Problem, CodeSubmission, CpTopic, CpNote, Setting } = requi
 const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean, escapeRegex } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
-const { SECTIONS, sectionOf, cpAccess, CP_UNLOCK_LEVEL } = require('../cp');
+const { SECTIONS, sectionOf, cpAccess, CP_UNLOCK_LEVEL, CP_TRACK } = require('../cp');
 const { TIERS, difficultyOf } = require('../coding-ranks');
 const md = require('../markdown');
 const files = require('../files');
@@ -22,6 +22,8 @@ const staffOnly = (req, res, next) => (isStaff(req.user) ? next() : notFound(res
 async function loadTopic(req, res, next) {
   if (!isId(req.params.id)) return notFound(res, 'Сэдэв');
   const topic = await CpTopic.findOne(isStaff(req.user) ? { _id: req.params.id } : { _id: req.params.id, published: true });
+  // Програмчлалын суурийн хичээл бол өөрийн хуудас руу (бодлогын «буцах» холбоос эндээс ирдэг)
+  if (topic?.track === 'basics') return res.redirect('/basics/lessons/' + topic._id + (req.path.endsWith('/edit') ? '/edit' : ''));
   if (!topic) return notFound(res, 'Сэдэв');
   req.topic = topic;
   next();
@@ -42,7 +44,7 @@ async function solvedSet(userId, problemIds) {
 // ---------------- Сэдвүүдийн жагсаалт ----------------
 router.get('/', async (req, res) => {
   const staff = isStaff(req.user);
-  const topics = await CpTopic.find(staff ? {} : { published: true }).select('-theory -attachments').sort({ order: 1, createdAt: 1 }).lean();
+  const topics = await CpTopic.find(staff ? CP_TRACK : { ...CP_TRACK, published: true }).select('-theory -attachments').sort({ order: 1, createdAt: 1 }).lean();
   const problems = await Problem.find(topicProblemFilter(req.user, topics.map((t) => t._id))).select('topic published').lean();
   const solved = await solvedSet(req.user._id, problems.map((p) => p._id));
   const byTopic = new Map();
@@ -98,7 +100,7 @@ function parseTopic(req) {
 router.post('/topics', staffOnly, async (req, res) => {
   const { errors, data } = parseTopic(req);
   if (errors.length) return res.status(400).render('cp/topic-form', { title: 'Шинэ сэдэв', topic: data, theoryHtml: md.render(data.theory), SECTIONS, errors });
-  const last = await CpTopic.findOne().sort({ order: -1 }).select('order').lean();
+  const last = await CpTopic.findOne(CP_TRACK).sort({ order: -1 }).select('order').lean();
   const topic = await CpTopic.create({ ...data, order: (last?.order || 0) + 10, createdBy: req.user._id });
   flash(req, 'success', 'Сэдэв үүслээ. Одоо бодлого нэмнэ үү.');
   res.redirect('/cp/topics/' + topic._id);
@@ -113,7 +115,7 @@ router.get('/topics/:id', loadTopic, async (req, res) => {
   // Багш зөвхөн өөрийн бодлогыг засна (админ бүгдийг)
   const mine = staff ? new Set((await Problem.find({ ...problemOwnerFilter(req.user), topic: t._id }).select('_id').lean()).map((p) => String(p._id))) : new Set();
   const theoryHtml = md.render(t.theory);
-  const all = await CpTopic.find(staff ? {} : { published: true }).select('title icon order').sort({ order: 1, createdAt: 1 }).lean();
+  const all = await CpTopic.find(staff ? CP_TRACK : { ...CP_TRACK, published: true }).select('title icon order').sort({ order: 1, createdAt: 1 }).lean();
   const idx = all.findIndex((x) => String(x._id) === String(t._id));
   res.render('cp/topic', {
     title: t.title,
@@ -148,7 +150,7 @@ router.post('/topics/:id', staffOnly, loadTopic, async (req, res) => {
 
 // Дарааллыг солих (дээш / доош)
 router.post('/topics/:id/move', staffOnly, loadTopic, async (req, res) => {
-  const all = await CpTopic.find().sort({ order: 1, createdAt: 1 });
+  const all = await CpTopic.find(CP_TRACK).sort({ order: 1, createdAt: 1 });
   const i = all.findIndex((x) => x._id.equals(req.topic._id));
   const j = req.body.dir === 'up' ? i - 1 : i + 1;
   if (j >= 0 && j < all.length) {
@@ -239,7 +241,7 @@ router.post('/book/delete', staffOnly, async (req, res) => {
 const NOTE_LIMIT = 300;
 
 async function visibleTopics(user) {
-  return CpTopic.find(isStaff(user) ? {} : { published: true }).select('title icon').sort({ order: 1, createdAt: 1 }).lean();
+  return CpTopic.find(isStaff(user) ? CP_TRACK : { ...CP_TRACK, published: true }).select('title icon').sort({ order: 1, createdAt: 1 }).lean();
 }
 
 async function noteForm(req, res, title, note, errors, status = 200) {
@@ -259,7 +261,7 @@ async function parseNote(req) {
   const body = String(req.body.body ?? '').replace(/\r\n/g, '\n').slice(0, 50000);
   let topic = null;
   if (isId(req.body.topic)) {
-    const t = await CpTopic.findOne(isStaff(req.user) ? { _id: req.body.topic } : { _id: req.body.topic, published: true }).select('_id').lean();
+    const t = await CpTopic.findOne(isStaff(req.user) ? { ...CP_TRACK, _id: req.body.topic } : { ...CP_TRACK, _id: req.body.topic, published: true }).select('_id').lean();
     topic = t?._id || null;
   }
   return { errors: title || body.trim() ? [] : ['Тэмдэглэл хоосон байна.'], data: { title, body, topic } };

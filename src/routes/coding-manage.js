@@ -85,7 +85,7 @@ async function renderForm(req, res, { problem, errors = [], status = 200 }) {
     statementHtml: md.render(problem.statement || ''),
     LANGUAGES: judge.LANGUAGES,
     DIFFICULTIES,
-    topics: await CpTopic.find().select('title icon section order').sort({ order: 1, createdAt: 1 }).lean(),
+    topics: await CpTopic.find().select('title icon section order track').sort({ order: 1, createdAt: 1 }).lean(),
   });
 }
 
@@ -94,7 +94,7 @@ router.get('/new', async (req, res) => {
     problem: {
       classIds: [], languages: LANG_KEYS, timeLimitMs: 1000, memoryLimitMb: 256, showStandings: true,
       difficulty: DEFAULT_DIFFICULTY, statement: STATEMENT_TEMPLATE,
-      topic: isId(req.query.topic) ? req.query.topic : null, // Гүнзгий бэлтгэлийн сэдвээс «+ Бодлого»
+      topic: isId(req.query.topic) ? req.query.topic : null, // Гүнзгий бэлтгэлийн сэдэв / Програмчлалын суурийн хичээлээс «+ Бодлого»
     },
   });
 });
@@ -140,7 +140,7 @@ router.post('/:id/publish', loadProblem, async (req, res) => {
   p.published = !p.published;
   if (p.published && !p.topic) await ensureNumber(p); // анх нийтлэхэд дараагийн дугаар (зөвхөн үндсэн тэмцээн)
   await p.save();
-  flash(req, 'success', p.published ? (p.topic ? 'Бодлого нийтлэгдлээ. Гүнзгий бэлтгэлийн сурагчдад харагдана.' : 'Бодлого нийтлэгдлээ. Бүх сурагч бодож, хоорондоо өрсөлдөнө.') : 'Бодлогыг нийтлэлээс буцаалаа.');
+  flash(req, 'success', p.published ? (p.topic ? 'Бодлого нийтлэгдлээ. Тухайн хичээл/сэдвийн сурагчдад харагдана.' : 'Бодлого нийтлэгдлээ. Бүх сурагч бодож, хоорондоо өрсөлдөнө.') : 'Бодлогыг нийтлэлээс буцаалаа.');
   res.redirect(base(p));
 });
 

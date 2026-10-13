@@ -1,6 +1,7 @@
 const { User, Class } = require('../models');
 const { isCodingStaff } = require('../access');
 const { cpAccess } = require('../cp');
+const { basicsAccess } = require('../basics');
 
 /** Сессээс хэрэглэгчийг ачаалж, идэвхгүй болсон бол гаргана */
 async function loadUser(req, res, next) {
@@ -21,6 +22,9 @@ async function loadUser(req, res, next) {
       user.codingPlayer = user.role === 'student' && !!user.classId && !!(await Class.exists({ _id: user.classId, codingEnabled: true }));
       res.locals.canCoding = user.codingPlayer || user.codingStaff;
       res.locals.canCp = cpAccess(user);
+      // Програмчлалын суурь: ангид нь дор хаяж нэг хичээл нээгдсэн сурагч, мэдээлэл зүйн багш
+      user.basicsAccess = await basicsAccess(user);
+      res.locals.canBasics = user.basicsAccess;
     } else {
       delete req.session.userId;
     }

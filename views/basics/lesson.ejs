@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+<a href="/basics" class="back">← 🧱 Програмчлалын суурь</a>
+<div class="page-head">
+  <div>
+    <p class="muted small cp-crumb">Хичээл <%= n %></p>
+    <h1><span class="cp-title-icon"><%= lesson.icon %></span> <%= lesson.title %>
+      <% if (!lesson.published) { %><span class="badge badge-amber">Ноорог</span><% } %></h1>
+    <% if (lesson.summary) { %><p class="muted"><%= lesson.summary %></p><% } %>
+  </div>
+  <% if (staff) { %>
+    <div class="btn-group">
+      <a class="btn" href="/basics/lessons/<%= lesson._id %>/edit">✎ Онол, тохиргоо</a>
+      <a class="btn btn-primary" href="/coding/manage/new?topic=<%= lesson._id %>">+ Бодлого нэмэх</a>
+    </div>
+  <% } %>
+</div>
+
+<% if (staff) { %>
+  <div class="import-toolbar cp-staff-bar">
+    <span class="small">🏫 Нээлттэй: <% if (openClasses.length) { %><strong><%= openClasses.map(function (c) { return c.name; }).join(', ') %></strong><% } else { %><span class="badge badge-amber">ямар ч ангид нээгээгүй</span><% } %>
+      · 👁 <%= viewers %> сурагч үзсэн</span>
+    <a class="btn btn-sm" href="/basics/classes">Анги бүрээр нээх</a>
+  </div>
+<% } else if (firstView) { %>
+  <div class="flash flash-success">👁 Хичээлийг «үзсэн» гэж тэмдэглэлээ. Онолоо уншаад доорх бодлогуудыг бодоорой!</div>
+<% } %>
+
+<div class="cp-topic-layout">
+  <article class="card cp-theory">
+    <h2 class="cp-block-title">📖 Онол</h2>
+    <% if (lesson.theory.trim()) { %>
+      <div class="markdown"><%- theoryHtml %></div>
+    <% } else { %>
+      <p class="muted">Онол хараахан оруулаагүй байна.<% if (staff) { %> <a href="/basics/lessons/<%= lesson._id %>/edit">Онол бичих →</a><% } %></p>
+    <% } %>
+  </article>
+
+  <aside class="cp-side">
+    <section class="card cp-problems">
+      <h2 class="cp-block-title">🧩 Бодлогууд</h2>
+      <% if (!problems.length) { %>
+        <p class="muted small">Бодлого хараахан алга.<% if (staff) { %> <a href="/coding/manage/new?topic=<%= lesson._id %>">Нэмэх →</a><% } %></p>
+      <% } else { %>
+        <ol class="cp-problem-list">
+          <% problems.forEach(function (p) { %>
+            <li class="<%= p.solved ? 'is-solved' : '' %>">
+              <a href="/coding/<%= p._id %>">
+                <span class="cp-p-num"><%= p.solved ? '✓' : p.n %></span>
+                <span class="cp-p-title"><%= p.title %></span>
+                <span class="diff-chip diff-<%= p.diff.key %>"><%= p.diff.icon %> <%= p.diff.label %></span>
+              </a>
+              <% if (staff) { %>
+                <span class="cp-p-staff small">
+                  <% if (!p.published) { %><span class="badge badge-amber">Ноорог</span><% } %>
+                  <% if (!p.testCount) { %><span class="badge badge-amber">тестгүй</span><% } %>
+                  <% if (p.canEdit) { %><a href="/coding/manage/<%= p._id %>">удирдах</a><% } %>
+                </span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ol>
+      <% } %>
+    </section>
+
+    <% if (toc.length > 1) { %>
+      <nav class="card cp-toc" aria-label="Агуулга">
+        <strong class="small">Агуулга</strong>
+        <% toc.forEach(function (h) { %><a class="toc-l<%= h.level %>" href="#<%= h.id %>"><%= h.text %></a><% }) %>
+      </nav>
+    <% } %>
+  </aside>
+</div>
+
+<nav class="cp-pager">
+  <% if (prev) { %><a class="btn" href="/basics/lessons/<%= prev._id %>">← <%= prev.icon %> <%= prev.title %></a><% } else { %><span></span><% } %>
+  <% if (next) { %><a class="btn btn-primary" href="/basics/lessons/<%= next._id %>"><%= next.icon %> <%= next.title %> →</a><% } %>
+</nav>
+<%- include('../partials/footer') %>

@@ -299,9 +299,21 @@ const cpTopicSchema = new Schema(
     // Багш засаагүй бол (hash таарвал) шинэ хувилбараар автоматаар шинэчилнэ.
     key: { type: String, default: null, index: true },
     seedHash: { type: String, default: null },
+    // 'cp' = Гүнзгий бэлтгэлийн сэдэв; 'basics' = Програмчлалын суурийн хичээл (бүх сурагч, анги бүрээр нээнэ)
+    track: { type: String, enum: ['cp', 'basics'], default: 'cp', index: true },
+    classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [] }, // basics: нээгдсэн ангиуд
   },
   { timestamps: true }
 );
+
+// Програмчлалын суурь: сурагч хичээлийг үзсэн тэмдэглэл
+const lessonViewSchema = new Schema({
+  user: { type: Types.ObjectId, ref: 'User', required: true },
+  topic: { type: Types.ObjectId, ref: 'CpTopic', required: true },
+  viewedAt: { type: Date, default: Date.now },
+});
+lessonViewSchema.index({ user: 1, topic: 1 }, { unique: true });
+lessonViewSchema.index({ topic: 1 });
 
 // Гүнзгий бэлтгэлийн сурагчийн хувийн тэмдэглэл (зөвхөн эзэн нь харна)
 const cpNoteSchema = new Schema(
@@ -318,6 +330,7 @@ cpNoteSchema.index({ user: 1, updatedAt: -1 });
 module.exports = {
   CpTopic: mongoose.model('CpTopic', cpTopicSchema),
   CpNote: mongoose.model('CpNote', cpNoteSchema),
+  LessonView: mongoose.model('LessonView', lessonViewSchema),
   Problem: mongoose.model('Problem', problemSchema),
   ProblemTest: mongoose.model('ProblemTest', problemTestSchema),
   CodeSubmission: mongoose.model('CodeSubmission', codeSubmissionSchema),
