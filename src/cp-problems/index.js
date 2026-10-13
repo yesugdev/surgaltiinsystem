@@ -22,10 +22,11 @@ function buildTests(def) {
   return inputs.map((input, i) => ({ name: String(i + 1), input, output: def.solve(input) }));
 }
 
-async function seedDefaultProblems() {
-  const setting = await Setting.findOne({ key: 'cpProblemKeys' }).lean();
+/** list-ийн бодлогуудыг (сэдэв нь key-ээр) нэг удаа нэмнэ. Програмчлалын суурь ч үүнийг ашиглана. */
+async function seedProblems(list, settingKey, label) {
+  const setting = await Setting.findOne({ key: settingKey }).lean();
   const known = new Set(setting?.value || []);
-  const todo = PROBLEMS.filter((p) => !known.has(p.key));
+  const todo = list.filter((p) => !known.has(p.key));
   if (!todo.length) return { created: 0 };
   const admin = await User.findOne({ role: 'admin' }).sort({ createdAt: 1 }).select('_id').lean();
   if (!admin) return { created: 0 };
@@ -36,8 +37,8 @@ async function seedDefaultProblems() {
   for (const [i, def] of todo.entries()) {
     const topic = topics.get(def.topic);
     if (!topic) continue; // сэдвийг багш устгасан
-    const list = buildTests(def);
-    const invalid = tests.validateTests(list);
+    const testList = buildTests(def);
+    const invalid = tests.validateTests(testList);
     if (invalid) { console.error(`Бодлого ${def.key}: ${invalid}`); continue; }
     const at = new Date(base + i * 1000); // сэдвийн хуудсанд дарааллаараа гарна
     const problem = new Problem({
@@ -55,14 +56,16 @@ async function seedDefaultProblems() {
       updatedAt: at,
     });
     await problem.save({ timestamps: false });
-    await tests.saveTests(problem._id, list, { replace: true, sampleFirst: def.samples.length });
+    await tests.saveTests(problem._id, testList, { replace: true, sampleFirst: def.samples.length });
     known.add(def.key);
-    await Setting.updateOne({ key: 'cpProblemKeys' }, { $set: { value: [...known] } }, { upsert: true });
+    await Setting.updateOne({ key: settingKey }, { $set: { value: [...known] } }, { upsert: true });
     created++;
     await new Promise((r) => setImmediate(r)); // хүсэлтүүдийг хаахгүй
   }
-  if (created) console.log(`Гүнзгий бэлтгэл: ${created} бодлого нэмлээ.`);
+  if (created) console.log(`${label}: ${created} бодлого нэмлээ.`);
   return { created };
 }
 
-module.exports = { PROBLEMS, buildTests, seedDefaultProblems };
+const seedDefaultProblems = () => seedProblems(PROBLEMS, 'cpProblemKeys', 'Гүнзгий бэлтгэл');
+
+module.exports = { PROBLEMS, buildTests, seedProblems, seedDefaultProblems };

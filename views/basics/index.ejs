@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+<section class="cp-hero basics-hero">
+  <div>
+    <h1>🧱 Програмчлалын суурь</h1>
+    <p>Алгоритмаас эхлээд эрэмбэлэлт хүртэл алхам алхмаар. Хичээл бүрийн <strong>онолыг</strong> уншаад, дараа нь <strong>хялбар бодлогуудыг</strong> бодоорой.</p>
+    <% if (staff) { %>
+      <div class="btn-group cp-hero-links">
+        <a class="btn" href="/basics/classes">🏫 Анги бүрээр нээх</a>
+        <a class="btn" href="/basics/progress">📈 Сурагчдын явц</a>
+        <a class="btn" href="/basics/lessons/new">+ Шинэ хичээл</a>
+      </div>
+    <% } %>
+  </div>
+  <% if (!staff) { %>
+    <div class="cp-hero-stat">
+      <strong><%= stats.viewed %></strong><span>/ <%= stats.open %> хичээл үзсэн</span>
+      <div class="score-bar"><span style="width: <%= stats.open ? Math.round(stats.viewed / stats.open * 100) : 0 %>%"></span></div>
+      <span class="small"><%= stats.solved %> / <%= stats.total %> бодлого бодсон</span>
+    </div>
+  <% } %>
+</section>
+
+<% if (!lessons.length) { %>
+  <div class="card empty"><p>Одоогоор хичээл алга байна.</p></div>
+<% } %>
+
+<ol class="roadmap">
+  <% lessons.forEach(function (l, i) {
+       const done = l.viewed && l.solved === l.total;
+       const state = !l.open ? 'is-locked' : done ? 'is-done' : l.viewed ? 'is-viewed' : 'is-new'; %>
+    <li class="roadmap-step <%= state %> <%= l.published ? '' : 'is-draft' %>" id="lesson-<%= l._id %>">
+      <span class="roadmap-dot"><%= !l.open ? '🔒' : done ? '✓' : l.n %></span>
+      <div class="roadmap-card">
+        <% if (l.open) { %><a class="roadmap-link" href="/basics/lessons/<%= l._id %>"><% } else { %><div class="roadmap-link"><% } %>
+          <span class="roadmap-icon"><%= l.icon %></span>
+          <span class="roadmap-body">
+            <strong><%= l.n %>. <%= l.title %></strong>
+            <% if (l.summary) { %><span class="muted small"><%= l.summary %></span><% } %>
+            <span class="roadmap-meta small">
+              <% if (staff) { %>
+                <span class="badge <%= l.classes ? 'badge-green' : 'badge-amber' %>"><%= l.classes ? l.classes + ' / ' + classCount + ' анги' : 'Ямар ч ангид нээгээгүй' %></span>
+                <% if (!l.published) { %><span class="badge badge-amber">Ноорог</span><% } %>
+                <span class="muted"><%= l.total %> бодлого</span>
+              <% } else if (!l.open) { %>
+                <span class="muted">Багш удахгүй нээнэ</span>
+              <% } else { %>
+                <span class="badge <%= l.viewed ? 'badge-green' : '' %>"><%= l.viewed ? '👁 Үзсэн' : '○ Үзээгүй' %></span>
+                <% if (l.total) { %><span class="muted">🧩 <%= l.solved %>/<%= l.total %> бодлого</span><% } %>
+              <% } %>
+            </span>
+          </span>
+        <% if (l.open) { %></a><% } else { %></div><% } %>
+        <% if (staff) { %>
+          <div class="cp-topic-tools">
+            <form method="post" action="/basics/lessons/<%= l._id %>/move"><input type="hidden" name="dir" value="up"><button class="btn btn-sm btn-ghost" title="Дээш">↑</button></form>
+            <form method="post" action="/basics/lessons/<%= l._id %>/move"><input type="hidden" name="dir" value="down"><button class="btn btn-sm btn-ghost" title="Доош">↓</button></form>
+            <a class="btn btn-sm btn-ghost" href="/basics/lessons/<%= l._id %>/edit" title="Засах">✎</a>
+          </div>
+        <% } %>
+      </div>
+    </li>
+  <% }) %>
+</ol>
+<%- include('../partials/footer') %>

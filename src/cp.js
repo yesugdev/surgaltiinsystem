@@ -61,21 +61,24 @@ const LEGACY_HASHES = new Set([
 ]);
 
 const hashOf = (text) => crypto.createHash('sha1').update(String(text || '').trim()).digest('hex').slice(0, 16);
-const theoryOf = (key) => fs.readFileSync(path.join(__dirname, 'cp-content', key + '.md'), 'utf8').trim();
+const theoryOf = (dir, key) => fs.readFileSync(path.join(__dirname, dir, key + '.md'), 'utf8').trim();
+
+// Гүнзгий бэлтгэлийн сэдвүүд (Програмчлалын суурийн хичээлүүдээс ялгах — хуучин бичлэгт track талбар байхгүй)
+const CP_TRACK = { track: { $ne: 'basics' } };
 
 /**
  * Сервер асахад анхдагч сэдвүүдийг шалгана:
  *  - огт байхгүй бол үүсгэнэ (багш санаатай устгасныг дахин үүсгэхгүй — Setting-д тэмдэглэнэ);
  *  - багш засаагүй (hash таарсан) онолыг шинэ хувилбараар шинэчилнэ; засварласныг хөндөхгүй.
  */
-async function seedDefaultTopics() {
-  const setting = await Setting.findOne({ key: 'cpDefaultKeys' }).lean();
+async function seedTopics({ defs, dir, settingKey, track, label }) {
+  const setting = await Setting.findOne({ key: settingKey }).lean();
   const known = new Set(setting?.value || []);
-  const firstRun = !(await CpTopic.exists({}));
+  const firstRun = !(await CpTopic.exists(track === 'basics' ? { track: 'basics' } : CP_TRACK));
   let created = 0;
   let updated = 0;
-  for (const def of DEFAULT_TOPICS) {
-    const theory = theoryOf(def.key);
+  for (const def of defs) {
+    const theory = theoryOf(dir, def.key);
     const newHash = hashOf(theory);
     let doc = await CpTopic.findOne({ key: def.key });
     if (!doc && def.legacyTitle) doc = await CpTopic.findOne({ key: null, title: def.legacyTitle });
@@ -92,15 +95,17 @@ async function seedDefaultTopics() {
       }
       await doc.save();
     } else if (firstRun || !known.has(def.key)) {
-      await CpTopic.create({ key: def.key, title: def.title, section: def.section, icon: def.icon, summary: def.summary, theory, seedHash: newHash, order: def.order, published: true });
+      await CpTopic.create({ key: def.key, title: def.title, section: def.section || 'basics', icon: def.icon, summary: def.summary, theory, seedHash: newHash, order: def.order, published: true, track });
       created++;
     }
     known.add(def.key);
   }
-  await Setting.updateOne({ key: 'cpDefaultKeys' }, { $set: { value: [...known] } }, { upsert: true });
-  if (created || updated) console.log(`Гүнзгий бэлтгэл: ${created} сэдэв нэмж, ${updated} сэдвийн онолыг шинэчиллээ.`);
+  await Setting.updateOne({ key: settingKey }, { $set: { value: [...known] } }, { upsert: true });
+  if (created || updated) console.log(`${label}: ${created} сэдэв нэмж, ${updated} сэдвийн онолыг шинэчиллээ.`);
   return { created, updated };
 }
+
+const seedDefaultTopics = () => seedTopics({ defs: DEFAULT_TOPICS, dir: 'cp-content', settingKey: 'cpDefaultKeys', track: 'cp', label: 'Гүнзгий бэлтгэл' });
 
 // Өмнөх хувилбарын товч тайлбарууд (багш засаагүй бол шинээр солино)
 const DEFAULT_SUMMARIES_OLD = new Set([
@@ -112,4 +117,4 @@ const DEFAULT_SUMMARIES_OLD = new Set([
   'Модны шинж, нэгтгэх-олох (Disjoint Set Union)', 'Хэрчмийн асуулга, шинэчлэлийг O(log n)-д',
 ]);
 
-module.exports = { CP_UNLOCK_LEVEL, SECTIONS, sectionOf, cpAccess, syncCpUnlock, seedDefaultTopics, DEFAULT_TOPICS };
+module.exports = { CP_UNLOCK_LEVEL, CP_TRACK, SECTIONS, sectionOf, cpAccess, syncCpUnlock, seedTopics, seedDefaultTopics, DEFAULT_TOPICS };

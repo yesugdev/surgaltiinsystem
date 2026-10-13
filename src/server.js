@@ -101,6 +101,7 @@ async function main() {
   app.use('/learn', require('./routes/learn'));
   app.use('/files', require('./routes/files'));
   app.use('/cp', require('./routes/cp'));
+  app.use('/basics', require('./routes/basics'));
   app.use('/coding/manage', require('./routes/coding-manage'));
   app.use('/coding', require('./routes/coding'));
 
@@ -118,7 +119,9 @@ async function main() {
   require('./problem-number').backfillNumbers().catch((e) => console.error('Бодлогын дугаар:', e.message));
   require('./cp').seedDefaultTopics()
     .then(() => require('./cp-problems').seedDefaultProblems())
-    .catch((e) => console.error('Гүнзгий бэлтгэлийн сэдэв:', e.message));
+    .then(() => require('./basics').seedBasics())
+    .then(() => require('./basics-problems').seedBasicsProblems())
+    .catch((e) => console.error('Гүнзгий бэлтгэл / Програмчлалын суурь:', e.message));
 
   // docker stop / шинэчлэлийн үед эхэлсэн хүсэлтүүдийг дуусгаад унтарна
   const shutdown = (signal) => {

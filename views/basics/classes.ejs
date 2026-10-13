@@ -1,0 +1,52 @@
+<%- include('../partials/header', { bodyClass: 'wide' }) %>
+<a href="/basics" class="back">← 🧱 Програмчлалын суурь</a>
+<div class="page-head">
+  <div>
+    <h1>🏫 Анги бүрээр нээх</h1>
+    <p class="muted">Чагтласан нүд = тухайн ангийн сурагчдад хичээл нээлттэй. Хичээл нээгдсэн ангийн сурагчдад цэсэнд «Програмчлалын суурь» гарч ирнэ.</p>
+  </div>
+</div>
+
+<% if (!classes.length || !lessons.length) { %>
+  <div class="card empty"><p><%= !classes.length ? 'Анги бүртгэгдээгүй байна.' : 'Хичээл алга байна.' %></p></div>
+<% } else { %>
+  <form method="post" action="/basics/classes" class="card basics-matrix-card">
+    <div class="table-wrap">
+      <table class="table basics-matrix">
+        <thead>
+          <tr>
+            <th>Хичээл</th>
+            <% classes.forEach(function (c) { %>
+              <th class="center"><label class="basics-col-head"><span><%= c.name %></span><input type="checkbox" data-col="<%= c._id %>" title="Бүх хичээлийг сонгох/цуцлах"></label></th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% lessons.forEach(function (l, i) { %>
+            <tr>
+              <th scope="row"><%= i + 1 %>. <%= l.icon %> <%= l.title %><% if (!l.published) { %> <span class="badge badge-amber">Ноорог</span><% } %></th>
+              <% classes.forEach(function (c) { const v = l._id + ':' + c._id; %>
+                <td class="center"><input type="checkbox" name="open" value="<%= v %>" data-cell="<%= c._id %>" <%= open.has(v) ? 'checked' : '' %> aria-label="<%= c.name %> — <%= l.title %>"></td>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="btn-group sticky-actions">
+      <a class="btn btn-ghost" href="/basics">Болих</a>
+      <button class="btn btn-primary">Хадгалах</button>
+    </div>
+  </form>
+  <script>
+    // Баганын толгойн чагт: тухайн ангийн бүх хичээлийг нэг дор сонгох
+    document.querySelectorAll('[data-col]').forEach(function (head) {
+      var cells = document.querySelectorAll('[data-cell="' + head.dataset.col + '"]');
+      var sync = function () { var n = Array.prototype.filter.call(cells, function (c) { return c.checked; }).length; head.checked = n === cells.length; head.indeterminate = n > 0 && n < cells.length; };
+      head.addEventListener('change', function () { cells.forEach(function (c) { c.checked = head.checked; }); });
+      cells.forEach(function (c) { c.addEventListener('change', sync); });
+      sync();
+    });
+  </script>
+<% } %>
+<%- include('../partials/footer') %>

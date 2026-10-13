@@ -26,11 +26,21 @@
           <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
           <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
         <% } %>
-        <% if (locals.canCoding) { %>
-          <a href="/coding" class="<%= on('/coding') %>">Өрсөлдөөнт Coding</a>
-        <% } %>
-        <% if (locals.canCp) { %>
-          <a href="/cp" class="<%= on('/cp') %>">🎯 Гүнзгий бэлтгэл</a>
+        <% const progLinks = [
+             locals.canBasics && ['/basics', '🧱 Програмчлалын суурь'],
+             locals.canCoding && ['/coding', 'Өрсөлдөөнт Coding'],
+             locals.canCp && ['/cp', '🎯 Гүнзгий бэлтгэл'],
+           ].filter(Boolean); %>
+        <% if (u.codingStaff && progLinks.length > 1) { const progOn = progLinks.some(function (l) { return on(l[0]); }); %>
+          <%# Багш, админ: цэс хэт урт болохоос сэргийлж нэг доош унжих цэсэнд %>
+          <details class="nav-menu">
+            <summary class="<%= progOn ? 'active' : '' %>">💻 Програмчлал</summary>
+            <div class="nav-menu-list">
+              <% progLinks.forEach(function (l) { %><a href="<%= l[0] %>" class="<%= on(l[0]) %>"><%= l[1] %></a><% }) %>
+            </div>
+          </details>
+        <% } else { %>
+          <% progLinks.forEach(function (l) { %><a href="<%= l[0] %>" class="<%= on(l[0]) %>"><%= l[1] %></a><% }) %>
         <% } %>
         <% if (u.role === 'admin') { const adminOn = ['/admin/subjects', '/admin/classes', '/admin/users'].some(function (x) { return on(x); }); %>
           <details class="nav-menu">

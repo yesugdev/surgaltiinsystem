@@ -1,0 +1,53 @@
+<%- include('../partials/header', { bodyClass: 'wide' }) %>
+<a href="/basics" class="back">← 🧱 Програмчлалын суурь</a>
+<div class="page-head">
+  <div>
+    <h1>📈 Сурагчдын явц</h1>
+    <p class="muted">👁 — хичээлийг үзсэн, тоо — бодсон бодлого / нийт. Зөвхөн тухайн ангид нээгдсэн хичээлүүд харагдана.</p>
+  </div>
+</div>
+
+<form method="get" action="/basics/progress" class="import-toolbar">
+  <label>Анги
+    <select name="class" onchange="this.form.submit()">
+      <% classes.forEach(function (c) { %><option value="<%= c._id %>" <%= String(c._id) === classId ? 'selected' : '' %>><%= c.name %></option><% }) %>
+    </select>
+  </label>
+  <noscript><button class="btn">Харах</button></noscript>
+</form>
+
+<% if (!lessons.length) { %>
+  <div class="card empty"><p>Энэ ангид нээгдсэн хичээл алга. <a href="/basics/classes">Анги бүрээр нээх →</a></p></div>
+<% } else if (!rows.length) { %>
+  <div class="card empty"><p>Энэ ангид сурагч алга.</p></div>
+<% } else { %>
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table basics-progress">
+        <thead>
+          <tr>
+            <th>Сурагч</th>
+            <% lessons.forEach(function (l, i) { %><th class="center" title="<%= l.title %>"><%= l.icon %><br><span class="small"><%= l.title %></span></th><% }) %>
+            <th class="center">Үзсэн</th>
+            <th class="center">Бодсон</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function (r) { %>
+            <tr>
+              <th scope="row"><%= r.fullName %> <span class="muted small"><%= r.username %></span></th>
+              <% r.cells.forEach(function (c) { %>
+                <td class="center <%= c.viewed ? (c.total && c.solved === c.total ? 'bp-done' : 'bp-viewed') : 'bp-none' %>">
+                  <%= c.viewed ? '👁' : '—' %><% if (c.total) { %><span class="small bp-count"><%= c.solved %>/<%= c.total %></span><% } %>
+                </td>
+              <% }) %>
+              <td class="center"><strong><%= r.viewedCount %></strong>/<%= lessons.length %></td>
+              <td class="center"><strong><%= r.solvedCount %></strong>/<%= totalProblems %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

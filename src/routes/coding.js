@@ -4,6 +4,7 @@
 const express = require('express');
 const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic } = require('../models');
 const { cpAccess, syncCpUnlock } = require('../cp');
+const { lessonOpenFor } = require('../basics');
 const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
@@ -21,7 +22,8 @@ const isStaff = (u) => !!u.codingStaff;
 
 // Мэдээлэл зүйн бус багш, админ нээгээгүй ангийн сурагчид энэ хэсэг байхгүй мэт
 // Мэдээлэл зүйн бус багш, Coding нээгдээгүй сурагчид байхгүй мэт. Гүнзгий бэлтгэлийн сурагч зөвхөн сэдвийн бодлогоо бодно.
-router.use((req, res, next) => (req.user.codingPlayer || isStaff(req.user) || cpAccess(req.user) ? next() : notFound(res, 'Хуудас')));
+// Програмчлалын суурийн сурагч зөвхөн ангидаа нээгдсэн хичээлийн бодлогоо бодно.
+router.use((req, res, next) => (req.user.codingPlayer || isStaff(req.user) || cpAccess(req.user) || req.user.basicsAccess ? next() : notFound(res, 'Хуудас')));
 // Үндсэн тэмцээний хуудсууд (жагсаалт, самбар, аватар) — Coding нээгдсэн сурагч, багш
 const mainOnly = (req, res, next) => (req.user.codingPlayer || isStaff(req.user) ? next() : notFound(res, 'Хуудас'));
 
@@ -35,13 +37,19 @@ function phase(p, now = new Date()) {
 /** Сурагч: нийтлэгдсэн, эхэлсэн бодлого; багш: өөрийн удирдах (админ бүгд) */
 async function findVisibleProblem(user, id) {
   if (!isId(id)) return null;
-  if (isStaff(user)) return Problem.findOne({ _id: id, ...problemOwnerFilter(user) }).lean();
+  if (isStaff(user)) {
+    const own = await Problem.findOne({ _id: id, ...problemOwnerFilter(user) }).lean();
+    if (own?.topic) own.topicDoc = await CpTopic.findById(own.topic).select('title icon track').lean();
+    return own;
+  }
   const p = await Problem.findOne({ _id: id, published: true }).lean();
   if (!p || phase(p) === 'upcoming') return null;
   if (p.topic) {
-    // Гүнзгий бэлтгэлийн бодлого: эрхтэй сурагч, нийтлэгдсэн сэдэв
-    if (!cpAccess(user) || !(await CpTopic.exists({ _id: p.topic, published: true }))) return null;
-    p.topicDoc = await CpTopic.findById(p.topic).select('title icon').lean();
+    const t = await CpTopic.findById(p.topic).select('title icon track published classIds').lean();
+    if (!t || !t.published) return null;
+    // Програмчлалын суурь: ангид нь нээгдсэн хичээл; Гүнзгий бэлтгэл: эрхтэй сурагч
+    if (t.track === 'basics' ? !lessonOpenFor(user, t) : !cpAccess(user)) return null;
+    p.topicDoc = { _id: t._id, title: t.title, icon: t.icon, track: t.track };
     return p;
   }
   return user.codingPlayer ? p : null;
