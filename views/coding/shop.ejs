@@ -12,20 +12,27 @@
   <div class="shop-wallet">
     <strong>🪙 <%= wallet.balance %></strong>
     <span class="small muted">нийт олсон <%= wallet.earned %> · зарцуулсан <%= wallet.spent %></span>
-    <a class="btn btn-sm" href="/coding/profile">🎨 Миний аватар</a>
+    <a class="btn btn-sm" href="/coding/profile">🎨 Миний профайл</a> <a class="btn btn-sm" href="/coding/u/<%= me._id %>">👤 Бусдад харагдах</a>
   </div>
 </section>
 
-<% function card(x) { const can = wallet.balance >= x.price; %>
-  <div class="shop-item <%= x.owned ? 'is-owned' : can ? '' : 'is-poor' %>">
+<% function card(x) { const can = wallet.balance >= x.price && x.available; %>
+  <div class="shop-item shop-<%= x.kind %> <%= x.owned ? 'is-owned' : can ? '' : 'is-poor' %>">
     <% if (x.kind === 'avatar') { %>
       <span class="cosmetic-face"><img class="av-img" src="<%= avatarImg(x.key) %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="av-face anim-<%= x.anim %>"><%= x.icon %></span></span>
+    <% } else if (x.kind === 'frame') { %>
+      <%- include('_avatar', { look: Object.assign({}, look, { frame: x.key }), initials: initials, size: 'lg' }) %>
+      <small><%= x.icon %> <%= x.name %><% if (x.season) { %><br><span class="muted"><%= x.seasonName %> улиралд</span><% } %></small>
+    <% } else if (x.kind === 'title') { %>
+      <span class="title-badge title-preview"><%= x.icon %> <%= x.name %></span>
     <% } else { %>
       <span class="cosmetic-face cosmetic-swatch <%= x.key === 'tier' ? 'swatch-tier' : 'av-color-' + x.key %>"></span>
       <small><%= x.name %></small>
     <% } %>
     <% if (x.owned) { %>
       <span class="badge badge-green">✓ Танд бий</span>
+    <% } else if (!x.available) { %>
+      <span class="badge" title="Зөвхөн <%= x.seasonName %> улиралд">🔒 <%= x.seasonName %> улирал</span>
     <% } else { %>
       <form method="post" action="/coding/shop/buy" data-confirm="<%= x.price %> 🪙-оор худалдаж авах уу?">
         <input type="hidden" name="kind" value="<%= x.kind %>"><input type="hidden" name="key" value="<%= x.key %>">
@@ -36,11 +43,21 @@
 <% } %>
 
 <section class="card">
-  <h2>Аватар</h2>
+  <h2>🏷 Цол</h2>
+  <p class="muted small">Нэрийн хажууд Rank самбар, contest, профайл дээр бүгдэд харагдана.</p>
+  <div class="shop-grid shop-grid-wide"><% titles.forEach(card) %></div>
+</section>
+<section class="card">
+  <h2>🖼 Хүрээ</h2>
+  <p class="muted small">Аватарын эргэн тойронд. Улирлын тусгай хүрээг зөвхөн тухайн улиралд нь авна — авсан бол үүрд таных.</p>
+  <div class="shop-grid"><% frames.forEach(card) %></div>
+</section>
+<section class="card">
+  <h2>🐾 Аватар</h2>
   <div class="shop-grid"><% avatars.forEach(card) %></div>
 </section>
 <section class="card">
-  <h2>Өнгө</h2>
+  <h2>🎨 Өнгө</h2>
   <div class="shop-grid"><% colors.forEach(card) %></div>
 </section>
 <p class="muted small attribution">Хөдөлгөөнт аватар: <a href="https://googlefonts.github.io/noto-emoji-animation/" target="_blank" rel="noopener">Google Noto Animated Emoji</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>

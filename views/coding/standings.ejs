@@ -51,7 +51,8 @@
           <div class="podium-col place-<%= place %> tier-<%= r.tier.key %> <%= String(r.student._id) === String(user._id) ? 'is-me' : '' %>">
             <% if (place === 1) { %><span class="podium-crown" aria-hidden="true">👑</span><% } %>
             <%- include('_avatar', { look: r.look, initials: r.student.initials, size: 'xl', animate: true }) %>
-            <strong class="podium-name <%= r.look.color ? 'name-' + r.look.color : '' %>"><%= r.student.fullName %></strong>
+            <a class="podium-name <%= r.look.color ? 'name-' + r.look.color : '' %>" href="/coding/u/<%= r.student._id %>"><%= r.student.fullName %></a>
+          <%- include('_title', { look: r.look }) %>
             <span class="muted small"><%= r.student.className %></span>
             <span class="tier-badge"><%= r.tier.icon %> <%= r.tier.name %></span>
             <div class="podium-block"><span class="podium-medal"><%= place === 1 ? '🥇' : place === 2 ? '🥈' : '🥉' %></span><strong><%= r.total %></strong><small>оноо</small></div>
@@ -77,7 +78,7 @@
             <div class="player">
               <%- include('_avatar', { look: r.look, initials: r.student.initials, size: '' }) %>
               <div>
-                <div class="player-name <%= r.look.color ? 'name-' + r.look.color : '' %>"><%= r.student.fullName %><% if (me) { %> <span class="badge badge-blue">та</span><% } %></div>
+                <div class="player-name <%= r.look.color ? 'name-' + r.look.color : '' %>"><a href="/coding/u/<%= r.student._id %>" class="player-link"><%= r.student.fullName %></a><% if (me) { %> <span class="badge badge-blue">та</span><% } %> <%- include('_title', { look: r.look }) %></div>
                 <div class="player-meta"><span class="tier-chip" title="<%= r.tier.points %> ranking оноо"><%= r.tier.icon %> <%= r.tier.name %></span><% if (r.student.className) { %><span class="muted"> · <%= r.student.className %></span><% } %></div>
               </div>
             </div>

@@ -37,7 +37,7 @@ const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).m
 async function contestStandings(contest, problems) {
   const ids = problems.map((p) => p._id);
   const students = await User.find({ role: 'student', classId: { $in: contest.classIds }, active: { $ne: false } })
-    .select('fullName username classId codingAvatar codingColor codingOwned ratingPoints placementDone').lean();
+    .select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
   const createdAt = { $gte: contest.startAt || new Date(8.64e15) };
   if (contest.endAt) createdAt.$lte = contest.endAt;
   const best = ids.length && students.length
