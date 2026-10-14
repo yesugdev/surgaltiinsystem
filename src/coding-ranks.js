@@ -15,6 +15,11 @@ const difficultyOf = (d) => (Object.hasOwn(DIFFICULTIES, d) ? DIFFICULTIES[d] : 
 /** Бүтэн бодвол авах оноо (зоос) */
 const solvePoints = (d) => difficultyOf(d).points;
 
+/** Contest-ийн бодлогын бүтэн оноо: тусгай оноо (points) эсвэл хүндийн зэргээр */
+const problemPoints = (p) => (p && p.points > 0 ? p.points : solvePoints(p && p.difficulty));
+/** Шүүгчийн 0–100 хувийг тухайн бодлогын contest-ийн оноо руу */
+const scoreFor = (score100, p) => Math.round((Number(score100) || 0) * problemPoints(p) / 10) / 10;
+
 /** Шүүгчийн 0–100 хувийг тухайн бодлогын оноо руу (хялбарын 60% → 15; аравтын нэг орон) */
 const toPoints = (score100, difficulty) => Math.round((Number(score100) || 0) * solvePoints(difficulty) / 10) / 10;
 
@@ -72,6 +77,6 @@ function placementTier(score, maxScore) {
 }
 
 module.exports = {
-  DIFFICULTIES, DEFAULT_DIFFICULTY, difficultyOf, solvePoints, toPoints, POINTS_PER_SOLVE,
+  DIFFICULTIES, DEFAULT_DIFFICULTY, difficultyOf, solvePoints, toPoints, POINTS_PER_SOLVE, problemPoints, scoreFor,
   TIERS, tierByKey, tierFor, CONTEST_MAX_GAIN, PLACE_BONUS, contestGain, PLACEMENT, placementTier,
 };

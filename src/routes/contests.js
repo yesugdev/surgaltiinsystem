@@ -5,7 +5,7 @@ const { Class, Problem, CodeSubmission, Contest, ContestResult } = require('../m
 const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean, toArray, parseInputDate } = require('../helpers');
 const { contestState, STATES, inContest, contestProblems, contestStandings, ratingChanges, finalizeContest } = require('../contests');
-const { tierFor, difficultyOf, PLACE_BONUS, CONTEST_MAX_GAIN, PLACEMENT, tierByKey } = require('../coding-ranks');
+const { tierFor, difficultyOf, problemPoints, PLACE_BONUS, CONTEST_MAX_GAIN, PLACEMENT, tierByKey } = require('../coding-ranks');
 
 const router = express.Router();
 router.use(requireRole());
@@ -133,7 +133,7 @@ router.get('/:id', loadContest, async (req, res) => {
     contest: c,
     state,
     STATES,
-    problems: problems.map((p) => ({ ...p, diff: difficultyOf(p.difficulty), mine: me ? me.cells[problems.indexOf(p)] : null })),
+    problems: problems.map((p) => ({ ...p, diff: difficultyOf(p.difficulty), pts: problemPoints(p), mine: me ? me.cells[problems.indexOf(p)] : null })),
     rows: shown.map((r) => ({ ...r, result: resultMap.get(String(r.student._id)) || null, preview: preview.get(String(r.student._id)) || null })),
     maxScore,
     me,

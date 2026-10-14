@@ -218,6 +218,10 @@ const problemSchema = new Schema(
     number: { type: Number, default: null, index: true },
     // Хүндийн зэрэг: бүтэн бодвол хялбар 25, дунд 50, хүнд 100 оноо (src/coding-ranks.js)
     difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' },
+    // Contest-ийн оноо (null = хүндийн зэргээр 25/50/100). Түвшин тогтоох contest-д 4–7 гэх мэт.
+    points: { type: Number, default: null, min: 1, max: 1000 },
+    // Гаралт шалгах: 'tokens' = үгээр (хоосон зай үл тооцно), 'lines' = мөр бүрийг яг таг (пирамид г.м.)
+    checker: { type: String, enum: ['tokens', 'lines'], default: 'tokens' },
     // Гүнзгий бэлтгэлийн сэдэв (null = үндсэн тэмцээн). Сэдэвтэй бодлого үндсэн самбарт орохгүй, дугааргүй.
     topic: { type: Types.ObjectId, ref: 'CpTopic', default: null, index: true },
     // Contest-ийн бодлого (null = үндсэн жагсаалт). Contest эхлэхээс өмнө хэнд ч харагдахгүй.

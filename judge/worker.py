@@ -200,6 +200,13 @@ def tokens_equal(expected: bytes, actual: bytes) -> bool:
     return expected.split() == actual.split()
 
 
+def lines_equal(expected: bytes, actual: bytes) -> bool:
+    """Мөр бүрийг яг таг (эхний хоосон зайтай нь) харьцуулна; зөвхөн CRLF ба төгсгөлийн хоосон мөрийг үл тооцно."""
+    def norm(b):
+        return b.replace(b'\r\n', b'\n').rstrip(b'\n').split(b'\n')
+    return norm(expected) == norm(actual)
+
+
 def classify(r, time_ms, mem_mb, stderr: bytes, out_size=0):
     if r.get('missing'):
         return 'SE'
@@ -234,6 +241,7 @@ def judge(req):
     mode = req.get('mode') or 'judge'
     want_output = set(req.get('returnOutputFor') or [])
     stop_first = bool(req.get('stopOnFirstFailure'))
+    same = lines_equal if req.get('checker') == 'lines' else tokens_equal
 
     slot = slot_queue.get()
     uid = RUNNER_UIDS[slot % len(RUNNER_UIDS)]
@@ -290,7 +298,7 @@ def judge(req):
             else:
                 if verdict is None:
                     actual = read_head(out_p, MAX_OUTPUT + 1)
-                    verdict = 'AC' if tokens_equal((t.get('output') or '').encode('utf-8'), actual) else 'WA'
+                    verdict = 'AC' if same((t.get('output') or '').encode('utf-8'), actual) else 'WA'
                     item['verdict'] = verdict
                 if i in want_output:
                     item['output'] = read_head(out_p, 4096).decode('utf-8', 'replace')
