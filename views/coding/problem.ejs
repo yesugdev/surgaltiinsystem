@@ -1,4 +1,4 @@
-<%- include('../partials/header', { bodyClass: 'wide' }) %>
+<%- include('../partials/header', { bodyClass: 'wide', katex: true }) %>
 <div class="page-head">
   <div>
     <% if (problem.contestDoc && !staff) { %><a href="/coding/contests/<%= problem.contestDoc._id %>" class="back">← 🏁 <%= problem.contestDoc.title %></a>

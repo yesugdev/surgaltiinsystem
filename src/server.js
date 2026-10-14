@@ -66,6 +66,8 @@ async function main() {
 
   // Хөдөлгөөнт аватар (өөрчлөгддөггүй, ~100KB тус бүр) — хөтөч 30 хоног кэшилнэ
   app.use('/img/avatars', express.static(path.join(__dirname, '..', 'public', 'img', 'avatars'), { maxAge: '30d', immutable: true }));
+  // LaTeX томьёоны загвар, фонт (KaTeX) — гадны CDN-гүй
+  app.use('/vendor/katex', express.static(path.join(__dirname, '..', 'node_modules', 'katex', 'dist'), { maxAge: '30d' }));
   app.use(express.static(path.join(__dirname, '..', 'public')));
   // PowerPoint-ийг хөтөч дотор зурах сан
   app.get('/vendor/pptx-preview.js', (req, res) =>

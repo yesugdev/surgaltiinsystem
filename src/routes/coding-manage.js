@@ -91,7 +91,6 @@ async function renderForm(req, res, { problem, errors = [], status = 200 }) {
     title: problem._id ? 'Бодлого засах' : 'Шинэ бодлого',
     problem,
     errors,
-    statementHtml: md.render(problem.statement || ''),
     LANGUAGES: judge.LANGUAGES,
     DIFFICULTIES,
     topics: await CpTopic.find().select('title icon section order track').sort({ order: 1, createdAt: 1 }).lean(),
@@ -119,6 +118,11 @@ const STATEMENT_TEMPLATE = [
   '## Гаралт',
   'Нэг бүхэл тоо хэвлэнэ.',
 ].join('\n');
+
+// Өгүүлбэрийн засварлагчийн урьдчилан харах (Markdown + LaTeX)
+router.post('/preview-statement', (req, res) => {
+  res.json({ html: md.renderStatement(String(req.body.text ?? '').slice(0, 200000)) });
+});
 
 router.post('/', async (req, res) => {
   const { errors, data } = await parseForm(req);

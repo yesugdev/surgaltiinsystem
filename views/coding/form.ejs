@@ -1,4 +1,4 @@
-<%- include('../partials/header') %>
+<%- include('../partials/header', { katex: true }) %>
 <% const isNew = !problem._id; const langs = problem.languages || []; %>
 <% if (!isNew) { %>
   <%- include('_manage-head', { problem: problem, tab: 'edit' }) %>
@@ -34,11 +34,10 @@
       </label>
     </div>
 
-    <label for="statement">Өгүүлбэр</label>
-    <textarea name="statement" id="statement" rows="14" data-rich data-html-source="#statement-html"
-              <%= isNew ? '' : 'data-upload=/coding/manage/' + problem._id + '/attachments' %> <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+    <label for="statement">Өгүүлбэр <span class="muted small">— Markdown + LaTeX ($1 le n le 10^5$)</span></label>
+    <textarea name="statement" id="statement" rows="18" data-md-editor data-preview="/coding/manage/preview-statement"
+              <%= isNew ? '' : 'data-upload=/coding/manage/' + problem._id + '/attachments' %>
               placeholder="Бодлогын нөхцөл, оролт, гаралтын формат, хязгаарууд"><%= problem.statement || '' %></textarea>
-    <template id="statement-html"><%- statementHtml %></template>
     <p class="muted small">«Оролт», «Гаралт» хэсгүүдийг гарчгаар тусгаарлавал ойлгомжтой. Жишээ тестийг энд бичих шаардлагагүй — тестүүдээс «Жишээ» гэж тэмдэглэсэн нь автоматаар харагдана.<% if (isNew) { %> Зураг оруулах боломж бодлого үүссэний дараа нээгдэнэ.<% } %></p>
   </section>
 
@@ -99,4 +98,4 @@
     </form>
   </section>
 <% } %>
-<%- include('../partials/footer', { scripts: ['/js/rich-editor.js'] }) %>
+<%- include('../partials/footer', { scripts: ['/js/md-editor.js'] }) %>
