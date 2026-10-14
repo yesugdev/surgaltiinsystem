@@ -1,7 +1,8 @@
 <%- include('../partials/header', { bodyClass: 'wide' }) %>
 <div class="page-head">
   <div>
-    <% if (problem.topic && !staff) { const isBasics = problem.topicDoc && problem.topicDoc.track === 'basics'; %><a href="<%= isBasics ? '/basics/lessons/' : '/cp/topics/' %><%= problem.topic %>" class="back">← <%= isBasics ? '🧱' : '🎯' %> <%= problem.topicDoc ? problem.topicDoc.title : 'Гүнзгий бэлтгэл' %></a>
+    <% if (problem.contestDoc && !staff) { %><a href="/coding/contests/<%= problem.contestDoc._id %>" class="back">← 🏁 <%= problem.contestDoc.title %></a>
+    <% } else if (problem.topic && !staff) { const isBasics = problem.topicDoc && problem.topicDoc.track === 'basics'; %><a href="<%= isBasics ? '/basics/lessons/' : '/cp/topics/' %><%= problem.topic %>" class="back">← <%= isBasics ? '🧱' : '🎯' %> <%= problem.topicDoc ? problem.topicDoc.title : 'Гүнзгий бэлтгэл' %></a>
     <% } else { %><a href="<%= staff ? '/coding/manage/' + problem._id : '/coding' %>" class="back">← <%= staff ? 'Бодлого удирдах' : 'Өрсөлдөөнт Coding' %></a><% } %>
     <h1><% if (problem.number) { %><span class="problem-num">&numero;<%= problem.number %></span> <% } %><%= problem.title %></h1>
     <p class="limits">
@@ -11,9 +12,10 @@
       <% if (problem.endAt) { %><span>⌛ <%= phase === 'closed' ? 'Дууссан' : 'Дуусах' %>: <%= fmtDate(problem.endAt) %></span><% } %>
     </p>
   </div>
-  <% if (!problem.topic && (problem.showStandings || staff)) { %><a class="btn" href="/coding/<%= problem._id %>/standings">🏆 Онооны самбар</a><% } %>
+  <% if (!problem.topic && !problem.contest && (problem.showStandings || staff)) { %><a class="btn" href="/coding/<%= problem._id %>/standings">🏆 Онооны самбар</a><% } %>
 </div>
 
+<% if (problem.contestDoc && problem.contestDoc.state === 'running') { %><div class="flash flash-info contest-live">🏁 <strong><%= problem.contestDoc.title %></strong> явагдаж байна — <%= fmtDate(problem.contestDoc.endAt) %> хүртэл илгээсэн код ranking оноонд тооцогдоно.</div><% } else if (problem.contestDoc && ['ended', 'finalized'].includes(problem.contestDoc.state)) { %><div class="flash flash-info">🏁 Энэ бодлого «<%= problem.contestDoc.title %>» contest-ийнх. Contest дууссан тул одоо илгээх нь зөвхөн дасгал (🪙 зоос авна, ranking-д тооцогдохгүй).</div><% } %>
 <% if (staff) { %><div class="flash flash-info">Та сурагчийн харагдацыг үзэж байна. Таны илгээлт онооны самбарт тооцогдохгүй.</div><% } %>
 <% if (phase === 'closed' && !staff) { %><div class="flash flash-warn">Бодлогын хугацаа дууссан. Код илгээх боломжгүй.</div><% } %>
 

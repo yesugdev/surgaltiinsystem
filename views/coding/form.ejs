@@ -3,7 +3,7 @@
 <% if (!isNew) { %>
   <%- include('_manage-head', { problem: problem, tab: 'edit' }) %>
 <% } else { %>
-  <div class="page-head"><div><% if (problem.topic) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← Сэдэв / хичээл рүү</a><% } else { %><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><% } %><h1>Шинэ бодлого</h1></div></div>
+  <div class="page-head"><div><% if (problem.contest) { %><a href="/coding/contests/<%= problem.contest %>" class="back">← 🏁 Contest</a><% } else if (problem.topic) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← Сэдэв / хичээл рүү</a><% } else { %><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><% } %><h1>Шинэ бодлого</h1></div></div>
 <% } %>
 
 <% if (errors.length) { %>
@@ -16,7 +16,12 @@
       <label>Бодлогын нэр <input name="title" value="<%= problem.title || '' %>" required maxlength="200" placeholder="жишээ: Хоёр тооны нийлбэр"></label>
       <label>Хаана
         <select name="topic">
-          <option value="">🏆 Үндсэн тэмцээн (бүх сурагч)</option>
+          <option value="">🏆 Үндсэн жагсаалт (бүх сурагч, 🪙 зоос)</option>
+          <% if (locals.contests && contests.length) { %>
+            <optgroup label="🏁 Contest (ranking оноо)">
+              <% contests.forEach(function (c) { %><option value="contest:<%= c._id %>" <%= String(problem.contest || '') === String(c._id) ? 'selected' : '' %>><%= c.kind === 'placement' ? '🎯' : '🏁' %> <%= c.title %></option><% }) %>
+            </optgroup>
+          <% } %>
           <% [['basics', '🧱 Програмчлалын суурийн хичээл'], ['cp', '🎯 Гүнзгий бэлтгэлийн сэдэв']].forEach(function (g) { const list = topics.filter(function (t) { return (t.track || 'cp') === g[0]; }); if (!list.length) return; %>
             <optgroup label="<%= g[1] %>">
               <% list.forEach(function (t) { %>

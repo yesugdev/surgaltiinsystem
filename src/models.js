@@ -42,10 +42,16 @@ const userSchema = new Schema(
     subjectIds: { type: [{ type: Types.ObjectId, ref: 'Subject' }], default: [], index: true },
     // Багш AI prompt, текстээр олноор оруулах боломжийг ашиглах эрх (админд үргэлж нээлттэй)
     aiEnabled: { type: Boolean, default: false },
-    // Өрсөлдөөнт Coding: зэрэглэлээр нээгддэг аватар, өнгө; хамгийн сүүлд баярлуулсан зэрэглэл
+    // Өрсөлдөөнт Coding: сонгосон аватар, өнгө; хамгийн сүүлд баярлуулсан зэрэглэл
     codingAvatar: { type: String, default: '' },
     codingColor: { type: String, default: '' },
     codingTierSeen: { type: String, default: 'newbie' },
+    // 🛒 Дэлгүүрээс авсан зүйлс ('a:<avatar>' / 'c:<color>') ба зарцуулсан зоос (зоос = бодсон бодлогын оноо − зарцуулсан)
+    codingOwned: { type: [String], default: [] },
+    coinsSpent: { type: Number, default: 0 },
+    // 🏅 Ranking оноо — зөвхөн contest-оор; түвшин тогтоох contest-д оролцсон эсэх
+    ratingPoints: { type: Number, default: 0, index: true },
+    placementDone: { type: Boolean, default: false },
     // Гүнзгий бэлтгэл: админ сонгосон, эсвэл Програмист зэрэглэлд хүрч нээгдсэн
     cpSelected: { type: Boolean, default: false },
     cpRankUnlocked: { type: Boolean, default: false },
@@ -214,6 +220,8 @@ const problemSchema = new Schema(
     difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' },
     // Гүнзгий бэлтгэлийн сэдэв (null = үндсэн тэмцээн). Сэдэвтэй бодлого үндсэн самбарт орохгүй, дугааргүй.
     topic: { type: Types.ObjectId, ref: 'CpTopic', default: null, index: true },
+    // Contest-ийн бодлого (null = үндсэн жагсаалт). Contest эхлэхээс өмнө хэнд ч харагдахгүй.
+    contest: { type: Types.ObjectId, ref: 'Contest', default: null, index: true },
     subject: { type: Types.ObjectId, ref: 'Subject', default: null, index: true },
     createdBy: { type: Types.ObjectId, ref: 'User', index: true },
     classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },
@@ -315,6 +323,38 @@ const lessonViewSchema = new Schema({
 lessonViewSchema.index({ user: 1, topic: 1 }, { unique: true });
 lessonViewSchema.index({ topic: 1 });
 
+// 🏁 Contest — зөвхөн админ үүсгэж, эхлүүлж, дүнг баталгаажуулна. Ranking оноо зөвхөн эндээс.
+const contestSchema = new Schema(
+  {
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    kind: { type: String, enum: ['regular', 'placement'], default: 'regular' }, // placement = түвшин тогтоох
+    description: { type: String, default: '', maxlength: 5000 },
+    classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [] }, // оролцох ангиуд
+    startAt: { type: Date, default: null },
+    endAt: { type: Date, default: null },
+    durationMin: { type: Number, default: 90, min: 5, max: 600 },
+    excluded: { type: [{ type: Types.ObjectId, ref: 'User' }], default: [] }, // хуурсан гэж хассан сурагчид
+    finalizedAt: { type: Date, default: null }, // дүн баталгаажиж ranking оноо олгосон
+    createdBy: { type: Types.ObjectId, ref: 'User' },
+  },
+  { timestamps: true }
+);
+
+const contestResultSchema = new Schema(
+  {
+    contest: { type: Types.ObjectId, ref: 'Contest', required: true, index: true },
+    user: { type: Types.ObjectId, ref: 'User', required: true, index: true },
+    score: { type: Number, default: 0 },
+    maxScore: { type: Number, default: 0 },
+    place: { type: Number, default: null },
+    placement: { type: Boolean, default: false }, // энэ contest-оор түвшин тогтоосон
+    ratingBefore: { type: Number, default: 0 },
+    ratingAfter: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+contestResultSchema.index({ contest: 1, user: 1 }, { unique: true });
+
 // Гүнзгий бэлтгэлийн сурагчийн хувийн тэмдэглэл (зөвхөн эзэн нь харна)
 const cpNoteSchema = new Schema(
   {
@@ -330,6 +370,8 @@ cpNoteSchema.index({ user: 1, updatedAt: -1 });
 module.exports = {
   CpTopic: mongoose.model('CpTopic', cpTopicSchema),
   CpNote: mongoose.model('CpNote', cpNoteSchema),
+  Contest: mongoose.model('Contest', contestSchema),
+  ContestResult: mongoose.model('ContestResult', contestResultSchema),
   LessonView: mongoose.model('LessonView', lessonViewSchema),
   Problem: mongoose.model('Problem', problemSchema),
   ProblemTest: mongoose.model('ProblemTest', problemTestSchema),
