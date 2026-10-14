@@ -407,7 +407,7 @@ router.get('/:id', loadProblem, async (req, res) => {
   res.render('coding/problem', {
     title: p.title,
     problem: p,
-    statementHtml: md.render(p.statement),
+    statementHtml: md.renderStatement(p.statement),
     samples,
     mySubs,
     phase: phase(p),

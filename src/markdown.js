@@ -2,6 +2,7 @@
 const { marked } = require('marked');
 const sanitizeHtml = require('sanitize-html');
 const { highlight } = require('./highlight');
+const katex = require('katex');
 
 marked.setOptions({ gfm: true, breaks: true });
 
@@ -49,8 +50,41 @@ function highlightCode(html) {
   });
 }
 
-function render(md) {
-  const html = highlightCode(sanitizeHtml(marked.parse(String(md || '')), SANITIZE));
+// ---------------- LaTeX томьёо (KaTeX) ----------------
+// $x^2$ — мөр доторх, $$…$$ — тусдаа мөр. Код доторх $-д хүрэхгүй; \$ = энгийн $ тэмдэгт.
+// Томьёог түр тэмдэгтээр солиод markdown → цэвэрлэгээ хийсний дараа KaTeX-ийн HTML-ээр орлуулна
+// (trust: false үед \href г.м. идэвхгүй, KaTeX оролтоо escape хийдэг тул аюулгүй).
+const KATEX_OPTS = { throwOnError: false, output: 'html', trust: false, strict: 'ignore', maxSize: 20, maxExpand: 1000 };
+const MARK = String.fromCharCode(1); // кодыг түр нуух тэмдэгт
+
+function extractMath(src) {
+  const math = [];
+  const code = [];
+  const hide = (m) => MARK + (code.push(m) - 1) + MARK;
+  let s = String(src || '')
+    .replace(/(^|\n)(`{3,}|~{3,})[^\n]*\n[\s\S]*?\n\2[ \t]*(?=\n|$)/g, hide) // код блок
+    .replace(/(`+)[^`\n][\s\S]*?\1(?!`)/g, hide); // мөр доторх код
+  const put = (tex, display) => 'KTXM' + (math.push({ tex: tex.trim(), display }) - 1) + 'KTX';
+  s = s
+    .replace(/\$\$([\s\S]+?)\$\$/g, (m, tex) => put(tex, true))
+    // $…$: нээх $-ийн дараа, хаах $-ийн өмнө хоосон зай байхгүй ($5 ба $10 гэх мэтийг томьёо гэж үзэхгүй)
+    .replace(/(^|[^\\$])\$(?!\s)((?:\\.|[^$\\\n])+?)\$(?!\d)/g, (m, pre, tex) => (/\s$/.test(tex) ? m : pre + put(tex, false)));
+  s = s.replace(new RegExp(MARK + '(\\d+)' + MARK, 'g'), (m, i) => code[i]);
+  return { src: s, math };
+}
+
+function injectMath(html, math) {
+  const tex = (i, display) => katex.renderToString(math[i].tex, { ...KATEX_OPTS, displayMode: display });
+  return html
+    .replace(/<p>KTXM(\d+)KTX<\/p>/g, (m, i) => (math[i] ? '<div class="math-display">' + tex(i, true) + '</div>' : m))
+    .replace(/KTXM(\d+)KTX/g, (m, i) => (math[i] ? tex(i, math[i].display) : m));
+}
+
+/** Markdown → аюулгүй HTML. { math: true } үед LaTeX томьёо зурна (бодлогын өгүүлбэр). */
+function render(md, { math = false } = {}) {
+  const ex = math ? extractMath(md) : { src: String(md || ''), math: [] };
+  let html = highlightCode(sanitizeHtml(marked.parse(ex.src), SANITIZE));
+  if (ex.math.length) html = injectMath(html, ex.math);
   const used = new Map();
   return html.replace(/<h([23])>([\s\S]*?)<\/h\1>/g, (m, level, inner) => {
     let id = slugify(inner.replace(/<[^>]+>/g, ''));
@@ -74,4 +108,7 @@ function sanitizeDocHtml(html) {
   return sanitizeHtml(html, { ...SANITIZE, allowedSchemesByTag: { img: ['data'] } });
 }
 
-module.exports = { render, toc, sanitizeDocHtml };
+/** Бодлогын өгүүлбэр: Markdown + LaTeX */
+const renderStatement = (md) => render(md, { math: true });
+
+module.exports = { render, renderStatement, toc, sanitizeDocHtml };

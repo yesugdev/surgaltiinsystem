@@ -1005,6 +1005,22 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
   .cp-book-frame { height: 70vh; min-height: 360px; }
 }
 
+/* ---------- Markdown + LaTeX засварлагч ---------- */
+.mde { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.mde-toolbar { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; padding: 6px; border-bottom: 1px solid var(--border); background: #f7f8fa; }
+.mde-toolbar .btn { font-weight: 600; }
+.mde-help-btn { margin-left: auto; }
+.mde-status { padding: 0 6px; }
+.mde-help { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: #fffdf5; }
+.mde-help[hidden] { display: none; }
+.mde-help-row code { background: #eef0f4; padding: 1px 5px; border-radius: 4px; }
+.mde-panes { display: grid; grid-template-columns: 1fr 1fr; min-height: 380px; }
+.mde-input { border: 0 !important; border-radius: 0 !important; border-right: 1px solid var(--border) !important; resize: vertical; min-height: 380px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.9rem; line-height: 1.55; padding: 12px 14px; outline: none !important; }
+.mde-preview { padding: 12px 16px; overflow: auto; max-height: 640px; }
+@media (max-width: 800px) { .mde-panes { grid-template-columns: 1fr; } .mde-input { border-right: 0 !important; border-bottom: 1px solid var(--border) !important; } }
+.math-display { overflow-x: auto; overflow-y: hidden; margin: 0.8em 0; }
+.markdown .katex { font-size: 1.08em; }
+
 /* ---------- 🏁 Contest, 🛒 Дэлгүүр ---------- */
 .contest-banner { display: flex; align-items: center; gap: 14px; padding: 12px 18px; margin-bottom: 12px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #b45309, #dc2626); box-shadow: 0 6px 18px rgba(220, 38, 38, 0.22); }
 .contest-banner.is-scheduled { background: linear-gradient(135deg, #1e3a8a, #6d28d9); box-shadow: 0 6px 18px rgba(30, 58, 138, 0.2); }
