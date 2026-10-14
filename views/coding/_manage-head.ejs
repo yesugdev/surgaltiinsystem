@@ -1,7 +1,7 @@
 <% const mb = '/coding/manage/' + problem._id; %>
 <div class="page-head">
   <div>
-    <% if (problem.topic) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← Сэдэв / хичээл рүү</a><% } else { %><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><% } %>
+    <% if (problem.contest) { %><a href="/coding/contests/<%= problem.contest %>" class="back">← 🏁 Contest</a><% } else if (problem.topic) { %><a href="/cp/topics/<%= problem.topic %>" class="back">← Сэдэв / хичээл рүү</a><% } else { %><a href="/coding" class="back">← Өрсөлдөөнт Coding</a><% } %>
     <h1><% if (problem.number) { %><span class="problem-num">&numero;<%= problem.number %></span> <% } %><%= problem.title %>
       <% if (problem.published) { %><span class="badge badge-green">Нийтлэгдсэн</span><% } else { %><span class="badge badge-amber">Ноорог</span><% } %>
     </h1>
@@ -9,7 +9,7 @@
   </div>
   <div class="btn-group">
     <a class="btn" href="/coding/<%= problem._id %>">Сурагчийн харагдац</a>
-    <form method="post" action="<%= mb %>/publish"><button class="btn <%= problem.published ? '' : 'btn-primary' %>"><%= problem.published ? 'Нийтлэлээс буцаах' : 'Нийтлэх' %></button></form>
+    <% if (!problem.contest) { %><form method="post" action="<%= mb %>/publish"><button class="btn <%= problem.published ? '' : 'btn-primary' %>"><%= problem.published ? 'Нийтлэлээс буцаах' : 'Нийтлэх' %></button></form><% } %>
   </div>
 </div>
 <nav class="tabs">

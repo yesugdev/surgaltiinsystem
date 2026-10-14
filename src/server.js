@@ -103,6 +103,7 @@ async function main() {
   app.use('/cp', require('./routes/cp'));
   app.use('/basics', require('./routes/basics'));
   app.use('/coding/manage', require('./routes/coding-manage'));
+  app.use('/coding/contests', require('./routes/contests')); // /coding/:id-ээс өмнө
   app.use('/coding', require('./routes/coding'));
 
   app.use((req, res) => {
@@ -116,6 +117,7 @@ async function main() {
   const server = app.listen(PORT, () => console.log(`YeSuvd ажиллаж байна: http://localhost:${PORT}`));
   // Өрсөлдөөнт Coding: илгээлтийн дараалал
   require('./judge').start().catch((e) => console.error('Judge дараалал:', e.message));
+  require('./contests').migrateRankSystem().catch((e) => console.error('Ranking систем:', e.message));
   require('./problem-number').backfillNumbers().catch((e) => console.error('Бодлогын дугаар:', e.message));
   require('./cp').seedDefaultTopics()
     .then(() => require('./cp-problems').seedDefaultProblems())

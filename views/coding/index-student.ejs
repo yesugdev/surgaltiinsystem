@@ -2,10 +2,24 @@
 <div class="page-head">
   <div>
     <h1>Өрсөлдөөнт Coding</h1>
-    <p class="muted">Бодлогоо C++ эсвэл Python-оор бодоод илгээгээрэй. Оноо цуглуулж зэрэглэлээ ахиулаарай!</p>
+    <p class="muted">Бодлого бодож 🪙 зоос цуглуулаад дэлгүүрээс аватар аваарай. Зэрэглэл 🏅 зөвхөн <strong>contest</strong>-оор ахина!</p>
   </div>
-  <a href="/coding/standings" class="btn">🏆 Онооны самбар</a>
+  <div class="btn-group">
+    <a href="/coding/contests" class="btn">🏁 Contest</a>
+    <a href="/coding/standings" class="btn">🏆 Rank самбар</a>
+  </div>
 </div>
+
+<% contests.forEach(function (c) { %>
+  <a class="contest-banner is-<%= c.state %>" href="/coding/contests/<%= c._id %>">
+    <span class="contest-banner-icon"><%= c.kind === 'placement' ? '🎯' : '🏁' %></span>
+    <span>
+      <strong><%= c.state === 'running' ? 'Contest явагдаж байна: ' : 'Удахгүй: ' %><%= c.title %></strong>
+      <span class="small"> · <%= c.state === 'running' ? 'дуусах ' + fmtDate(c.endAt) : 'эхлэх ' + fmtDate(c.startAt) %><%= c.kind === 'placement' ? ' · түвшин тогтоох' : '' %></span>
+    </span>
+    <span class="contest-banner-go"><%= c.state === 'running' ? 'Оролцох →' : 'Харах →' %></span>
+  </a>
+<% }) %>
 
 <section class="rank-hero tier-<%= me.tier.key %>">
   <div class="rank-main">
@@ -14,24 +28,25 @@
       <span class="rank-avatar-badge" aria-hidden="true"><%= me.tier.icon %></span>
     </a>
     <div>
-      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин · <a href="/coding/profile">🎨 Аватар солих</a></span>
+      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин · <a href="/coding/profile">🎨 Аватар</a></span>
       <h2 class="rank-name"><%= me.tier.name %></h2>
       <% if (me.tier.next) { %>
         <div class="tier-progress"><span style="width: <%= me.tier.progress %>%"></span></div>
-        <span class="small"><%= me.tier.next.icon %> <strong><%= me.tier.next.name %></strong> хүртэл <%= me.tier.toNext %> rank оноо (хүнд бодлогоор <%= me.tier.hardToNext %>, хялбараар <%= me.tier.solvesToNext %> бодлого)</span>
+        <span class="small"><%= me.tier.next.icon %> <strong><%= me.tier.next.name %></strong> хүртэл <%= me.tier.toNext %> ranking оноо — contest-д оролцоорой!</span>
       <% } else { %><span class="small">Та хамгийн дээд зэрэглэлд хүрсэн! 🎉</span><% } %>
+      <% if (!me.placementDone) { %><span class="small muted rank-hint">🎯 Түвшин тогтоох contest-д оролцож эхлэх зэрэглэлээ аваарай.</span><% } %>
     </div>
   </div>
   <div class="rank-stats">
-    <div title="Бүтэн бодвол: хялбар 25, дунд 50, хүнд 100 rank оноо"><strong><%= me.tier.points %></strong><span>rank оноо</span></div>
-    <div><strong><%= me.rank ? '#' + me.rank : '—' %></strong><span><%= me.players %> оролцогчоос</span></div>
-    <div><strong><%= me.solved %></strong><span>бодсон</span></div>
+    <div title="Зөвхөн contest-оор нэмэгдэнэ"><strong><%= me.tier.points %></strong><span>🏅 ranking</span></div>
+    <div><strong><%= me.rank ? '#' + me.rank : '—' %></strong><span><%= me.players %> сурагчаас</span></div>
+    <a class="rank-coins" href="/coding/shop" title="Бодсон бодлогын оноо — дэлгүүрт зарцуулна"><strong>🪙 <%= me.wallet.balance %></strong><span>зоос · 🛒 Дэлгүүр</span></a>
   </div>
   <% if (top.length) { %>
     <a class="rank-top" href="/coding/standings">
       <span class="muted small">Тэргүүлэгчид</span>
       <% top.forEach(function (r, i) { %>
-        <span class="rank-top-row"><%= ['🥇', '🥈', '🥉'][i] %> <%= r.student.fullName %> <b><%= r.total %></b></span>
+        <span class="rank-top-row"><%= ['🥇', '🥈', '🥉'][i] %> <%= r.student.fullName %> <b><%= r.student.ratingPoints %></b></span>
       <% }) %>
     </a>
   <% } %>
@@ -50,7 +65,7 @@
 <% } else { %>
   <section class="card problem-list-card">
     <div class="problem-list-head">
-      <span>№</span><span>Бодлого</span><span>Миний оноо</span><span>Төлөв</span>
+      <span>№</span><span>Бодлого</span><span>Миний оноо 🪙</span><span>Төлөв</span>
     </div>
     <ol class="problem-list">
       <% problems.forEach(function (p) { const m = p.mine; const done = m && m.best === 100; const tag = p.phase === 'upcoming' ? 'div' : 'a'; %>

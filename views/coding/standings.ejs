@@ -22,8 +22,8 @@
         <div class="lb-me-top"><strong><%= meRow.rank ? meRow.rank + '-р байр' : 'Байргүй' %></strong><span class="muted small"> / <%= ranked.length %> оролцогч</span></div>
         <span class="tier-badge"><%= meRow.tier.icon %> <%= meRow.tier.name %></span>
         <% if (meRow.tier.next) { %>
-          <div class="tier-progress" title="<%= meRow.tier.points %> rank оноо"><span style="width: <%= meRow.tier.progress %>%"></span></div>
-          <span class="small muted"><%= meRow.tier.next.icon %> <%= meRow.tier.next.name %> хүртэл <strong><%= meRow.tier.toNext %></strong> rank оноо (хүнд <%= meRow.tier.hardToNext %> эсвэл хялбар <%= meRow.tier.solvesToNext %> бодлого)</span>
+          <div class="tier-progress" title="<%= meRow.tier.points %> ranking оноо"><span style="width: <%= meRow.tier.progress %>%"></span></div>
+          <span class="small muted"><%= meRow.tier.next.icon %> <%= meRow.tier.next.name %> хүртэл <strong><%= meRow.tier.toNext %></strong> ranking оноо (contest-оор)</span>
         <% } else { %><span class="small">Хамгийн дээд зэрэглэл! 🎉</span><% } %>
       </div>
     </div>
@@ -78,7 +78,7 @@
               <%- include('_avatar', { look: r.look, initials: r.student.initials, size: '' }) %>
               <div>
                 <div class="player-name <%= r.look.color ? 'name-' + r.look.color : '' %>"><%= r.student.fullName %><% if (me) { %> <span class="badge badge-blue">та</span><% } %></div>
-                <div class="player-meta"><span class="tier-chip" title="<%= r.tier.points %> rank оноо (<%= r.solved %> бүтэн бодсон)"><%= r.tier.icon %> <%= r.tier.name %> · <%= r.tier.points %></span><% if (r.student.className) { %><span class="muted"> · <%= r.student.className %></span><% } %></div>
+                <div class="player-meta"><span class="tier-chip" title="<%= r.tier.points %> ranking оноо"><%= r.tier.icon %> <%= r.tier.name %></span><% if (r.student.className) { %><span class="muted"> · <%= r.student.className %></span><% } %></div>
               </div>
             </div>
           </td>
@@ -93,13 +93,5 @@
   </section>
 <% } %>
 
-<section class="card tier-legend">
-  <h2>Зэрэглэлүүд</h2>
-  <p class="muted small">Бодлогыг <strong>бүтэн бодох</strong> (100/100) бүрт хүндийн зэргээр rank оноо авна: <span class="diff-chip diff-easy">🟢 Хялбар 25</span> <span class="diff-chip diff-medium">🟡 Дунд 50</span> <span class="diff-chip diff-hard">🔴 Хүнд 100</span>. Самбарын «Нийт оноо» нь мөн эдгээр оноогоор, хэсэгчилсэн нь хувиар (хүнд бодлогын 60% → 60).</p>
-  <div class="tier-list">
-    <% TIERS.forEach(function (t) { %>
-      <span class="tier-badge tier-<%= t.key %> <%= meRow && meRow.tier.key === t.key ? 'is-current' : '' %>"><%= t.icon %> <%= t.name %> <small><%= t.min %>+ оноо</small></span>
-    <% }) %>
-  </div>
-</section>
+<p class="muted small">Энэ самбар нь зөвхөн энэ бодлогын оноо. Зэрэглэл (🏅 ranking) contest-оор тогтоно — <a href="/coding/standings">Rank самбар</a>.</p>
 <%- include('../partials/footer') %>

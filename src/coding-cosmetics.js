@@ -1,10 +1,10 @@
-// Өрсөлдөөнт Coding: зэрэглэл ахих тусам нээгддэг аватар ба өнгө
-// level = TIERS-ийн дугаар (1 Шинэ тоглогч … 8 Домог)
+// Өрсөлдөөнт Coding: дэлгүүрээс зоосоор худалдаж авдаг аватар ба өнгө
+// level = үнийн шат (1 үнэгүй … 8 хамгийн үнэтэй); хуучин системд зэрэглэлийн дугаар байсан
 const { TIERS } = require('./coding-ranks');
 
 // Хөдөлгөөнт зураг: Google Noto Animated Emoji (CC BY 4.0) → public/img/avatars/<key>.webp (160px).
 // icon = зураг ачаалагдаагүй / «хөдөлгөөн багасгах» үед харуулах emoji, anim = түүний CSS хөдөлгөөн.
-// Зэрэглэл ахих тусам илүү гайхалтай аватар нээгдэнэ.
+// Үнэтэй нь илүү гайхалтай.
 const AVATARS = [
   { key: 'hatch', icon: '🐣', level: 1, anim: 'hop' },
   { key: 'cat', icon: '🐱', level: 1, anim: 'wiggle' },
@@ -50,23 +50,33 @@ const tierName = (level) => TIERS[level - 1]?.name || '';
 const findAvatar = (key) => AVATARS.find((a) => a.key === key) || null;
 const findColor = (key) => COLORS.find((c) => c.key === key) || null;
 
-/** Хэрэглэгчийн сонгосон (нээгдсэн бол) аватар, өнгө — зэрэглэл буурвал анхдагч руу */
-function cosmeticsFor(user, tier) {
+// ---------------- 🛒 Дэлгүүр ----------------
+// Аватар, өнгийг 🪙 зоосоор (бодлого бодож авсан оноо) худалдаж авна. 1-р түвшний нь үнэгүй.
+// Худалдаж авсныг User.codingOwned-д 'a:<key>' / 'c:<key>' хэлбэрээр хадгална.
+const PRICES = { 1: 0, 2: 100, 3: 250, 4: 500, 5: 800, 6: 1200, 7: 1800, 8: 2500 };
+const priceOf = (item) => PRICES[item.level] ?? 0;
+const itemKey = (kind, key) => (kind === 'color' ? 'c:' : 'a:') + key;
+const owns = (user, kind, item) => !!item && (priceOf(item) === 0 || (user.codingOwned || []).includes(itemKey(kind, item.key)));
+
+/** Хэрэглэгчийн сонгосон (эзэмшдэг бол) аватар, өнгө */
+function cosmeticsFor(user) {
   const a = findAvatar(user.codingAvatar);
   const c = findColor(user.codingColor);
-  const ok = a && a.level <= tier.level;
+  const okA = owns(user, 'avatar', a);
   return {
-    avatar: ok ? a.icon : null,
-    img: ok ? avatarImg(a.key) : null,
-    anim: ok ? a.anim : null,
-    color: c && c.level <= tier.level && c.key !== 'tier' ? c.key : null,
+    avatar: okA ? a.icon : null,
+    img: okA ? avatarImg(a.key) : null,
+    anim: okA ? a.anim : null,
+    color: owns(user, 'color', c) && c.key !== 'tier' ? c.key : null,
   };
 }
 
-/** fromLevel-ээс toLevel хүртэл шинээр нээгдсэн зүйлс */
-function unlockedBetween(fromLevel, toLevel) {
-  const inRange = (x) => x.level > fromLevel && x.level <= toLevel;
-  return { avatars: AVATARS.filter(inRange), colors: COLORS.filter(inRange) };
+/** Хуучин (бодлогын оноогоор нээгддэг байсан) системд нээгдсэн бүх зүйлийн түлхүүр — шилжүүлэхэд */
+function ownedUpToLevel(level) {
+  return [
+    ...AVATARS.filter((a) => a.level > 1 && a.level <= level).map((a) => itemKey('avatar', a.key)),
+    ...COLORS.filter((c) => c.level > 1 && c.level <= level).map((c) => itemKey('color', c.key)),
+  ];
 }
 
-module.exports = { AVATARS, COLORS, avatarImg, tierName, findAvatar, findColor, cosmeticsFor, unlockedBetween };
+module.exports = { AVATARS, COLORS, avatarImg, tierName, findAvatar, findColor, PRICES, priceOf, itemKey, owns, cosmeticsFor, ownedUpToLevel };

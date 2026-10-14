@@ -2,7 +2,7 @@
 const express = require('express');
 const multer = require('multer');
 const JSZip = require('jszip');
-const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic } = require('../models');
+const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic, Contest } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate } = require('../helpers');
 const { problemOwnerFilter, canUseAI, requireAI } = require('../access');
@@ -64,12 +64,21 @@ async function parseForm(req) {
   if (!languages.length) errors.push('Дор хаяж нэг програмчлалын хэл сонгоно уу.');
   if (startAt && endAt && endAt <= startAt) errors.push('Дуусах хугацаа эхлэхээс хойш байх ёстой.');
   // Гүнзгий бэлтгэлийн сэдэв (хоосон = үндсэн тэмцээн)
-  const topic = isId(req.body.topic) ? (await CpTopic.findById(req.body.topic).select('_id').lean())?._id || null : null;
+  // «Хаана» сонголт: Гүнзгий бэлтгэл/суурийн сэдэв эсвэл 🏁 contest (contest зөвхөн админ, дүн гараагүй)
+  const where = String(req.body.topic || '');
+  let topic = null;
+  let contest = null;
+  if (where.startsWith('contest:')) {
+    const cid = where.slice(8);
+    if (req.user.role === 'admin' && isId(cid)) contest = (await Contest.findOne({ _id: cid, finalizedAt: null }).select('_id').lean())?._id || null;
+  } else if (isId(where)) topic = (await CpTopic.findById(where).select('_id').lean())?._id || null;
   return {
     errors,
     data: {
       // Хичээлийн төрөл, анги хэрэглэхгүй — бүх сурагчид нээлттэй
-      title, subject: null, classIds: [], timeLimitMs, memoryLimitMb, languages, startAt, endAt, topic,
+      title, subject: null, classIds: [], timeLimitMs, memoryLimitMb, languages, topic, contest,
+      // Contest-ийн бодлогын хугацааг contest өөрөө хянана
+      startAt: contest ? null : startAt, endAt: contest ? null : endAt,
       statement: String(req.body.statement ?? '').slice(0, 200000),
       showStandings: req.body.showStandings === 'on',
       difficulty: Object.hasOwn(DIFFICULTIES, req.body.difficulty) ? req.body.difficulty : DEFAULT_DIFFICULTY,
@@ -86,6 +95,7 @@ async function renderForm(req, res, { problem, errors = [], status = 200 }) {
     LANGUAGES: judge.LANGUAGES,
     DIFFICULTIES,
     topics: await CpTopic.find().select('title icon section order track').sort({ order: 1, createdAt: 1 }).lean(),
+    contests: req.user.role === 'admin' ? await Contest.find({ finalizedAt: null }).select('title kind').sort({ createdAt: -1 }).lean() : [],
   });
 }
 
@@ -95,6 +105,7 @@ router.get('/new', async (req, res) => {
       classIds: [], languages: LANG_KEYS, timeLimitMs: 1000, memoryLimitMb: 256, showStandings: true,
       difficulty: DEFAULT_DIFFICULTY, statement: STATEMENT_TEMPLATE,
       topic: isId(req.query.topic) ? req.query.topic : null, // Гүнзгий бэлтгэлийн сэдэв / Програмчлалын суурийн хичээлээс «+ Бодлого»
+      contest: req.user.role === 'admin' && isId(req.query.contest) ? req.query.contest : null, // contest-ийн хуудаснаас
     },
   });
 });
@@ -138,7 +149,7 @@ router.post('/:id/publish', loadProblem, async (req, res) => {
     }
   }
   p.published = !p.published;
-  if (p.published && !p.topic) await ensureNumber(p); // анх нийтлэхэд дараагийн дугаар (зөвхөн үндсэн тэмцээн)
+  if (p.published && !p.topic && !p.contest) await ensureNumber(p); // анх нийтлэхэд дараагийн дугаар (зөвхөн үндсэн тэмцээн)
   await p.save();
   flash(req, 'success', p.published ? (p.topic ? 'Бодлого нийтлэгдлээ. Тухайн хичээл/сэдвийн сурагчдад харагдана.' : 'Бодлого нийтлэгдлээ. Бүх сурагч бодож, хоорондоо өрсөлдөнө.') : 'Бодлогыг нийтлэлээс буцаалаа.');
   res.redirect(base(p));
@@ -152,7 +163,7 @@ router.post('/:id/delete', loadProblem, async (req, res) => {
   ]);
   await Problem.deleteOne({ _id: req.problem._id });
   flash(req, 'success', `"${req.problem.title}" бодлого устгагдлаа.`);
-  res.redirect(req.problem.topic ? '/cp/topics/' + req.problem.topic : '/coding');
+  res.redirect(req.problem.contest ? '/coding/contests/' + req.problem.contest : req.problem.topic ? '/cp/topics/' + req.problem.topic : '/coding');
 });
 
 // Өгүүлбэрт зураг оруулах (засварлагчийн «Зураг» товч)

@@ -6,10 +6,11 @@
     <%- include('_avatar', { look: look, initials: initials, size: 'xl', animate: true }) %>
     <div>
       <h1 class="<%= look.color ? 'name-' + look.color : '' %>"><%= user.fullName %></h1>
-      <span class="tier-badge"><%= tier.icon %> <%= tier.name %> · <%= tier.points %> rank оноо</span>
+      <span class="tier-badge"><%= tier.icon %> <%= tier.name %> · <%= tier.points %> ranking</span>
+      <span class="tier-badge">🪙 <%= wallet.balance %> зоос</span>
     </div>
   </div>
-  <p class="muted small">Зэрэглэл ахих тусам шинэ аватар, өнгө нээгдэнэ. 🔒 нь түгжээтэй — зэрэглэлээ ахиулаарай!</p>
+  <p class="muted small">Энд таны эзэмшдэг аватар, өнгө харагдана.<% if (lockedCount) { %> Дахиад <%= lockedCount %> зүйлийг <a href="/coding/shop">🛒 дэлгүүрээс</a> зоосоор аваарай!<% } %></p>
 </section>
 
 <form method="post" action="/coding/profile" class="form">
@@ -21,24 +22,25 @@
         <span class="cosmetic-face cosmetic-initials"><%= initials %></span>
         <small>Нэрийн үсэг</small>
       </label>
-      <% AVATARS.forEach(function (a) { const locked = a.level > tier.level; %>
-        <label class="cosmetic <%= locked ? 'is-locked' : '' %> <%= selectedAvatar === a.key ? 'is-selected' : '' %>" title="<%= locked ? tierName(a.level) + ' болж нээнэ' : '' %>">
-          <input type="radio" name="avatar" value="<%= a.key %>" data-anim="<%= a.anim %>" <%= selectedAvatar === a.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
-          <span class="cosmetic-face"><% if (!locked) { %><img class="av-img" src="<%= avatarImg(a.key) %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><% } %><span class="av-face anim-<%= a.anim %>"><%= a.icon %></span></span>
-          <small><%= locked ? '🔒 ' + tierName(a.level) : ' ' %></small>
+      <% avatars.forEach(function (a) { %>
+        <label class="cosmetic <%= selectedAvatar === a.key ? 'is-selected' : '' %>">
+          <input type="radio" name="avatar" value="<%= a.key %>" data-anim="<%= a.anim %>" <%= selectedAvatar === a.key ? 'checked' : '' %>>
+          <span class="cosmetic-face"><img class="av-img" src="<%= avatarImg(a.key) %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="av-face anim-<%= a.anim %>"><%= a.icon %></span></span>
+          <small> </small>
         </label>
       <% }) %>
+      <a class="cosmetic cosmetic-shop" href="/coding/shop"><span class="cosmetic-face">🛒</span><small>Дэлгүүр</small></a>
     </div>
   </section>
 
   <section class="card">
     <h2>Өнгө</h2>
     <div class="cosmetic-grid">
-      <% COLORS.forEach(function (c) { const locked = c.level > tier.level; %>
-        <label class="cosmetic <%= locked ? 'is-locked' : '' %> <%= selectedColor === c.key ? 'is-selected' : '' %>" title="<%= locked ? tierName(c.level) + ' болж нээнэ' : '' %>">
-          <input type="radio" name="color" value="<%= c.key %>" <%= selectedColor === c.key ? 'checked' : '' %> <%= locked ? 'disabled' : '' %>>
+      <% colors.forEach(function (c) { %>
+        <label class="cosmetic <%= selectedColor === c.key ? 'is-selected' : '' %>">
+          <input type="radio" name="color" value="<%= c.key %>" <%= selectedColor === c.key ? 'checked' : '' %>>
           <span class="cosmetic-face cosmetic-swatch <%= c.key === 'tier' ? 'swatch-tier' : 'av-color-' + c.key %>"></span>
-          <small><%= c.name %><%= locked ? ' · 🔒 ' + tierName(c.level) : '' %></small>
+          <small><%= c.name %></small>
         </label>
       <% }) %>
     </div>

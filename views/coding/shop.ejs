@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+<a href="/coding" class="back">← Өрсөлдөөнт Coding</a>
+
+<section class="shop-hero">
+  <div class="shop-preview">
+    <%- include('_avatar', { look: look, initials: initials, size: 'xl', animate: true }) %>
+    <div>
+      <h1>🛒 Дэлгүүр</h1>
+      <p class="muted small">Бодлого бүтэн бодох бүрт зоос авна: <span class="diff-chip diff-easy">🟢 <%= DIFFICULTIES.easy.points %></span> <span class="diff-chip diff-medium">🟡 <%= DIFFICULTIES.medium.points %></span> <span class="diff-chip diff-hard">🔴 <%= DIFFICULTIES.hard.points %></span></p>
+    </div>
+  </div>
+  <div class="shop-wallet">
+    <strong>🪙 <%= wallet.balance %></strong>
+    <span class="small muted">нийт олсон <%= wallet.earned %> · зарцуулсан <%= wallet.spent %></span>
+    <a class="btn btn-sm" href="/coding/profile">🎨 Миний аватар</a>
+  </div>
+</section>
+
+<% function card(x) { const can = wallet.balance >= x.price; %>
+  <div class="shop-item <%= x.owned ? 'is-owned' : can ? '' : 'is-poor' %>">
+    <% if (x.kind === 'avatar') { %>
+      <span class="cosmetic-face"><img class="av-img" src="<%= avatarImg(x.key) %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="av-face anim-<%= x.anim %>"><%= x.icon %></span></span>
+    <% } else { %>
+      <span class="cosmetic-face cosmetic-swatch <%= x.key === 'tier' ? 'swatch-tier' : 'av-color-' + x.key %>"></span>
+      <small><%= x.name %></small>
+    <% } %>
+    <% if (x.owned) { %>
+      <span class="badge badge-green">✓ Танд бий</span>
+    <% } else { %>
+      <form method="post" action="/coding/shop/buy" data-confirm="<%= x.price %> 🪙-оор худалдаж авах уу?">
+        <input type="hidden" name="kind" value="<%= x.kind %>"><input type="hidden" name="key" value="<%= x.key %>">
+        <button class="btn btn-sm <%= can ? 'btn-primary' : '' %>" <%= can ? '' : 'disabled' %> title="<%= can ? '' : 'Зоос хүрэлцэхгүй' %>">🪙 <%= x.price %></button>
+      </form>
+    <% } %>
+  </div>
+<% } %>
+
+<section class="card">
+  <h2>Аватар</h2>
+  <div class="shop-grid"><% avatars.forEach(card) %></div>
+</section>
+<section class="card">
+  <h2>Өнгө</h2>
+  <div class="shop-grid"><% colors.forEach(card) %></div>
+</section>
+<p class="muted small attribution">Хөдөлгөөнт аватар: <a href="https://googlefonts.github.io/noto-emoji-animation/" target="_blank" rel="noopener">Google Noto Animated Emoji</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+<%- include('../partials/footer') %>

@@ -1,0 +1,175 @@
+<%- include('../partials/header', { bodyClass: 'wide' }) %>
+<% const st = STATES[state]; const editable = ['draft', 'scheduled'].includes(state); %>
+<a href="/coding/contests" class="back">← 🏁 Contest</a>
+
+<section class="contest-hero is-<%= state %>">
+  <div>
+    <p class="small contest-kind"><%= contest.kind === 'placement' ? '🎯 Түвшин тогтоох contest' : '🏁 Contest' %> · <span class="badge <%= st.badge %>"><%= st.label %></span></p>
+    <h1><%= contest.title %></h1>
+    <p class="small">
+      <% if (contest.startAt) { %>🕒 <%= fmtDate(contest.startAt) %> — <%= fmtDate(contest.endAt) %><% } else { %>Эхлэх цаг тохируулаагүй<% } %>
+      · ⏱ <%= contest.durationMin %> мин<% if (staff) { %> · 🏫 <%= classNames.join(', ') || '—' %><% } %>
+    </p>
+    <% if (contest.description) { %><p class="contest-desc"><%= contest.description %></p><% } %>
+  </div>
+  <% if (state === 'running' || state === 'scheduled') { %>
+    <div class="contest-timer" data-until="<%= +(state === 'running' ? contest.endAt : contest.startAt) %>">
+      <span class="small"><%= state === 'running' ? 'Дуусахад' : 'Эхлэхэд' %></span>
+      <strong data-left>—</strong>
+    </div>
+  <% } %>
+</section>
+
+<% if (admin) { %>
+  <div class="import-toolbar contest-admin">
+    <div class="btn-group">
+      <% if (state !== 'finalized') { %><a class="btn" href="/coding/contests/<%= contest._id %>/edit">✎ Тохиргоо</a><% } %>
+      <% if (editable) { %>
+        <form method="post" action="/coding/contests/<%= contest._id %>/start" data-confirm="Contest-ийг одоо эхлүүлэх үү? <%= contest.durationMin %> минут үргэлжилнэ."><button class="btn btn-primary">▶ Одоо эхлүүлэх</button></form>
+      <% } %>
+      <% if (state === 'running') { %>
+        <form method="post" action="/coding/contests/<%= contest._id %>/end" data-confirm="Contest-ийг одоо дуусгах уу?"><button class="btn btn-danger">■ Одоо дуусгах</button></form>
+      <% } %>
+      <% if (state === 'ended') { %>
+        <form method="post" action="/coding/contests/<%= contest._id %>/finalize" data-confirm="Дүнг баталгаажуулж ranking оноо олгох уу? Дараа нь өөрчлөх боломжгүй."><button class="btn btn-primary">✅ Дүн баталгаажуулж ranking оноо олгох</button></form>
+      <% } %>
+    </div>
+    <% if (state !== 'finalized') { %>
+      <form method="post" action="/coding/contests/<%= contest._id %>/delete" data-confirm="Contest-ийг устгах уу? Бодлогууд ноорог болно."><button class="btn btn-sm btn-ghost">🗑 Устгах</button></form>
+    <% } %>
+  </div>
+  <% if (state === 'ended') { %>
+    <div class="flash flash-info">Contest дууслаа. Доорх самбарт <strong>урьдчилсан ranking оноо</strong> харагдаж байна. Хуурсан сурагч байвал «Хасах» товчоор хасаад, дараа нь дүнг баталгаажуулна уу.<% if (pending) { %> ⚠️ <strong><%= pending %></strong> илгээлт шалгагдаж дуусаагүй байна — түр хүлээгээрэй.<% } %></div>
+  <% } %>
+<% } %>
+
+<% if (me && myResult) { const t = tierFor(myResult.ratingAfter); %>
+  <div class="card contest-myresult tier-<%= t.key %>">
+    <span class="contest-myresult-big"><%= myResult.placement ? '🎯' : myResult.place === 1 ? '🥇' : myResult.place === 2 ? '🥈' : myResult.place === 3 ? '🥉' : '🏁' %></span>
+    <div>
+      <strong><%= myResult.score %> / <%= myResult.maxScore %> оноо<%= myResult.place ? ' · ' + myResult.place + '-р байр' : '' %></strong>
+      <p class="small"><%= myResult.placement ? 'Түвшин тогтоогдлоо: ' : 'Ranking оноо: ' %><strong class="delta-up">+<%= myResult.ratingAfter - myResult.ratingBefore %></strong> → <span class="tier-badge"><%= t.icon %> <%= t.name %> · <%= myResult.ratingAfter %></span></p>
+    </div>
+  </div>
+<% } else if (me && me.participated && state !== 'scheduled') { %>
+  <div class="card contest-myresult">
+    <span class="contest-myresult-big">📊</span>
+    <div><strong>Таны оноо: <%= me.score %> / <%= maxScore %><%= me.place ? ' · одоогоор ' + me.place + '-р байр' : '' %></strong>
+      <p class="small muted"><%= state === 'running' ? 'Contest дуусахаас өмнө илгээсэн код тооцогдоно.' : 'Админ дүнг баталгаажуулмагц ranking оноо орно.' %></p></div>
+  </div>
+<% } %>
+
+<% if (state === 'scheduled' && !staff) { %>
+  <div class="card empty"><p class="lb-empty-icon">⏳</p><p>Contest эхлэхэд бодлогууд энд гарч ирнэ.</p></div>
+<% } %>
+
+<% if (problems.length || admin) { %>
+  <section class="card">
+    <h2>🧩 Бодлогууд</h2>
+    <% if (!problems.length) { %><p class="muted small">Бодлого алга. Доорх товчоор нэмнэ үү.</p><% } %>
+    <ol class="contest-problems">
+      <% problems.forEach(function (p) { const m = p.mine; %>
+        <li class="<%= m && m.best === 100 ? 'is-solved' : m ? 'is-tried' : '' %>">
+          <a href="/coding/<%= p._id %>" class="contest-problem">
+            <span class="contest-letter"><%= p.letter %></span>
+            <span class="contest-p-title"><%= p.title %></span>
+            <span class="diff-chip diff-<%= p.diff.key %>"><%= p.diff.icon %> <%= p.diff.label %> · <%= p.diff.points %></span>
+            <% if (!staff) { %><span class="contest-p-score"><%= m ? m.points : 0 %> / <%= p.diff.points %></span><% } %>
+          </a>
+          <% if (admin) { %>
+            <span class="contest-p-admin small">
+              <% if (!p.testCount) { %><span class="badge badge-amber">тестгүй</span><% } %>
+              <a href="/coding/manage/<%= p._id %>">удирдах</a>
+              <% if (editable) { %><form method="post" action="/coding/contests/<%= contest._id %>/problems/<%= p._id %>/detach"><button class="btn btn-sm btn-ghost" title="Contest-оос хасах">✕</button></form><% } %>
+            </span>
+          <% } %>
+        </li>
+      <% }) %>
+    </ol>
+    <% if (admin && editable) { %>
+      <div class="contest-add">
+        <a class="btn btn-sm btn-primary" href="/coding/manage/new?contest=<%= contest._id %>">+ Шинэ бодлого</a>
+        <% if (drafts.length) { %>
+          <form method="post" action="/coding/contests/<%= contest._id %>/problems/attach" class="contest-attach">
+            <select name="problem" required>
+              <option value="">Ноорог бодлогоос сонгох…</option>
+              <% drafts.forEach(function (d) { %><option value="<%= d._id %>"><%= d.title %><%= d.testCount ? '' : ' (тестгүй)' %></option><% }) %>
+            </select>
+            <button class="btn btn-sm">Нэмэх</button>
+          </form>
+        <% } %>
+      </div>
+      <p class="muted small">Contest-ийн бодлого үндсэн жагсаалтад харагдахгүй, contest эхлэхээс өмнө сурагчдад нээгдэхгүй.</p>
+    <% } %>
+  </section>
+<% } %>
+
+<% if (problems.length && (staff || state !== 'scheduled')) { %>
+  <section class="card standings-wrap" id="standings">
+    <h2>🏆 Самбар</h2>
+    <% if (!rows.length) { %>
+      <p class="muted small">Одоогоор хэн ч илгээгээгүй байна.</p>
+    <% } else { %>
+      <table class="table standings contest-standings">
+        <thead>
+          <tr>
+            <th class="num">#</th><th>Сурагч</th>
+            <% problems.forEach(function (p) { %><th class="num" title="<%= p.title %>"><%= p.letter %></th><% }) %>
+            <th class="num">Оноо</th>
+            <% if (state === 'finalized') { %><th class="num">Ranking</th><% } else if (admin) { %><th class="num" title="Урьдчилсан">Ranking (урьдчилсан)</th><th></th><% } %>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function (r) { const mine = String(r.student._id) === String(user._id); %>
+            <tr class="<%= mine ? 'me' : '' %> <%= r.excluded ? 'is-excluded' : '' %>">
+              <td class="num rank-cell"><%= r.excluded ? '⛔' : r.place ? (r.place === 1 ? '🥇' : r.place === 2 ? '🥈' : r.place === 3 ? '🥉' : r.place) : '—' %></td>
+              <td>
+                <div class="player">
+                  <%- include('../coding/_avatar', { look: r.look, initials: r.student.initials, size: '' }) %>
+                  <div class="player-name"><%= r.student.fullName %><% if (mine) { %> <span class="badge badge-blue">та</span><% } %><% if (r.excluded) { %> <span class="badge badge-red">хасагдсан</span><% } %></div>
+                </div>
+              </td>
+              <% r.cells.forEach(function (c) { %>
+                <td class="num cell-score <%= c ? (c.best === 100 ? 'is-full' : c.best > 0 ? 'is-part' : 'is-zero') : '' %>"><%= c ? c.points : '' %></td>
+              <% }) %>
+              <td class="num"><strong><%= r.score %></strong></td>
+              <% if (state === 'finalized') { %>
+                <td class="num"><% if (r.result) { %><strong class="delta-up">+<%= r.result.ratingAfter - r.result.ratingBefore %></strong><% if (r.result.placement) { %> 🎯<% } %><% } else { %>—<% } %></td>
+              <% } else if (admin) { %>
+                <td class="num"><% if (r.preview) { %>+<%= r.preview.delta %><% if (r.preview.placement) { %> 🎯 <%= r.preview.placementTier.icon %><% } %><% } else { %>—<% } %></td>
+                <td><% if (r.participated) { %><form method="post" action="/coding/contests/<%= contest._id %>/exclude/<%= r.student._id %>"><button class="btn btn-sm btn-ghost"><%= r.excluded ? 'Буцаах' : 'Хасах' %></button></form><% } %></td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+<% } %>
+
+<section class="card tier-legend">
+  <h2>Ranking оноо хэрхэн олгогдох вэ?</h2>
+  <% if (contest.kind === 'placement') { %>
+    <p class="small">🎯 Анх удаа оролцож буй сурагчийн эхлэх зэрэглэлийг авсан хувиар тогтооно:
+      <% PLACEMENT.forEach(function (p) { %><span class="tier-badge tier-<%= p.tier.key %>"><%= p.pct %>%+ → <%= p.tier.icon %> <%= p.tier.name %></span><% }) %>
+      Өмнө нь түвшин тогтоосон сурагч энгийн contest шиг оноо авна.</p>
+  <% } %>
+  <p class="small">🏁 Авсан оноо / боломжит оноо × <%= CONTEST_MAX_GAIN %> + шилдэг 3 байрт +<%= PLACE_BONUS.join(' / +') %>. Зөвхөн contest-ийн хугацаанд илгээсэн код тооцогдоно. Ranking оноо буурахгүй.</p>
+</section>
+
+<script>
+  (function () {
+    var box = document.querySelector('.contest-timer');
+    if (!box) return;
+    var until = +box.dataset.until, out = box.querySelector('[data-left]');
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var tick = function () {
+      var s = Math.max(0, Math.round((until - Date.now()) / 1000));
+      out.textContent = (s >= 3600 ? Math.floor(s / 3600) + ':' : '') + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60);
+      if (s === 0) { clearInterval(t); setTimeout(function () { location.reload(); }, 1500); }
+    };
+    var t = setInterval(tick, 1000);
+    tick();
+  })();
+</script>
+<%- include('../partials/footer') %>

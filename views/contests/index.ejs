@@ -1,0 +1,40 @@
+<%- include('../partials/header') %>
+<a href="/coding" class="back">← Өрсөлдөөнт Coding</a>
+<div class="page-head">
+  <div>
+    <h1>🏁 Contest</h1>
+    <p class="muted">Ranking оноо, зэрэглэл <strong>зөвхөн</strong> contest-оор ахина. Contest-ийг админ нээнэ.</p>
+  </div>
+  <% if (admin) { %>
+    <div class="btn-group">
+      <a class="btn" href="/coding/contests/new?kind=placement">🎯 Түвшин тогтоох contest</a>
+      <a class="btn btn-primary" href="/coding/contests/new">+ Шинэ contest</a>
+    </div>
+  <% } else if (!staff) { %>
+    <span class="tier-badge tier-<%= tier.key %>"><%= tier.icon %> <%= tier.name %> · <%= tier.points %> ranking</span>
+  <% } %>
+</div>
+
+<% if (!contests.length) { %>
+  <div class="card empty"><p class="lb-empty-icon">🏁</p><p><%= admin ? 'Одоогоор contest алга. «+ Шинэ contest» товчоор үүсгээрэй.' : 'Танай ангид одоогоор contest алга байна.' %></p></div>
+<% } else { %>
+  <div class="contest-list">
+    <% contests.forEach(function (c) { const st = STATES[c.state]; %>
+      <a class="card contest-card is-<%= c.state %>" href="/coding/contests/<%= c._id %>">
+        <span class="contest-card-icon"><%= c.kind === 'placement' ? '🎯' : '🏁' %></span>
+        <span class="contest-card-body">
+          <strong><%= c.title %></strong>
+          <span class="small muted">
+            <% if (c.startAt) { %><%= fmtDate(c.startAt) %> · <% } %><%= c.durationMin %> мин · <%= c.problemCount %> бодлого<% if (staff && c.classNames.length) { %> · <%= c.classNames.join(', ') %><% } %>
+            <% if (c.kind === 'placement') { %> · түвшин тогтоох<% } %>
+          </span>
+        </span>
+        <span class="contest-card-side">
+          <span class="badge <%= st.badge %>"><%= st.label %></span>
+          <% if (c.mine) { %><span class="small"><%= c.mine.place ? c.mine.place + '-р байр · ' : '' %><strong class="<%= c.mine.ratingAfter > c.mine.ratingBefore ? 'delta-up' : '' %>">+<%= c.mine.ratingAfter - c.mine.ratingBefore %></strong> ranking</span><% } %>
+        </span>
+      </a>
+    <% }) %>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

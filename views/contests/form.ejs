@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+<% const isNew = !contest._id; const picked = (contest.classIds || []).map(String); %>
+<a href="<%= isNew ? '/coding/contests' : '/coding/contests/' + contest._id %>" class="back">← <%= isNew ? 'Contest' : contest.title %></a>
+<h1><%= isNew ? (contest.kind === 'placement' ? '🎯 Шинэ түвшин тогтоох contest' : '🏁 Шинэ contest') : 'Contest засах' %></h1>
+
+<% if (errors.length) { %>
+  <div class="flash flash-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div>
+<% } %>
+
+<form method="post" action="<%= isNew ? '/coding/contests' : '/coding/contests/' + contest._id %>" class="form">
+  <section class="card form">
+    <label>Нэр <input name="title" value="<%= contest.title || '' %>" required maxlength="200" placeholder="жишээ: 10-р сарын contest #1"></label>
+    <div class="row">
+      <label>Төрөл
+        <select name="kind">
+          <option value="regular" <%= contest.kind !== 'placement' ? 'selected' : '' %>>🏁 Энгийн — ranking оноо нэмнэ</option>
+          <option value="placement" <%= contest.kind === 'placement' ? 'selected' : '' %>>🎯 Түвшин тогтоох — анх оролцогчийн эхлэх зэрэглэл</option>
+        </select>
+      </label>
+      <label>Үргэлжлэх хугацаа (минут) <input type="number" name="durationMin" min="5" max="600" value="<%= contest.durationMin || 90 %>" required></label>
+      <label>Эхлэх цаг <small class="muted">(хоосон бол «Эхлүүлэх» товчоор)</small>
+        <input type="datetime-local" name="startAt" value="<%= toInputDate(contest.startAt) %>"></label>
+    </div>
+    <label>Тайлбар <small class="muted">(заавал биш — дүрэм, санамж)</small>
+      <textarea name="description" rows="3" maxlength="5000" placeholder="жишээ: Хичээлийн цагаар, ангидаа бодно. Утас, ChatGPT ашиглахыг хориглоно."><%= contest.description || '' %></textarea></label>
+  </section>
+
+  <section class="card form">
+    <h2>Оролцох ангиуд</h2>
+    <p class="muted small">Зөвхөн Coding нээгдсэн ангиуд. Сонгосон ангийн сурагчдад contest харагдана.</p>
+    <% if (!classes.length) { %>
+      <p class="flash flash-warn">Coding нээгдсэн анги алга. Админ → Анги, бүлэг хэсгээс Coding-ийг нээнэ үү.</p>
+    <% } else { %>
+      <div class="check-grid">
+        <% classes.forEach(function (c) { %>
+          <label class="check"><input type="checkbox" name="classIds" value="<%= c._id %>" <%= picked.includes(String(c._id)) ? 'checked' : '' %>> <%= c.name %></label>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <div class="btn-group sticky-actions">
+    <a class="btn btn-ghost" href="<%= isNew ? '/coding/contests' : '/coding/contests/' + contest._id %>">Болих</a>
+    <button class="btn btn-primary"><%= isNew ? 'Үүсгэх' : 'Хадгалах' %></button>
+  </div>
+</form>
+<%- include('../partials/footer') %>
