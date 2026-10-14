@@ -8,9 +8,10 @@
       <h1 class="<%= look.color ? 'name-' + look.color : '' %>"><%= user.fullName %></h1>
       <span class="tier-badge"><%= tier.icon %> <%= tier.name %> · <%= tier.points %> ranking</span>
       <span class="tier-badge">🪙 <%= wallet.balance %> зоос</span>
+      <%- include('_title', { look: look }) %>
     </div>
   </div>
-  <p class="muted small">Энд таны эзэмшдэг аватар, өнгө харагдана.<% if (lockedCount) { %> Дахиад <%= lockedCount %> зүйлийг <a href="/coding/shop">🛒 дэлгүүрээс</a> зоосоор аваарай!<% } %></p>
+  <p class="muted small">Энд таны эзэмшдэг аватар, өнгө, хүрээ, цол харагдана. Бусад сурагч таны <a href="/coding/u/<%= user._id %>">👤 профайлыг</a> харж чадна.<% if (lockedCount) { %> Дахиад <%= lockedCount %> зүйлийг <a href="/coding/shop">🛒 дэлгүүрээс</a> зоосоор аваарай!<% } %></p>
 </section>
 
 <form method="post" action="/coding/profile" class="form">
@@ -46,6 +47,35 @@
     </div>
   </section>
 
+  <section class="card">
+    <h2>🏷 Цол</h2>
+    <div class="cosmetic-grid">
+      <label class="cosmetic <%= !selectedTitle ? 'is-selected' : '' %>"><input type="radio" name="title" value="" <%= !selectedTitle ? 'checked' : '' %>><span class="cosmetic-face">—</span><small>Цолгүй</small></label>
+      <% titles.forEach(function (t) { %>
+        <label class="cosmetic cosmetic-title <%= selectedTitle === t.key ? 'is-selected' : '' %>">
+          <input type="radio" name="title" value="<%= t.key %>" <%= selectedTitle === t.key ? 'checked' : '' %>>
+          <span class="title-badge"><%= t.icon %> <%= t.name %></span>
+        </label>
+      <% }) %>
+      <a class="cosmetic cosmetic-shop" href="/coding/shop"><span class="cosmetic-face">🛒</span><small>Дэлгүүр</small></a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🖼 Хүрээ</h2>
+    <div class="cosmetic-grid">
+      <label class="cosmetic <%= !selectedFrame ? 'is-selected' : '' %>"><input type="radio" name="frame" value="" <%= !selectedFrame ? 'checked' : '' %>><span class="cosmetic-face">—</span><small>Хүрээгүй</small></label>
+      <% frames.forEach(function (fr) { %>
+        <label class="cosmetic <%= selectedFrame === fr.key ? 'is-selected' : '' %>">
+          <input type="radio" name="frame" value="<%= fr.key %>" <%= selectedFrame === fr.key ? 'checked' : '' %>>
+          <%- include('_avatar', { look: { frame: fr.key }, initials: initials, size: '' }) %>
+          <small><%= fr.icon %> <%= fr.name %></small>
+        </label>
+      <% }) %>
+      <a class="cosmetic cosmetic-shop" href="/coding/shop"><span class="cosmetic-face">🛒</span><small>Дэлгүүр</small></a>
+    </div>
+  </section>
+
   <div class="btn-group sticky-actions">
     <a class="btn btn-ghost" href="/coding">Буцах</a>
     <button class="btn btn-primary">Хадгалах</button>
@@ -77,9 +107,23 @@
             preview.appendChild(span);
           } else preview.textContent = initials;
           preview.classList.toggle('avatar-emoji', !!input.value);
-        } else {
+        } else if (input.name === 'color') {
           preview.className = preview.className.replace(/\bav-color-\S+/g, '').trim();
           if (input.value !== 'tier') preview.classList.add('av-color-' + input.value);
+        } else if (input.name === 'frame') {
+          // Хүрээг шууд харуулна: аватарыг .av-frame-д ороох / гаргах
+          var wrap = preview.parentElement.classList.contains('av-frame') ? preview.parentElement : null;
+          if (input.value) {
+            if (!wrap) {
+              wrap = document.createElement('span');
+              preview.parentNode.insertBefore(wrap, preview);
+              wrap.appendChild(preview);
+            }
+            wrap.className = 'av-frame av-frame-xl frame-' + input.value;
+          } else if (wrap) {
+            wrap.parentNode.insertBefore(preview, wrap);
+            wrap.remove();
+          }
         }
       });
     });

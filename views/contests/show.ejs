@@ -126,7 +126,7 @@
               <td>
                 <div class="player">
                   <%- include('../coding/_avatar', { look: r.look, initials: r.student.initials, size: '' }) %>
-                  <div class="player-name"><%= r.student.fullName %><% if (mine) { %> <span class="badge badge-blue">та</span><% } %><% if (r.excluded) { %> <span class="badge badge-red">хасагдсан</span><% } %></div>
+                  <div class="player-name"><a href="/coding/u/<%= r.student._id %>" class="player-link"><%= r.student.fullName %></a> <%- include('../coding/_title', { look: r.look }) %><% if (mine) { %> <span class="badge badge-blue">та</span><% } %><% if (r.excluded) { %> <span class="badge badge-red">хасагдсан</span><% } %></div>
                 </div>
               </td>
               <% r.cells.forEach(function (c) { %>

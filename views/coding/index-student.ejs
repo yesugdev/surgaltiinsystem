@@ -28,7 +28,8 @@
       <span class="rank-avatar-badge" aria-hidden="true"><%= me.tier.icon %></span>
     </a>
     <div>
-      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин · <a href="/coding/profile">🎨 Аватар</a></span>
+      <span class="muted small">Таны зэрэглэл · <%= me.tier.level %>-р түвшин · <a href="/coding/profile">🎨 Аватар</a> · <a href="/coding/u/<%= user._id %>">👤 Миний профайл</a></span>
+      <%- include('_title', { look: me.look }) %>
       <h2 class="rank-name"><%= me.tier.name %></h2>
       <% if (me.tier.next) { %>
         <div class="tier-progress"><span style="width: <%= me.tier.progress %>%"></span></div>

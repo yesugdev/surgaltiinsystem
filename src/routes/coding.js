@@ -2,7 +2,7 @@
 // Бодлого бодож 🪙 зоос цуглуулна (дэлгүүр); 🏅 ranking оноо, зэрэглэл зөвхөн contest-оор (src/routes/contests.js).
 // Удирдах: админ болон мэдээлэл зүйн багш (req.user.codingStaff).
 const express = require('express');
-const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic, Contest } = require('../models');
+const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic, Contest, ContestResult } = require('../models');
 const { cpAccess, syncCpUnlock } = require('../cp');
 const { lessonOpenFor } = require('../basics');
 const { requireRole, flash } = require('../middleware/auth');
@@ -12,7 +12,7 @@ const judge = require('../judge');
 const md = require('../markdown');
 const { highlight } = require('../highlight');
 const { TIERS, DIFFICULTIES, tierFor, toPoints, POINTS_PER_SOLVE, CONTEST_MAX_GAIN, PLACE_BONUS, PLACEMENT, tierByKey } = require('../coding-ranks');
-const { AVATARS, COLORS, avatarImg, findAvatar, findColor, PRICES, priceOf, itemKey, owns, cosmeticsFor } = require('../coding-cosmetics');
+const { AVATARS, COLORS, FRAMES, TITLES, KINDS, avatarImg, priceOf, itemKey, owns, inSeason, cosmeticsFor } = require('../coding-cosmetics');
 const { contestState, inContest, wallet } = require('../contests');
 
 const router = express.Router();
@@ -170,7 +170,7 @@ async function leaderboard({ classId = null } = {}) {
   const enabled = await Class.distinct('_id', { codingEnabled: true });
   const filter = { role: 'student', active: { $ne: false }, classId: classId ? classId : { $in: enabled }, $or: [{ ratingPoints: { $gt: 0 } }, { placementDone: true }] };
   if (classId && !enabled.some((id) => String(id) === String(classId))) return [];
-  const students = await User.find(filter).select('fullName username classId codingAvatar codingColor codingOwned ratingPoints placementDone').lean();
+  const students = await User.find(filter).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
   const classes = await Class.find({ _id: { $in: students.map((s) => s.classId).filter(Boolean) } }).select('name').lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
   students.sort((a, b) => b.ratingPoints - a.ratingPoints || a.fullName.localeCompare(b.fullName, 'mn'));
@@ -214,11 +214,11 @@ async function buildStandings(problems, { classId = null } = {}) {
   let students;
   if (classId) {
     students = enabled.some((id) => String(id) === String(classId))
-      ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor codingOwned ratingPoints').lean()
+      ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints').lean()
       : [];
   } else {
     const participants = await CodeSubmission.distinct('user', { problem: { $in: ids }, isStaff: false, status: 'done' });
-    students = await User.find({ _id: { $in: participants }, role: 'student', classId: { $in: enabled }, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor codingOwned ratingPoints').lean();
+    students = await User.find({ _id: { $in: participants }, role: 'student', classId: { $in: enabled }, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints').lean();
   }
   const [best, classes] = await Promise.all([
     bestScores(ids, { user: { $in: students.map((s) => s._id) } }),
@@ -262,17 +262,24 @@ const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).m
 router.get('/profile', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const u = req.user;
+  const mine = (kind) => KINDS[kind].list.filter((x) => owns(u, kind, x));
+  const all = Object.keys(KINDS).reduce((n, k) => n + KINDS[k].list.length, 0);
+  const have = Object.keys(KINDS).reduce((n, k) => n + mine(k).length, 0);
   res.render('coding/profile', {
     title: 'Миний аватар',
     tier: ratingTier(u),
     look: cosmeticsFor(u),
     initials: initials(u.fullName),
-    avatars: AVATARS.filter((a) => owns(u, 'avatar', a)),
-    colors: COLORS.filter((c) => owns(u, 'color', c)),
-    lockedCount: AVATARS.filter((a) => !owns(u, 'avatar', a)).length + COLORS.filter((c) => !owns(u, 'color', c)).length,
+    avatars: mine('avatar'),
+    colors: mine('color'),
+    frames: mine('frame'),
+    titles: mine('title'),
+    lockedCount: all - have,
     avatarImg,
     selectedAvatar: u.codingAvatar,
     selectedColor: u.codingColor || 'tier',
+    selectedFrame: u.codingFrame || '',
+    selectedTitle: u.codingTitle || '',
     wallet: await wallet(u),
   });
 });
@@ -280,23 +287,28 @@ router.get('/profile', mainOnly, async (req, res) => {
 router.post('/profile', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const u = req.user;
-  const a = findAvatar(clean(req.body.avatar, 20));
-  const c = findColor(clean(req.body.color, 20));
-  // Худалдаж аваагүй зүйлийг сонгож болохгүй (хөтчөөс хуурсан ч)
+  // Худалдаж аваагүй зүйлийг сонгож болохгүй (хөтчөөс хуурсан ч). '' = байхгүй (нэрийн үсэг / хүрээгүй / цолгүй)
   const update = {};
-  if (req.body.avatar === '' || owns(u, 'avatar', a)) update.codingAvatar = a ? a.key : '';
-  if (owns(u, 'color', c)) update.codingColor = c.key === 'tier' ? '' : c.key;
-  const locked = (a && !owns(u, 'avatar', a)) || (c && !owns(u, 'color', c));
+  let locked = false;
+  for (const [kind, k] of Object.entries(KINDS)) {
+    if (!(k.field in req.body) && !(kind in req.body)) continue;
+    const raw = clean(req.body[kind], 30);
+    if (raw === '' && kind !== 'color') { update[k.field] = ''; continue; }
+    const item = k.find(raw);
+    if (!item) continue;
+    if (!owns(u, kind, item)) { locked = true; continue; }
+    update[k.field] = kind === 'color' && item.key === 'tier' ? '' : item.key;
+  }
   await User.updateOne({ _id: u._id }, { $set: update });
-  flash(req, locked ? 'error' : 'success', locked ? 'Эхлээд дэлгүүрээс худалдаж аваарай!' : 'Аватар хадгалагдлаа.');
+  flash(req, locked ? 'error' : 'success', locked ? 'Эхлээд дэлгүүрээс худалдаж аваарай!' : 'Профайл хадгалагдлаа.');
   res.redirect('/coding/profile');
 });
 
-// ---------------- 🛒 Дэлгүүр: зоосоор аватар, өнгө ----------------
+// ---------------- 🛒 Дэлгүүр: зоосоор аватар, өнгө, хүрээ, цол ----------------
 router.get('/shop', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const u = req.user;
-  const item = (kind) => (x) => ({ ...x, kind, price: priceOf(x), owned: owns(u, kind, x) });
+  const item = (kind) => (x) => ({ ...x, kind, price: priceOf(x), owned: owns(u, kind, x), available: inSeason(x) });
   res.render('coding/shop', {
     title: 'Дэлгүүр',
     wallet: await wallet(u),
@@ -304,19 +316,27 @@ router.get('/shop', mainOnly, async (req, res) => {
     initials: initials(u.fullName),
     avatars: AVATARS.map(item('avatar')),
     colors: COLORS.map(item('color')),
+    frames: FRAMES.map(item('frame')),
+    titles: TITLES.map(item('title')),
     avatarImg,
     DIFFICULTIES,
+    me: u,
   });
 });
 
 router.post('/shop/buy', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const u = req.user;
-  const kind = req.body.kind === 'color' ? 'color' : 'avatar';
-  const x = kind === 'color' ? findColor(clean(req.body.key, 20)) : findAvatar(clean(req.body.key, 20));
+  const kind = Object.hasOwn(KINDS, req.body.kind) ? req.body.kind : 'avatar';
+  const k = KINDS[kind];
+  const x = k.find(clean(req.body.key, 30));
   if (!x) return notFound(res, 'Бараа');
   if (owns(u, kind, x)) {
     flash(req, 'success', 'Танд аль хэдийн байгаа.');
+    return res.redirect('/coding/shop');
+  }
+  if (!inSeason(x)) {
+    flash(req, 'error', `${x.name} хүрээг зөвхөн ${x.seasonName || 'тухайн'} улиралд худалдаж авна.`);
     return res.redirect('/coding/shop');
   }
   const price = priceOf(x);
@@ -325,14 +345,49 @@ router.post('/shop/buy', mainOnly, async (req, res) => {
     flash(req, 'error', `Зоос хүрэлцэхгүй байна: ${price} 🪙 хэрэгтэй, танд ${w.balance} 🪙 байна. Бодлого бодож зоос цуглуулаарай!`);
     return res.redirect('/coding/shop');
   }
-  // Зэрэг хоёр удаа дарахад давхар зарцуулахгүй: зарцуулсан зоос өөрчлөгдөөгүй үед л
+  // Зэрэг хоёр удаа дарахад давхар зарцуулахгүй: зарцуулсан зоос өөрчлөгдөөгүй үед л.
+  // Хуучин хэрэглэгчид coinsSpent талбаргүй байж болно — 0 бол «байхгүй»-г ч зөвшөөрнө
   const r = await User.updateOne(
-    // Хуучин хэрэглэгчид coinsSpent талбаргүй байж болно — 0 бол «байхгүй»-г ч зөвшөөрнө
     { _id: u._id, coinsSpent: u.coinsSpent ? u.coinsSpent : { $in: [0, null] }, codingOwned: { $ne: itemKey(kind, x.key) } },
-    { $inc: { coinsSpent: price }, $push: { codingOwned: itemKey(kind, x.key) }, $set: kind === 'color' ? { codingColor: x.key } : { codingAvatar: x.key } }
+    { $inc: { coinsSpent: price }, $push: { codingOwned: itemKey(kind, x.key) }, $set: { [k.field]: x.key } }
   );
-  flash(req, r.modifiedCount ? 'success' : 'error', r.modifiedCount ? `🎉 Худалдаж авлаа! ${kind === 'color' ? x.name + ' өнгө' : x.icon + ' аватар'} танд тохируулагдлаа.` : 'Дахин оролдоно уу.');
+  const label = { avatar: x.icon + ' аватар', color: x.name + ' өнгө', frame: x.icon + ' ' + x.name + ' хүрээ', title: x.icon + ' ' + x.name + ' цол' }[kind];
+  flash(req, r.modifiedCount ? 'success' : 'error', r.modifiedCount ? `🎉 Худалдаж авлаа! ${label} танд тохируулагдлаа.` : 'Дахин оролдоно уу.');
   res.redirect('/coding/shop');
+});
+
+// ---------------- 👤 Сурагчийн профайл (бусдад харагдана) ----------------
+router.get('/u/:id', mainOnly, async (req, res) => {
+  const enabled = await Class.distinct('_id', { codingEnabled: true });
+  const s = isId(req.params.id)
+    ? await User.findOne({ _id: req.params.id, role: 'student', active: { $ne: false }, classId: { $in: enabled } })
+      .select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean()
+    : null;
+  if (!s) return notFound(res, 'Профайл');
+  const [cls, results, solvedIds, board] = await Promise.all([
+    Class.findById(s.classId).select('name').lean(),
+    ContestResult.find({ user: s._id }).sort({ createdAt: -1 }).limit(20).lean(),
+    CodeSubmission.distinct('problem', { user: s._id, isStaff: false, status: 'done', score: 100 }),
+    leaderboard(),
+  ]);
+  const contests = await Contest.find({ _id: { $in: results.map((r) => r.contest) } }).select('title kind').lean();
+  const cmap = new Map(contests.map((c) => [String(c._id), c]));
+  const me = board.find((r) => String(r.student._id) === String(s._id));
+  const showcase = (kind) => KINDS[kind].list.filter((x) => priceOf(x) > 0 && owns(s, kind, x));
+  res.render('coding/public-profile', {
+    title: s.fullName,
+    student: { ...s, initials: initials(s.fullName), className: cls?.name || '' },
+    isMe: String(s._id) === String(req.user._id),
+    look: cosmeticsFor(s),
+    tier: tierFor(s.ratingPoints),
+    rank: me ? me.rank : null,
+    players: board.length,
+    solved: solvedIds.length,
+    history: results.map((r) => ({ ...r, contest: cmap.get(String(r.contest)) || null })).filter((r) => r.contest),
+    best: results.reduce((b, r) => (r.place && (!b || r.place < b) ? r.place : b), null),
+    showcase: { avatar: showcase('avatar'), frame: showcase('frame'), title: showcase('title'), color: showcase('color') },
+    avatarImg,
+  });
 });
 
 router.get('/standings', mainOnly, async (req, res) => {

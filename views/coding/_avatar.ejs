@@ -1,4 +1,5 @@
-<%# Аватар: look = { avatar: emoji|null, img, anim, color }, initials, size = '' | 'lg' | 'xl', animate
-    Хөдөлгөөнт зураг (Noto Animated Emoji); ачаалагдаагүй эсвэл «хөдөлгөөн багасгах» үед emoji + CSS хөдөлгөөн %>
+<%# Аватар: look = { avatar: emoji|null, img, anim, color, frame }, initials, size = '' | 'lg' | 'xl', animate
+    Хөдөлгөөнт зураг (Noto Animated Emoji); ачаалагдаагүй эсвэл «хөдөлгөөн багасгах» үед emoji + CSS хөдөлгөөн.
+    frame = дэлгүүрийн хүрээ (CSS) %>
 <% const lk = locals.look || {}; %>
-<span class="avatar <%= locals.size ? 'avatar-' + size : '' %> <%= lk.color ? 'av-color-' + lk.color : '' %> <%= lk.avatar ? 'avatar-emoji' : '' %> <%= locals.animate ? 'is-animated' : '' %>" aria-hidden="true"><% if (lk.avatar) { %><% if (lk.img) { %><img class="av-img" src="<%= lk.img %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><% } %><span class="av-face anim-<%= lk.anim || 'none' %>"><%= lk.avatar %></span><% } else { %><%= locals.initials || '?' %><% } %></span>
+<% if (lk.frame) { %><span class="av-frame frame-<%= lk.frame %> <%= locals.size ? 'av-frame-' + size : '' %>" aria-hidden="true"><% } %><span class="avatar <%= locals.size ? 'avatar-' + size : '' %> <%= lk.color ? 'av-color-' + lk.color : '' %> <%= lk.avatar ? 'avatar-emoji' : '' %> <%= locals.animate ? 'is-animated' : '' %>" aria-hidden="true"><% if (lk.avatar) { %><% if (lk.img) { %><img class="av-img" src="<%= lk.img %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><% } %><span class="av-face anim-<%= lk.anim || 'none' %>"><%= lk.avatar %></span><% } else { %><%= locals.initials || '?' %><% } %></span><% if (lk.frame) { %></span><% } %>

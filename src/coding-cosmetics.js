@@ -54,20 +54,62 @@ const findColor = (key) => COLORS.find((c) => c.key === key) || null;
 // Аватар, өнгийг 🪙 зоосоор (бодлого бодож авсан оноо) худалдаж авна. 1-р түвшний нь үнэгүй.
 // Худалдаж авсныг User.codingOwned-д 'a:<key>' / 'c:<key>' хэлбэрээр хадгална.
 const PRICES = { 1: 0, 2: 100, 3: 250, 4: 500, 5: 800, 6: 1200, 7: 1800, 8: 2500 };
-const priceOf = (item) => PRICES[item.level] ?? 0;
-const itemKey = (kind, key) => (kind === 'color' ? 'c:' : 'a:') + key;
-const owns = (user, kind, item) => !!item && (priceOf(item) === 0 || (user.codingOwned || []).includes(itemKey(kind, item.key)));
 
-/** Хэрэглэгчийн сонгосон (эзэмшдэг бол) аватар, өнгө */
+// 🖼 Аватарын хүрээ (CSS). season = худалдаж авах боломжтой сарууд (авсан бол үүрд үлдэнэ)
+const FRAMES = [
+  { key: 'neon-blue', name: 'Неон цэнхэр', icon: '💠', price: 150 },
+  { key: 'neon-pink', name: 'Неон ягаан', icon: '💗', price: 250 },
+  { key: 'circuit', name: 'Хэлхээ', icon: '🔌', price: 350 },
+  { key: 'binary', name: 'Хоёртын код', icon: '🔢', price: 450 },
+  { key: 'algorithm', name: 'Алгоритм', icon: '🧬', price: 600 },
+  { key: 'fire', name: 'Гал', icon: '🔥', price: 750 },
+  { key: 'gold', name: 'Алтан', icon: '🏆', price: 1000 },
+  { key: 'winter', name: 'Өвөл', icon: '❄️', price: 1000, season: [12, 1, 2], seasonName: 'Өвлийн' },
+  { key: 'spring', name: 'Хавар', icon: '🌸', price: 1000, season: [3, 4, 5], seasonName: 'Хаврын' },
+  { key: 'summer', name: 'Зун', icon: '☀️', price: 1000, season: [6, 7, 8], seasonName: 'Зуны' },
+  { key: 'autumn', name: 'Намар', icon: '🍂', price: 1000, season: [9, 10, 11], seasonName: 'Намрын' },
+];
+
+// 🏷 Профайл дээр нэрийн хажууд харагдах цол
+const TITLES = [
+  { key: 'hello', name: 'Hello World', icon: '👋', price: 100 },
+  { key: 'bug-hunter', name: 'Bug Hunter', icon: '🐛', price: 250 },
+  { key: 'loop-master', name: 'Loop Master', icon: '🔁', price: 400 },
+  { key: 'code-ninja', name: 'Code Ninja', icon: '🥷', price: 600 },
+  { key: 'debug-wizard', name: 'Debug Wizard', icon: '🧙', price: 800 },
+  { key: 'speed-coder', name: 'Speed Coder', icon: '⚡', price: 1000 },
+  { key: 'algo-master', name: 'Algorithm Master', icon: '🧠', price: 1200 },
+  { key: 'legend', name: 'Legendary Coder', icon: '🐉', price: 1500 },
+];
+const findFrame = (key) => FRAMES.find((x) => x.key === key) || null;
+const findTitle = (key) => TITLES.find((x) => x.key === key) || null;
+
+const KINDS = {
+  avatar: { prefix: 'a:', find: findAvatar, list: AVATARS, field: 'codingAvatar' },
+  color: { prefix: 'c:', find: findColor, list: COLORS, field: 'codingColor' },
+  frame: { prefix: 'f:', find: findFrame, list: FRAMES, field: 'codingFrame' },
+  title: { prefix: 't:', find: findTitle, list: TITLES, field: 'codingTitle' },
+};
+const priceOf = (item) => (item.price != null ? item.price : PRICES[item.level] ?? 0);
+const itemKey = (kind, key) => (KINDS[kind] || KINDS.avatar).prefix + key;
+const owns = (user, kind, item) => !!item && (priceOf(item) === 0 || (user.codingOwned || []).includes(itemKey(kind, item.key)));
+/** Улирлын хүрээг одоо худалдаж авч болох уу */
+const inSeason = (item, now = new Date()) => !item.season || item.season.includes(now.getMonth() + 1);
+
+/** Хэрэглэгчийн сонгосон (эзэмшдэг бол) аватар, өнгө, хүрээ, цол */
 function cosmeticsFor(user) {
   const a = findAvatar(user.codingAvatar);
   const c = findColor(user.codingColor);
+  const f = findFrame(user.codingFrame);
+  const t = findTitle(user.codingTitle);
   const okA = owns(user, 'avatar', a);
   return {
     avatar: okA ? a.icon : null,
     img: okA ? avatarImg(a.key) : null,
     anim: okA ? a.anim : null,
     color: owns(user, 'color', c) && c.key !== 'tier' ? c.key : null,
+    frame: owns(user, 'frame', f) ? f.key : null,
+    title: owns(user, 'title', t) ? { name: t.name, icon: t.icon } : null,
   };
 }
 
@@ -79,4 +121,7 @@ function ownedUpToLevel(level) {
   ];
 }
 
-module.exports = { AVATARS, COLORS, avatarImg, tierName, findAvatar, findColor, PRICES, priceOf, itemKey, owns, cosmeticsFor, ownedUpToLevel };
+module.exports = {
+  AVATARS, COLORS, FRAMES, TITLES, KINDS, avatarImg, tierName, findAvatar, findColor, findFrame, findTitle,
+  PRICES, priceOf, itemKey, owns, inSeason, cosmeticsFor, ownedUpToLevel,
+};

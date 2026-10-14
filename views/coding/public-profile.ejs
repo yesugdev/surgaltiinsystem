@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+<a href="/coding/standings" class="back">← 🏆 Rank самбар</a>
+
+<section class="pp-hero tier-<%= tier.key %>">
+  <div class="pp-main">
+    <%- include('_avatar', { look: look, initials: student.initials, size: 'xl', animate: true }) %>
+    <div>
+      <h1 class="<%= look.color ? 'name-' + look.color : '' %>"><%= student.fullName %></h1>
+      <div class="pp-tags">
+        <%- include('_title', { look: look }) %>
+        <span class="tier-badge"><%= tier.icon %> <%= tier.name %></span>
+        <% if (student.className) { %><span class="muted small"><%= student.className %></span><% } %>
+      </div>
+      <% if (isMe) { %><a class="btn btn-sm pp-edit" href="/coding/profile">🎨 Профайлаа засах</a> <a class="btn btn-sm" href="/coding/shop">🛒 Дэлгүүр</a><% } %>
+    </div>
+  </div>
+  <div class="rank-stats pp-stats">
+    <div><strong><%= tier.points %></strong><span>🏅 ranking</span></div>
+    <div><strong><%= rank ? '#' + rank : '—' %></strong><span><%= players %> сурагчаас</span></div>
+    <div><strong><%= history.length %></strong><span>🏁 contest</span></div>
+    <div><strong><%= best ? best + '-р' : '—' %></strong><span>шилдэг байр</span></div>
+    <div><strong><%= solved %></strong><span>🧩 бодсон</span></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>✨ Цуглуулга</h2>
+  <% const total = showcase.avatar.length + showcase.frame.length + showcase.title.length + showcase.color.length; %>
+  <% if (!total) { %>
+    <p class="muted small"><%= isMe ? 'Одоохондоо цуглуулга алга. Бодлого бодож зоос цуглуулаад дэлгүүрээс аваарай!' : 'Одоохондоо цуглуулга алга.' %></p>
+  <% } else { %>
+    <% if (showcase.title.length) { %>
+      <h3 class="pp-sub">🏷 Цол</h3>
+      <div class="pp-chips"><% showcase.title.forEach(function (t) { %><span class="title-badge"><%= t.icon %> <%= t.name %></span><% }) %></div>
+    <% } %>
+    <% if (showcase.frame.length) { %>
+      <h3 class="pp-sub">🖼 Хүрээ</h3>
+      <div class="pp-grid">
+        <% showcase.frame.forEach(function (f) { %>
+          <div class="pp-item"><%- include('_avatar', { look: { frame: f.key }, initials: student.initials, size: 'lg' }) %><small><%= f.icon %> <%= f.name %></small></div>
+        <% }) %>
+      </div>
+    <% } %>
+    <% if (showcase.avatar.length) { %>
+      <h3 class="pp-sub">🐾 Аватар</h3>
+      <div class="pp-grid">
+        <% showcase.avatar.forEach(function (a) { %>
+          <div class="pp-item"><span class="cosmetic-face"><img class="av-img" src="<%= avatarImg(a.key) %>" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="av-face anim-<%= a.anim %>"><%= a.icon %></span></span></div>
+        <% }) %>
+      </div>
+    <% } %>
+    <% if (showcase.color.length) { %>
+      <h3 class="pp-sub">🎨 Өнгө</h3>
+      <div class="pp-grid">
+        <% showcase.color.forEach(function (c) { %><div class="pp-item"><span class="cosmetic-face cosmetic-swatch av-color-<%= c.key %>"></span><small><%= c.name %></small></div><% }) %>
+      </div>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2>🏁 Contest-ийн түүх</h2>
+  <% if (!history.length) { %>
+    <p class="muted small">Contest-д хараахан оролцоогүй.</p>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th>Contest</th><th class="num">Оноо</th><th class="num">Байр</th><th class="num">Ranking</th></tr></thead>
+      <tbody>
+        <% history.forEach(function (h) { %>
+          <tr>
+            <td><a href="/coding/contests/<%= h.contest._id %>"><%= h.contest.kind === 'placement' ? '🎯' : '🏁' %> <%= h.contest.title %></a></td>
+            <td class="num"><%= h.score %> / <%= h.maxScore %></td>
+            <td class="num"><%= h.place ? (h.place === 1 ? '🥇' : h.place === 2 ? '🥈' : h.place === 3 ? '🥉' : h.place) : '—' %></td>
+            <td class="num"><strong class="delta-up">+<%= h.ratingAfter - h.ratingBefore %></strong><%= h.placement ? ' 🎯' : '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>
