@@ -287,7 +287,7 @@ router.get('/profile', mainOnly, async (req, res) => {
 router.post('/profile', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const u = req.user;
-  // Худалдаж аваагүй зүйлийг сонгож болохгүй (хөтчөөс хуурсан ч). '' = байхгүй (нэрийн үсэг / хүрээгүй / цолгүй)
+  // Худалдаж аваагүй зүйлийг сонгож болохгүй (хөтчөөс хуурсан ч). '' = байхгүй (нэрийн үсэг / хүрээгүй / badge-гүй)
   const update = {};
   let locked = false;
   for (const [kind, k] of Object.entries(KINDS)) {
@@ -304,7 +304,7 @@ router.post('/profile', mainOnly, async (req, res) => {
   res.redirect('/coding/profile');
 });
 
-// ---------------- 🛒 Дэлгүүр: зоосоор аватар, өнгө, хүрээ, цол ----------------
+// ---------------- 🛒 Дэлгүүр: зоосоор аватар, өнгө, хүрээ, badge ----------------
 router.get('/shop', mainOnly, async (req, res) => {
   if (req.user.role !== 'student') return notFound(res, 'Хуудас');
   const u = req.user;
@@ -351,7 +351,7 @@ router.post('/shop/buy', mainOnly, async (req, res) => {
     { _id: u._id, coinsSpent: u.coinsSpent ? u.coinsSpent : { $in: [0, null] }, codingOwned: { $ne: itemKey(kind, x.key) } },
     { $inc: { coinsSpent: price }, $push: { codingOwned: itemKey(kind, x.key) }, $set: { [k.field]: x.key } }
   );
-  const label = { avatar: x.icon + ' аватар', color: x.name + ' өнгө', frame: x.icon + ' ' + x.name + ' хүрээ', title: x.icon + ' ' + x.name + ' цол' }[kind];
+  const label = { avatar: x.icon + ' аватар', color: x.name + ' өнгө', frame: x.icon + ' ' + x.name + ' хүрээ', title: x.icon + ' ' + x.name + ' badge' }[kind];
   flash(req, r.modifiedCount ? 'success' : 'error', r.modifiedCount ? `🎉 Худалдаж авлаа! ${label} танд тохируулагдлаа.` : 'Дахин оролдоно уу.');
   res.redirect('/coding/shop');
 });

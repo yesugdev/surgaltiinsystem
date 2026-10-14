@@ -1,1 +1,1 @@
-<%# Дэлгүүрийн цол: look.title = { name, icon } %><% const lt = locals.look && look.title; %><% if (lt) { %><span class="title-badge"><%= lt.icon %> <%= lt.name %></span><% } %>
+<%# Дэлгүүрийн badge (нэрийн хажууд жижгээр): look.title = TITLES-ийн бичлэг %><% const lt = locals.look && look.title; %><% if (lt) { %><span class="title-badge" title="<%= lt.name %>"><%- include('_badge', { b: lt, size: 18 }) %><%= lt.name %></span><% } %>

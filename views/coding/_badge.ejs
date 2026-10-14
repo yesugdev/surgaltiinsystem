@@ -1,0 +1,55 @@
+<%# 🏷 Badge-ийн SVG дүрслэл: b = TITLES-ийн бичлэг (b.art), size = өргөн (px).
+    Хэлбэр + өнгөт хүрээ, судалтай дэвсгэр, ретро компьютер (дэлгэцэнд бичиг), доод медальд тэмдэг. %>
+<%
+  const art = b.art || { shape: 'circle', rim: '#a78bfa', bg: ['#312e81', '#3730a3'], screen: 'CODE', glow: '#4ade80' };
+  const W = locals.size || 96;
+  const SHAPES = {
+    circle: 'M60 6a58 58 0 1 1 0 116a58 58 0 1 1 0-116Z',
+    shield: 'M22 4H98Q108 4 108 14V90L60 134L12 90V14Q12 4 22 4Z',
+    hexagon: 'M60 3L111 32V98L60 127L9 98V32Z',
+    octagon: 'M38 4H82L112 34V94L82 124H38L8 94V34Z',
+    pennant: 'M10 6L60 20L110 6V96L60 134L10 96Z',
+  };
+  const d = SHAPES[art.shape] || SHAPES.circle;
+  const id = 'bdg-' + b.key;
+  const scr = String(art.screen || '');
+  const fs = Math.min(11, 62 / Math.max(scr.length, 1));
+  const keys = art.rainbow ? ['#f87171', '#fbbf24', '#4ade80', '#38bdf8', '#a78bfa', '#f472b6'] : ['#8b7b60', '#a3927a'];
+  const medalY = art.shape === 'circle' ? 108 : art.shape === 'hexagon' || art.shape === 'octagon' ? 110 : 114;
+  const star = (x, y, r) => `M${x} ${y - r}Q${x} ${y} ${x + r} ${y}Q${x} ${y} ${x} ${y + r}Q${x} ${y} ${x - r} ${y}Q${x} ${y} ${x} ${y - r}Z`;
+%>
+<svg class="badge-svg" viewBox="0 0 120 138" width="<%= W %>" height="<%= Math.round(W * 138 / 120) %>" role="img" aria-label="<%= b.name %>">
+  <defs>
+    <clipPath id="<%= id %>-c"><path d="<%= d %>" transform="translate(60 66) scale(.84) translate(-60 -66)"/></clipPath>
+    <pattern id="<%= id %>-p" width="14" height="138" patternUnits="userSpaceOnUse"><rect width="7" height="138" fill="<%= art.bg[0] %>"/><rect x="7" width="7" height="138" fill="<%= art.bg[1] %>"/></pattern>
+  </defs>
+  <path d="<%= d %>" fill="<%= art.rim %>" stroke="rgba(0,0,0,.28)" stroke-width="2.5"/>
+  <g clip-path="url(#<%= id %>-c)">
+    <rect width="120" height="138" fill="url(#<%= id %>-p)"/>
+    <% if (art.sparkles) { %>
+      <path d="<%= star(24, 26, 5) %> <%= star(98, 30, 4) %> <%= star(90, 52, 3) %> <%= star(30, 52, 3) %>" fill="#fde68a"/>
+    <% } else { %>
+      <path d="<%= star(26, 30, 3.5) %> <%= star(95, 34, 3) %>" fill="#fde68a" opacity=".85"/>
+    <% } %>
+    <rect y="90" width="120" height="48" fill="#1c1630"/>
+    <rect y="88" width="120" height="3" fill="rgba(255,255,255,.12)"/>
+    <% if (art.plants) { %>
+      <g><rect x="13" y="76" width="11" height="12" rx="2" fill="#a855f7"/><path d="M18 76c-6-6-6-14 0-18c6 4 6 12 0 18Z" fill="#22c55e"/><path d="M18 76c-9-2-12-8-10-12c6 0 9 5 10 12Z" fill="#16a34a"/></g>
+      <g><rect x="96" y="76" width="11" height="12" rx="2" fill="#a855f7"/><path d="M102 76c-6-6-6-14 0-18c6 4 6 12 0 18Z" fill="#22c55e"/><path d="M102 76c9-2 12-8 10-12c-6 0-9 5-10 12Z" fill="#16a34a"/></g>
+    <% } %>
+    <%# Ретро компьютер %>
+    <rect x="33" y="29" width="54" height="42" rx="6" fill="#efe2c4" stroke="#4a3a2c" stroke-width="1.6"/>
+    <rect x="39" y="34" width="42" height="29" rx="3.5" fill="#0b1a14" stroke="#4a3a2c" stroke-width="1"/>
+    <rect x="41" y="36" width="38" height="25" rx="2.5" fill="none" stroke="<%= art.glow %>" stroke-opacity=".25"/>
+    <text x="60" y="<%= 49 + fs / 3 %>" text-anchor="middle" font-family="'Courier New', ui-monospace, monospace" font-weight="700" font-size="<%= fs.toFixed(1) %>" fill="<%= art.glow %>" style="paint-order: stroke" stroke="<%= art.glow %>" stroke-opacity=".25" stroke-width="1.6"><%= scr %></text>
+    <circle cx="80" cy="67" r="1.4" fill="#ef4444"/>
+    <rect x="50" y="71" width="20" height="5" fill="#d8c9a6" stroke="#4a3a2c" stroke-width="1"/>
+    <path d="M27 78H93L100 91H20Z" fill="#dccfb2" stroke="#4a3a2c" stroke-width="1.5" stroke-linejoin="round"/>
+    <% for (let r = 0; r < 2; r++) { for (let k = 0; k < 9; k++) { %>
+      <rect x="<%= (31 - r * 2.5 + k * 6.6).toFixed(1) %>" y="<%= 80.5 + r * 4.6 %>" width="5" height="3.2" rx=".8" fill="<%= keys[(k + r * 2) % keys.length] %>"/>
+    <% } } %>
+  </g>
+  <path d="<%= d %>" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" transform="translate(60 66) scale(.84) translate(-60 -66)"/>
+  <circle cx="60" cy="<%= medalY %>" r="12" fill="#14112a" stroke="<%= art.rim %>" stroke-width="2.5"/>
+  <text x="60" y="<%= medalY + 4.6 %>" text-anchor="middle" font-size="13"><%= b.icon %></text>
+</svg>

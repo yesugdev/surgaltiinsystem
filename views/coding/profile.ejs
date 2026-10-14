@@ -11,7 +11,7 @@
       <%- include('_title', { look: look }) %>
     </div>
   </div>
-  <p class="muted small">Энд таны эзэмшдэг аватар, өнгө, хүрээ, цол харагдана. Бусад сурагч таны <a href="/coding/u/<%= user._id %>">👤 профайлыг</a> харж чадна.<% if (lockedCount) { %> Дахиад <%= lockedCount %> зүйлийг <a href="/coding/shop">🛒 дэлгүүрээс</a> зоосоор аваарай!<% } %></p>
+  <p class="muted small">Энд таны эзэмшдэг аватар, өнгө, хүрээ, badge харагдана. Бусад сурагч таны <a href="/coding/u/<%= user._id %>">👤 профайлыг</a> харж чадна.<% if (lockedCount) { %> Дахиад <%= lockedCount %> зүйлийг <a href="/coding/shop">🛒 дэлгүүрээс</a> зоосоор аваарай!<% } %></p>
 </section>
 
 <form method="post" action="/coding/profile" class="form">
@@ -48,13 +48,14 @@
   </section>
 
   <section class="card">
-    <h2>🏷 Цол</h2>
+    <h2>🏷 Badge</h2>
     <div class="cosmetic-grid">
-      <label class="cosmetic <%= !selectedTitle ? 'is-selected' : '' %>"><input type="radio" name="title" value="" <%= !selectedTitle ? 'checked' : '' %>><span class="cosmetic-face">—</span><small>Цолгүй</small></label>
+      <label class="cosmetic <%= !selectedTitle ? 'is-selected' : '' %>"><input type="radio" name="title" value="" <%= !selectedTitle ? 'checked' : '' %>><span class="cosmetic-face">—</span><small>Badge-гүй</small></label>
       <% titles.forEach(function (t) { %>
         <label class="cosmetic cosmetic-title <%= selectedTitle === t.key ? 'is-selected' : '' %>">
           <input type="radio" name="title" value="<%= t.key %>" <%= selectedTitle === t.key ? 'checked' : '' %>>
-          <span class="title-badge"><%= t.icon %> <%= t.name %></span>
+          <%- include('_badge', { b: t, size: 64 }) %>
+          <small><%= t.name %></small>
         </label>
       <% }) %>
       <a class="cosmetic cosmetic-shop" href="/coding/shop"><span class="cosmetic-face">🛒</span><small>Дэлгүүр</small></a>
