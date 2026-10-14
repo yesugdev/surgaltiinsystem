@@ -8,7 +8,7 @@
       <h1 class="<%= look.color ? 'name-' + look.color : '' %>"><%= student.fullName %></h1>
       <div class="pp-tags">
         <%- include('_title', { look: look }) %>
-        <span class="tier-badge"><%= tier.icon %> <%= tier.name %></span>
+        <span class="tier-badge" title="Contest-оор тогтсон жинхэнэ rank">🏅 Rank: <%= tier.icon %> <%= tier.name %></span>
         <% if (student.className) { %><span class="muted small"><%= student.className %></span><% } %>
       </div>
       <% if (isMe) { %><a class="btn btn-sm pp-edit" href="/coding/profile">🎨 Профайлаа засах</a> <a class="btn btn-sm" href="/coding/shop">🛒 Дэлгүүр</a><% } %>
@@ -30,8 +30,8 @@
     <p class="muted small"><%= isMe ? 'Одоохондоо цуглуулга алга. Бодлого бодож зоос цуглуулаад дэлгүүрээс аваарай!' : 'Одоохондоо цуглуулга алга.' %></p>
   <% } else { %>
     <% if (showcase.title.length) { %>
-      <h3 class="pp-sub">🏷 Цол</h3>
-      <div class="pp-chips"><% showcase.title.forEach(function (t) { %><span class="title-badge"><%= t.icon %> <%= t.name %></span><% }) %></div>
+      <h3 class="pp-sub">🏷 Badge</h3>
+      <div class="pp-grid"><% showcase.title.forEach(function (t) { %><div class="pp-item"><%- include('_badge', { b: t, size: 84 }) %><small><%= t.name %></small></div><% }) %></div>
     <% } %>
     <% if (showcase.frame.length) { %>
       <h3 class="pp-sub">🖼 Хүрээ</h3>

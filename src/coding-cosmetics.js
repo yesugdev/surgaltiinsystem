@@ -70,16 +70,17 @@ const FRAMES = [
   { key: 'autumn', name: 'Намар', icon: '🍂', price: 1000, season: [9, 10, 11], seasonName: 'Намрын' },
 ];
 
-// 🏷 Профайл дээр нэрийн хажууд харагдах цол
+// 🏷 Профайл дээр нэрийн хажууд харагдах badge (чимэглэл; rank биш)
 const TITLES = [
-  { key: 'hello', name: 'Hello World', icon: '👋', price: 100 },
-  { key: 'bug-hunter', name: 'Bug Hunter', icon: '🐛', price: 250 },
-  { key: 'loop-master', name: 'Loop Master', icon: '🔁', price: 400 },
-  { key: 'code-ninja', name: 'Code Ninja', icon: '🥷', price: 600 },
-  { key: 'debug-wizard', name: 'Debug Wizard', icon: '🧙', price: 800 },
-  { key: 'speed-coder', name: 'Speed Coder', icon: '⚡', price: 1000 },
-  { key: 'algo-master', name: 'Algorithm Master', icon: '🧠', price: 1200 },
-  { key: 'legend', name: 'Legendary Coder', icon: '🐉', price: 1500 },
+  // art: SVG дүрслэл (views/coding/_badge.ejs) — хэлбэр, хүрээний өнгө, судалтай дэвсгэр, дэлгэцийн бичиг
+  { key: 'hello', name: 'Hello World', icon: '👋', price: 100, art: { shape: 'circle', rim: '#a78bfa', bg: ['#2e1065', '#3b0f7a'], screen: 'HELLO', glow: '#4ade80', plants: true } },
+  { key: 'bug-hunter', name: 'Bug Hunter', icon: '🐛', price: 250, art: { shape: 'shield', rim: '#fbbf24', bg: ['#9f1239', '#be123c'], screen: 'BUG!', glow: '#fde047' } },
+  { key: 'loop-master', name: 'Loop Master', icon: '🔁', price: 400, art: { shape: 'hexagon', rim: '#38bdf8', bg: ['#4c1d95', '#6d28d9'], screen: 'LOOP', glow: '#67e8f9', sparkles: true } },
+  { key: 'code-ninja', name: 'Code Ninja', icon: '🥷', price: 600, art: { shape: 'pennant', rim: '#34d399', bg: ['#064e3b', '#065f46'], screen: '<NINJA>', glow: '#6ee7b7', rainbow: true, plants: true } },
+  { key: 'debug-wizard', name: 'Debug Wizard', icon: '🧙', price: 800, art: { shape: 'octagon', rim: '#f472b6', bg: ['#1e3a8a', '#1d4ed8'], screen: 'DEBUG', glow: '#f9a8d4', sparkles: true } },
+  { key: 'speed-coder', name: 'Speed Coder', icon: '⚡', price: 1000, art: { shape: 'shield', rim: '#fb923c', bg: ['#7c2d12', '#9a3412'], screen: 'FAST', glow: '#fde047', sparkles: true } },
+  { key: 'algo-master', name: 'Algorithm Master', icon: '🧠', price: 1200, art: { shape: 'hexagon', rim: '#fcd34d', bg: ['#134e4a', '#115e59'], screen: 'O(logn)', glow: '#5eead4', rainbow: true, sparkles: true } },
+  { key: 'legend', name: 'Legendary Coder', icon: '🐉', price: 1500, art: { shape: 'octagon', rim: '#f59e0b', bg: ['#450a0a', '#7f1d1d'], screen: 'LEGEND', glow: '#fbbf24', rainbow: true, sparkles: true, plants: true } },
 ];
 const findFrame = (key) => FRAMES.find((x) => x.key === key) || null;
 const findTitle = (key) => TITLES.find((x) => x.key === key) || null;
@@ -96,7 +97,7 @@ const owns = (user, kind, item) => !!item && (priceOf(item) === 0 || (user.codin
 /** Улирлын хүрээг одоо худалдаж авч болох уу */
 const inSeason = (item, now = new Date()) => !item.season || item.season.includes(now.getMonth() + 1);
 
-/** Хэрэглэгчийн сонгосон (эзэмшдэг бол) аватар, өнгө, хүрээ, цол */
+/** Хэрэглэгчийн сонгосон (эзэмшдэг бол) аватар, өнгө, хүрээ, badge */
 function cosmeticsFor(user) {
   const a = findAvatar(user.codingAvatar);
   const c = findColor(user.codingColor);
@@ -109,7 +110,7 @@ function cosmeticsFor(user) {
     anim: okA ? a.anim : null,
     color: owns(user, 'color', c) && c.key !== 'tier' ? c.key : null,
     frame: owns(user, 'frame', f) ? f.key : null,
-    title: owns(user, 'title', t) ? { name: t.name, icon: t.icon } : null,
+    title: owns(user, 'title', t) ? t : null,
   };
 }
 

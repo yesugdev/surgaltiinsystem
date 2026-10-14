@@ -24,7 +24,8 @@
       <%- include('_avatar', { look: Object.assign({}, look, { frame: x.key }), initials: initials, size: 'lg' }) %>
       <small><%= x.icon %> <%= x.name %><% if (x.season) { %><br><span class="muted"><%= x.seasonName %> улиралд</span><% } %></small>
     <% } else if (x.kind === 'title') { %>
-      <span class="title-badge title-preview"><%= x.icon %> <%= x.name %></span>
+      <%- include('_badge', { b: x, size: 112 }) %>
+      <small class="badge-name"><%= x.name %></small>
     <% } else { %>
       <span class="cosmetic-face cosmetic-swatch <%= x.key === 'tier' ? 'swatch-tier' : 'av-color-' + x.key %>"></span>
       <small><%= x.name %></small>
@@ -43,8 +44,8 @@
 <% } %>
 
 <section class="card">
-  <h2>🏷 Цол</h2>
-  <p class="muted small">Нэрийн хажууд Rank самбар, contest, профайл дээр бүгдэд харагдана.</p>
+  <h2>🏷 Badge</h2>
+  <p class="muted small">Нэрийн хажууд Rank самбар, contest, профайл дээр бүгдэд харагдана. Badge бол чимэглэл — жинхэнэ зэрэглэл (rank) зөвхөн contest-оор ахина.</p>
   <div class="shop-grid shop-grid-wide"><% titles.forEach(card) %></div>
 </section>
 <section class="card">

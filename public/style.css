@@ -1034,9 +1034,14 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
 @keyframes frame-glow { 50% { filter: brightness(1.35); } }
 @keyframes frame-shine { 50% { background-position: 100% 100%; } }
 @media (prefers-reduced-motion: reduce) { .av-frame::before { animation: none !important; } }
-.title-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; color: #fff; background: linear-gradient(135deg, #7c3aed, #db2777); box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3); white-space: nowrap; vertical-align: middle; }
+.badge-svg { display: block; flex-shrink: 0; filter: drop-shadow(0 3px 5px rgba(17, 24, 39, 0.25)); }
+.title-badge .badge-svg { display: inline-block; filter: none; margin: -3px 0; }
+.badge-name { font-weight: 700; }
+.shop-title .badge-svg, .pp-item .badge-svg { transition: transform 0.15s; }
+.shop-title:hover .badge-svg, .pp-item:hover .badge-svg { transform: translateY(-3px) rotate(-3deg); }
+.title-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px 2px 4px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; color: #fff; background: linear-gradient(135deg, #7c3aed, #db2777); box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3); white-space: nowrap; vertical-align: middle; }
 .title-preview { font-size: 0.85rem; padding: 5px 12px; margin: 10px 0 4px; }
-.shop-grid.shop-grid-wide { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.shop-grid.shop-grid-wide { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .cosmetic-title { justify-content: center; min-height: 64px; }
 .player-link { color: inherit; }
 .player-link:hover { color: var(--primary); }

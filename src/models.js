@@ -46,7 +46,7 @@ const userSchema = new Schema(
     codingAvatar: { type: String, default: '' },
     codingColor: { type: String, default: '' },
     codingFrame: { type: String, default: '' }, // 🖼 дэлгүүрийн хүрээ
-    codingTitle: { type: String, default: '' }, // 🏷 цол
+    codingTitle: { type: String, default: '' }, // 🏷 badge
     codingTierSeen: { type: String, default: 'newbie' },
     // 🛒 Дэлгүүрээс авсан зүйлс ('a:<avatar>' / 'c:<color>') ба зарцуулсан зоос (зоос = бодсон бодлогын оноо − зарцуулсан)
     codingOwned: { type: [String], default: [] },
