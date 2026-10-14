@@ -77,6 +77,7 @@ async function judgeSubmission(sub) {
     code: sub.code,
     timeLimitMs: problem.timeLimitMs,
     memoryLimitMb: problem.memoryLimitMb,
+    checker: problem.checker || 'tokens',
     tests: tests.map((t) => ({ input: t.input, output: t.output })),
     returnOutputFor: tests.map((t, i) => (t.sample ? i : -1)).filter((i) => i >= 0),
   });

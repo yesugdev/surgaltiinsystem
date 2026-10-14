@@ -73,8 +73,8 @@
           <a href="/coding/<%= p._id %>" class="contest-problem">
             <span class="contest-letter"><%= p.letter %></span>
             <span class="contest-p-title"><%= p.title %></span>
-            <span class="diff-chip diff-<%= p.diff.key %>"><%= p.diff.icon %> <%= p.diff.label %> · <%= p.diff.points %></span>
-            <% if (!staff) { %><span class="contest-p-score"><%= m ? m.points : 0 %> / <%= p.diff.points %></span><% } %>
+            <span class="diff-chip diff-<%= p.diff.key %>"><%= p.diff.icon %> <%= p.diff.label %> · <%= p.pts %> оноо</span>
+            <% if (!staff) { %><span class="contest-p-score"><%= m ? m.points : 0 %> / <%= p.pts %></span><% } %>
           </a>
           <% if (admin) { %>
             <span class="contest-p-admin small">

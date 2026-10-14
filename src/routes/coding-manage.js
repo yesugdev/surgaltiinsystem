@@ -82,6 +82,8 @@ async function parseForm(req) {
       statement: String(req.body.statement ?? '').slice(0, 200000),
       showStandings: req.body.showStandings === 'on',
       difficulty: Object.hasOwn(DIFFICULTIES, req.body.difficulty) ? req.body.difficulty : DEFAULT_DIFFICULTY,
+      points: (() => { const n = Math.round(Number(req.body.points)); return n >= 1 && n <= 1000 ? n : null; })(),
+      checker: req.body.checker === 'lines' ? 'lines' : 'tokens',
     },
   };
 }

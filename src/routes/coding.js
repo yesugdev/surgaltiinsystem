@@ -327,7 +327,8 @@ router.post('/shop/buy', mainOnly, async (req, res) => {
   }
   // Зэрэг хоёр удаа дарахад давхар зарцуулахгүй: зарцуулсан зоос өөрчлөгдөөгүй үед л
   const r = await User.updateOne(
-    { _id: u._id, coinsSpent: u.coinsSpent || 0, codingOwned: { $ne: itemKey(kind, x.key) } },
+    // Хуучин хэрэглэгчид coinsSpent талбаргүй байж болно — 0 бол «байхгүй»-г ч зөвшөөрнө
+    { _id: u._id, coinsSpent: u.coinsSpent ? u.coinsSpent : { $in: [0, null] }, codingOwned: { $ne: itemKey(kind, x.key) } },
     { $inc: { coinsSpent: price }, $push: { codingOwned: itemKey(kind, x.key) }, $set: kind === 'color' ? { codingColor: x.key } : { codingAvatar: x.key } }
   );
   flash(req, r.modifiedCount ? 'success' : 'error', r.modifiedCount ? `🎉 Худалдаж авлаа! ${kind === 'color' ? x.name + ' өнгө' : x.icon + ' аватар'} танд тохируулагдлаа.` : 'Дахин оролдоно уу.');

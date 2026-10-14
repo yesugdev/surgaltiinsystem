@@ -43,7 +43,7 @@
 
   <section class="card form">
     <h2>Хүндийн зэрэг</h2>
-    <p class="muted small">Сурагч бүтэн бодвол авах оноо. Rank, онооны самбарт үүгээр тооцно.</p>
+    <p class="muted small">Сурагч бүтэн бодвол авах 🪙 зоос. Contest-д тусгай оноо өгөөгүй бол мөн үүгээр тооцно.</p>
     <div class="diff-picker" role="radiogroup" aria-label="Хүндийн зэрэг">
       <% Object.values(DIFFICULTIES).forEach(function (d) { %>
         <label class="diff-option diff-<%= d.key %>">
@@ -53,6 +53,16 @@
           <span class="diff-option-pts"><%= d.points %> оноо</span>
         </label>
       <% }) %>
+    </div>
+    <div class="row">
+      <label>Contest-ийн оноо <small class="muted">(заавал биш — хоосон бол хүндийн зэргээр)</small>
+        <input type="number" name="points" min="1" max="1000" step="1" value="<%= problem.points || '' %>" placeholder="жишээ: 7"></label>
+      <label>Гаралт шалгах
+        <select name="checker">
+          <option value="tokens" <%= problem.checker !== 'lines' ? 'selected' : '' %>>Үгээр — хоосон зай, мөр шилжилтийг үл тооцно (ихэнх бодлого)</option>
+          <option value="lines" <%= problem.checker === 'lines' ? 'selected' : '' %>>Мөр бүрийг яг таг — эхний/төгсгөлийн хоосон зай чухал (зураг хэвлэх)</option>
+        </select>
+      </label>
     </div>
   </section>
 

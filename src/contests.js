@@ -1,6 +1,6 @@
 // 🏁 Contest: самбар, ranking оноо олгох, 🪙 зоос, хуучин системээс шилжүүлэх
 const { Contest, ContestResult, Problem, CodeSubmission, User, Setting } = require('./models');
-const { toPoints, solvePoints, contestGain, placementTier } = require('./coding-ranks');
+const { solvePoints, problemPoints, scoreFor, contestGain, placementTier } = require('./coding-ranks');
 const { cosmeticsFor, ownedUpToLevel } = require('./coding-cosmetics');
 
 /** draft → scheduled → running → ended → finalized */
@@ -23,7 +23,7 @@ const STATES = {
 const inContest = (user, c) => !!user.classId && (c.classIds || []).some((id) => String(id) === String(user.classId));
 
 /** Contest-ийн бодлогууд (A, B, C … дарааллаар) */
-async function contestProblems(contestId, select = 'title difficulty testCount statement createdAt') {
+async function contestProblems(contestId, select = 'title difficulty points testCount statement createdAt') {
   const list = await Problem.find({ contest: contestId }).select(select).sort({ createdAt: 1 }).lean();
   return list.map((p, i) => ({ ...p, letter: String.fromCharCode(65 + (i % 26)) + (i >= 26 ? Math.floor(i / 26) : '') }));
 }
@@ -49,11 +49,11 @@ async function contestStandings(contest, problems) {
     : [];
   const map = new Map(best.map((b) => [`${b._id.p}:${b._id.u}`, b]));
   const excluded = new Set((contest.excluded || []).map(String));
-  const maxScore = problems.reduce((s, p) => s + solvePoints(p.difficulty), 0);
+  const maxScore = problems.reduce((s, p) => s + problemPoints(p), 0);
   const rows = students.map((s) => {
     const cells = problems.map((p) => {
       const c = map.get(`${p._id}:${s._id}`);
-      return c ? { ...c, points: toPoints(c.best, p.difficulty) } : null;
+      return c ? { ...c, points: scoreFor(c.best, p) } : null;
     });
     const score = Math.round(cells.reduce((sum, c) => sum + (c ? c.points : 0), 0) * 10) / 10;
     const last = cells.reduce((m, c) => (c && c.best > 0 && c.at > m ? c.at : m), new Date(0));
