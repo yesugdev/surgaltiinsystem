@@ -66,6 +66,12 @@ async function main() {
 
   // Хөдөлгөөнт аватар (өөрчлөгддөггүй, ~100KB тус бүр) — хөтөч 30 хоног кэшилнэ
   app.use('/img/avatars', express.static(path.join(__dirname, '..', 'public', 'img', 'avatars'), { maxAge: '30d', immutable: true }));
+  // Windows 7/8-ийн хуучин emoji фонт шинэ emoji-г харуулдаггүй — Twemoji өнгөт фонтыг зөвхөн тэдэнд ачаална
+  app.use('/vendor/twemoji', express.static(path.join(__dirname, '..', 'node_modules', 'twemoji-colr-font'), { maxAge: '365d', immutable: true }));
+  app.use((req, res, next) => {
+    res.locals.legacyEmoji = /Windows NT (5\.|6\.[0-3])/.test(req.get('user-agent') || '');
+    next();
+  });
   // LaTeX томьёоны загвар, фонт (KaTeX) — гадны CDN-гүй
   app.use('/vendor/katex', express.static(path.join(__dirname, '..', 'node_modules', 'katex', 'dist'), { maxAge: '30d' }));
   app.use(express.static(path.join(__dirname, '..', 'public')));
