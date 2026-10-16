@@ -150,13 +150,13 @@ router.get('/', mainOnly, async (req, res) => {
       look: cosmeticsFor(u),
       initials: initials(u.fullName),
       rank: meIdx >= 0 ? board[meIdx].rank : null,
-      players: board.length,
+      players: board.filter((r) => r.ranked).length,
       solved: mine.filter((m) => m.best === 100).length,
       wallet: await wallet(u),
       placementDone: !!u.placementDone,
     },
     contests,
-    top: board.slice(0, 3),
+    top: board.filter((r) => r.ranked).slice(0, 3),
     TIERS,
     DIFFICULTIES,
   });
@@ -168,17 +168,40 @@ const ratingTier = (user) => tierFor(user.ratingPoints);
 /** Rank самбар: Coding нээгдсэн ангийн, ranking оноотой эсвэл түвшин тогтоосон сурагчид */
 async function leaderboard({ classId = null } = {}) {
   const enabled = await Class.distinct('_id', { codingEnabled: true });
-  const filter = { role: 'student', active: { $ne: false }, classId: classId ? classId : { $in: enabled }, $or: [{ ratingPoints: { $gt: 0 } }, { placementDone: true }] };
   if (classId && !enabled.some((id) => String(id) === String(classId))) return [];
+  // Coding нээгдсэн ангийн БҮХ сурагч — rank-гүй (contest-д ороогүй) нь ч харагдана
+  const filter = { role: 'student', active: { $ne: false }, classId: classId ? classId : { $in: enabled } };
   const students = await User.find(filter).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
   const classes = await Class.find({ _id: { $in: students.map((s) => s.classId).filter(Boolean) } }).select('name').lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
-  students.sort((a, b) => b.ratingPoints - a.ratingPoints || a.fullName.localeCompare(b.fullName, 'mn'));
+  const rows = students.map((s) => ({
+    student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
+    ranked: s.ratingPoints > 0 || !!s.placementDone,
+    tier: tierFor(s.ratingPoints),
+    look: cosmeticsFor(s),
+    collection: collectionOf(s),
+  }));
+  // Rank-тай нь ranking оноогоор; rank-гүй нь доор нь цуглуулгын үнэ цэнээр, дараа нь нэрээр
+  rows.sort((x, y) => (y.ranked - x.ranked) || (y.student.ratingPoints - x.student.ratingPoints)
+    || (y.collection.value - x.collection.value) || x.student.fullName.localeCompare(y.student.fullName, 'mn'));
   let rank = 0;
-  return students.map((s, i) => {
-    if (i === 0 || s.ratingPoints !== students[i - 1].ratingPoints) rank = i + 1;
-    return { student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) }, rank, tier: tierFor(s.ratingPoints), look: cosmeticsFor(s) };
+  rows.forEach((r, i) => {
+    if (!r.ranked) { r.rank = null; return; }
+    if (i === 0 || r.student.ratingPoints !== rows[i - 1].student.ratingPoints) rank = i + 1;
+    r.rank = rank;
   });
+  return rows;
+}
+
+/** Зоосоор авсан зүйлс: badge, хүрээ, аватар, өнгө (үнэгүйг тооцохгүй) + нийт үнэ цэн */
+function collectionOf(s) {
+  const pick = (kind) => KINDS[kind].list.filter((x) => priceOf(x) > 0 && owns(s, kind, x));
+  const badges = pick('title');
+  const frames = pick('frame');
+  const avatars = pick('avatar');
+  const colors = pick('color');
+  const all = [...badges, ...frames, ...avatars, ...colors];
+  return { badges, frames, avatars, colors, count: all.length, value: all.reduce((sum, x) => sum + priceOf(x), 0) };
 }
 
 /**
@@ -381,7 +404,7 @@ router.get('/u/:id', mainOnly, async (req, res) => {
     look: cosmeticsFor(s),
     tier: tierFor(s.ratingPoints),
     rank: me ? me.rank : null,
-    players: board.length,
+    players: board.filter((r) => r.ranked).length,
     solved: solvedIds.length,
     history: results.map((r) => ({ ...r, contest: cmap.get(String(r.contest)) || null })).filter((r) => r.contest),
     best: results.reduce((b, r) => (r.place && (!b || r.place < b) ? r.place : b), null),
