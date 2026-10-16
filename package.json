@@ -36,7 +36,8 @@
     "multer": "^2.4.0",
     "pptx-preview": "^1.0.7",
     "sanitize-html": "^2.17.7",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "twemoji-colr-font": "^15.0.3"
   },
   "devDependencies": {
     "@codemirror/commands": "^6.11.1",
