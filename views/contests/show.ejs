@@ -34,6 +34,7 @@
         <form method="post" action="/coding/contests/<%= contest._id %>/finalize" data-confirm="Дүнг баталгаажуулж ranking оноо олгох уу? Дараа нь өөрчлөх боломжгүй."><button class="btn btn-primary">✅ Дүн баталгаажуулж ranking оноо олгох</button></form>
       <% } %>
     </div>
+    <form method="post" action="/coding/contests/<%= contest._id %>/duplicate" data-confirm="Энэ contest-ийн бодлого, тестийг хуулж шинэ contest үүсгэх үү? Дараа нь өөр анги сонгож дахин авна."><button class="btn btn-sm">⧉ Дахин зохион байгуулах (өөр ангид)</button></form>
     <% if (state !== 'finalized') { %>
       <form method="post" action="/coding/contests/<%= contest._id %>/delete" data-confirm="Contest-ийг устгах уу? Бодлогууд ноорог болно."><button class="btn btn-sm btn-ghost">🗑 Устгах</button></form>
     <% } %>

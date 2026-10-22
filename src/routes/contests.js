@@ -1,7 +1,8 @@
 // 🏁 Contest — ranking оноо зөвхөн эндээс. Үүсгэх, эхлүүлэх, дуусгах, дүн баталгаажуулах: ЗӨВХӨН админ.
 // Мэдээлэл зүйн багш үзэж болно. Сурагч: анги нь сонгогдсон, Coding нээлттэй.
 const express = require('express');
-const { Class, Problem, CodeSubmission, Contest, ContestResult } = require('../models');
+const { Class, Problem, ProblemTest, CodeSubmission, Contest, ContestResult } = require('../models');
+const files = require('../files');
 const { requireRole, flash } = require('../middleware/auth');
 const { isId, clean, toArray, parseInputDate } = require('../helpers');
 const { contestState, STATES, inContest, contestProblems, contestStandings, ratingChanges, finalizeContest } = require('../contests');
@@ -216,6 +217,43 @@ router.post('/:id/problems/:pid/detach', adminOnly, loadContest, async (req, res
     flash(req, 'success', 'Бодлогыг contest-оос хаслаа (ноорог болж үндсэн жагсаалтад шилжлээ).');
   }
   res.redirect('/coding/contests/' + c._id);
+});
+
+// Дахин зохион байгуулах: бодлого, тестийг нь хуулж шинэ ноорог contest үүсгэнэ (өөр ангид дахин авах).
+// Аль хэдийн түвшин тогтоосон сурагч дахин оролцвол энгийн contest шиг оноо авна.
+router.post('/:id/duplicate', adminOnly, loadContest, async (req, res) => {
+  const c = req.contest;
+  const copy = await Contest.create({
+    title: c.title,
+    kind: c.kind,
+    description: c.description,
+    durationMin: c.durationMin,
+    classIds: [],
+    createdBy: req.user._id,
+  });
+  const problems = await Problem.find({ contest: c._id }).sort({ createdAt: 1 }).lean();
+  const base = Date.now();
+  for (const [i, p] of problems.entries()) {
+    const { _id, createdAt, updatedAt, __v, attachments, ...rest } = p;
+    const at = new Date(base + i * 1000); // A, B, C … дараалал хэвээр
+    const np = new Problem({ ...rest, contest: copy._id, topic: null, published: false, attachments: [], createdAt: at, updatedAt: at });
+    // Өгүүлбэр доторх зургийг шинэ бодлогод хуулна (нэг бодлогыг устгахад нөгөөгийнх нь алга болохгүй)
+    for (const a of attachments || []) {
+      try {
+        const buffer = await files.readBuffer(a.fileId);
+        const [saved] = await files.saveFiles([{ originalname: a.name, buffer, size: buffer.length }], { kind: 'problem', problemId: np._id, uploadedBy: req.user._id });
+        np.attachments.push(saved);
+        np.statement = np.statement.split('/files/' + a.fileId).join('/files/' + saved.fileId);
+      } catch {
+        // устсан зураг — алгасна
+      }
+    }
+    await np.save({ timestamps: false });
+    const tests = await ProblemTest.find({ problem: _id }).select('-_id -__v').lean();
+    if (tests.length) await ProblemTest.insertMany(tests.map((t) => ({ ...t, problem: np._id })));
+  }
+  flash(req, 'success', `"${c.title}"-ийн хуулбар үүслээ (${problems.length} бодлого, тесттэй нь). Оролцох ангиа сонгоод хадгална уу.`);
+  res.redirect('/coding/contests/' + copy._id + '/edit');
 });
 
 router.post('/:id/delete', adminOnly, loadContest, async (req, res) => {
