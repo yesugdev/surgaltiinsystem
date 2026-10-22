@@ -111,4 +111,7 @@ function sanitizeDocHtml(html) {
 /** Бодлогын өгүүлбэр: Markdown + LaTeX */
 const renderStatement = (md) => render(md, { math: true });
 
-module.exports = { render, renderStatement, toc, sanitizeDocHtml };
+/** Хичээлийн онол/заавар: Markdown + LaTeX хичээлд томьёо зурна, Word шиг хичээлд энгийн markdown */
+const renderLesson = (text, lesson) => render(text, { math: lesson?.contentFormat === 'markdown' });
+
+module.exports = { render, renderStatement, renderLesson, toc, sanitizeDocHtml };

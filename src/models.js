@@ -170,6 +170,8 @@ const lessonSchema = new Schema(
     classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },
     published: { type: Boolean, default: false },
     theory: { type: String, default: '', maxlength: 300000 }, // markdown
+    // Засварлагч: 'rich' = Word шиг; 'markdown' = Markdown + LaTeX ($томьёо$) — онол ба даалгаврын зааварт
+    contentFormat: { type: String, enum: ['rich', 'markdown'], default: 'rich' },
     attachments: { type: [fileRefSchema], default: [] },
     tasks: { type: [taskSchema], default: [] },
   },

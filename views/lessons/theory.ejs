@@ -3,15 +3,22 @@
   <div>
     <a href="/lessons/<%= lesson._id %>" class="back">← <%= lesson.title %></a>
     <h1>Онол</h1>
-    <p class="muted">Word-д бичдэг шиг бичнэ. Сурагчдад яг ингэж харагдана. Word, вэб хуудаснаас хуулж буулгаж болно.</p>
+    <p class="muted"><%= lesson.contentFormat === 'markdown' ? 'Markdown-аар бичээд баруун талд сурагчдад харагдахыг шууд харна. Томьёо: $x^2$ (мөр дотор), $$\\frac{a}{b}$$ (тусдаа мөр).' : 'Word-д бичдэг шиг бичнэ. Сурагчдад яг ингэж харагдана. Word, вэб хуудаснаас хуулж буулгаж болно.' %></p>
   </div>
 </div>
+<%- include('_format-switch', { lesson: lesson, back: '/lessons/' + lesson._id + '/theory' }) %>
 
 <form method="post" action="/lessons/<%= lesson._id %>/theory" class="theory-form" id="theory-form">
-  <textarea name="theory" id="theory-text" rows="18" data-rich data-html-source="#theory-html"
-            data-upload="/lessons/<%= lesson._id %>/attachments" <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
-            placeholder="Онолоо энд бичнэ үү. Дээрх товчоор гарчиг, жагсаалт, хүснэгт, зураг оруулна."><%= lesson.theory %></textarea>
-  <template id="theory-html"><%- theoryHtml %></template>
+  <% if (lesson.contentFormat === 'markdown') { %>
+    <textarea name="theory" id="theory-text" rows="22" data-md-editor data-preview="/lessons/preview-md?math=1"
+              data-upload="/lessons/<%= lesson._id %>/attachments"
+              placeholder="## Гарчиг&#10;Онолоо Markdown-аар бичнэ. Томьёо: $a^2 + b^2 = c^2$"><%= lesson.theory %></textarea>
+  <% } else { %>
+    <textarea name="theory" id="theory-text" rows="18" data-rich data-html-source="#theory-html"
+              data-upload="/lessons/<%= lesson._id %>/attachments" <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+              placeholder="Онолоо энд бичнэ үү. Дээрх товчоор гарчиг, жагсаалт, хүснэгт, зураг оруулна."><%= lesson.theory %></textarea>
+    <template id="theory-html"><%- theoryHtml %></template>
+  <% } %>
   <div class="btn-group sticky-actions">
     <a class="btn btn-ghost" href="/lessons/<%= lesson._id %>">Болих</a>
     <button class="btn btn-primary">Хадгалах</button>
@@ -39,4 +46,4 @@
     window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   })();
 </script>
-<%- include('../partials/footer', { scripts: ['/js/rich-editor.js'] }) %>
+<%- include('../partials/footer', { scripts: [lesson.contentFormat === 'markdown' ? '/js/md-editor.js' : '/js/rich-editor.js'] }) %>

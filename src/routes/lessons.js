@@ -20,6 +20,7 @@ async function loadLesson(req, res, next) {
   const lesson = await Lesson.findOne({ _id: req.params.id, ...ownerFilter(req.user) });
   if (!lesson) return notFound(res);
   req.lesson = lesson;
+  res.locals.katex = lesson.contentFormat === 'markdown'; // томьёоны загвар (header)
   next();
 }
 
@@ -53,7 +54,9 @@ async function removeSubmissions(filter) {
 
 // ---------------- Markdown урьдчилан харах ----------------
 router.post('/preview-md', (req, res) => {
-  const html = md.render(String(req.body.text ?? '').slice(0, 300000));
+  // ?math=1 — Markdown + LaTeX засварлагчийн урьдчилан харах
+  const text = String(req.body.text ?? '').slice(0, 300000);
+  const html = req.query.math === '1' ? md.renderStatement(text) : md.render(text);
   res.json({ html });
 });
 
@@ -153,7 +156,7 @@ router.get('/:id', loadLesson, async (req, res) => {
     ]),
   ]);
   const countMap = new Map(counts.map((c) => [String(c._id), c]));
-  const theoryHtml = md.render(lesson.theory);
+  const theoryHtml = md.renderLesson(lesson.theory, lesson);
   res.render('lessons/show', {
     title: lesson.title,
     lesson,
@@ -214,6 +217,14 @@ router.post('/:id/delete', loadLesson, async (req, res) => {
 // ---------------- Онол ----------------
 router.get('/:id/theory', loadLesson, (req, res) => {
   res.render('lessons/theory', { title: 'Онол засах', lesson: req.lesson, theoryHtml: md.render(req.lesson.theory) });
+});
+
+// Засварлагчийн горим солих (онол + даалгаврын заавар). Агуулга хэвээр — зөвхөн бичих, харуулах арга өөрчлөгдөнө.
+router.post('/:id/format', loadLesson, async (req, res) => {
+  req.lesson.contentFormat = req.body.format === 'markdown' ? 'markdown' : 'rich';
+  await req.lesson.save();
+  flash(req, 'success', req.lesson.contentFormat === 'markdown' ? 'Markdown + LaTeX горимд шилжлээ. $x^2$ гэж томьёо бичнэ.' : '«Word шиг» засварлагчид шилжлээ.');
+  res.redirect(String(req.body.back || '').startsWith(base(req.lesson)) ? req.body.back : base(req.lesson) + '/theory');
 });
 
 router.post('/:id/theory', loadLesson, async (req, res) => {
@@ -542,7 +553,7 @@ router.get('/:id/tasks/:tid/grade', loadLesson, findTask, async (req, res) => {
     task,
     rows,
     initial: isId(req.query.s) ? req.query.s : '',
-    instructionsHtml: md.render(task.instructions),
+    instructionsHtml: md.renderLesson(task.instructions, lesson),
   });
 });
 
@@ -575,7 +586,7 @@ router.get('/:id/tasks/:tid/submissions/:sid', loadLesson, findTask, loadSubmiss
     cls,
     nextId: next?._id || null,
     answerMap: new Map(req.sub.answers.map((a) => [String(a.questionId), a])),
-    instructionsHtml: md.render(req.task.instructions),
+    instructionsHtml: md.renderLesson(req.task.instructions, req.lesson),
   });
 });
 

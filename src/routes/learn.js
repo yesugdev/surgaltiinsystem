@@ -18,6 +18,7 @@ async function loadLesson(req, res, next) {
   const lesson = await Lesson.findOne({ _id: req.params.id, published: true, classIds: req.user.classId }).lean();
   if (!lesson) return notFound(res);
   req.lesson = lesson;
+  res.locals.katex = lesson.contentFormat === 'markdown';
   next();
 }
 
@@ -79,7 +80,7 @@ router.get('/:id', loadLesson, async (req, res) => {
     const sub = subMap.get(String(t._id)) || null;
     return { task: t, sub, state: taskState(t, sub, now), total: taskTotal(t) };
   });
-  const theoryHtml = md.render(l.theory);
+  const theoryHtml = md.renderLesson(l.theory, l);
   res.render('learn/lesson', { title: l.title, lesson: l, subject, tasks, theoryHtml, toc: md.toc(theoryHtml) });
 });
 
@@ -93,7 +94,7 @@ router.get('/:id/tasks/:tid', loadLesson, findTask, async (req, res) => {
     task,
     sub,
     total: taskTotal(task),
-    instructionsHtml: md.render(task.instructions),
+    instructionsHtml: md.renderLesson(task.instructions, lesson),
     state: taskState(task, sub),
   };
   if (task.type === 'quiz') {

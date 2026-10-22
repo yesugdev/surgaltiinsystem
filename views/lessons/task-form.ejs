@@ -19,10 +19,17 @@
     <input id="task-title" name="title" value="<%= task.title %>" required maxlength="200" placeholder="<%= isQuiz ? 'жишээ: Бататгах тест' : 'жишээ: Бие даалт' %>">
 
     <label for="instructions"><%= isQuiz ? 'Заавар (заавал биш)' : 'Даалгаврын заавар' %></label>
-    <textarea name="instructions" id="instructions" rows="<%= isQuiz ? 3 : 8 %>" maxlength="50000" data-rich
-              data-html-source="#instructions-html" data-upload="<%= b %>/attachments" <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
-              placeholder="<%= isQuiz ? 'Сурагчдад харагдах товч заавар' : 'Юу хийх, ямар хэлбэрээр илгээх, хэрхэн үнэлэх вэ...' %>"><%= task.instructions %></textarea>
-    <template id="instructions-html"><%- instructionsHtml %></template>
+    <% if (lesson.contentFormat === 'markdown') { %>
+      <textarea name="instructions" id="instructions" rows="<%= isQuiz ? 6 : 12 %>" maxlength="50000" data-md-editor
+                data-preview="/lessons/preview-md?math=1" data-upload="<%= b %>/attachments"
+                placeholder="<%= isQuiz ? 'Сурагчдад харагдах товч заавар' : 'Юу хийх, ямар хэлбэрээр илгээх, хэрхэн үнэлэх вэ... Томьёо: $x^2$' %>"><%= task.instructions %></textarea>
+      <p class="muted small">Markdown + LaTeX горим (хичээлийн онолтой ижил). Солих бол онол засах хуудаснаас.</p>
+    <% } else { %>
+      <textarea name="instructions" id="instructions" rows="<%= isQuiz ? 3 : 8 %>" maxlength="50000" data-rich
+                data-html-source="#instructions-html" data-upload="<%= b %>/attachments" <%= locals.canUseAI ? 'data-markdown-toggle=1' : '' %>
+                placeholder="<%= isQuiz ? 'Сурагчдад харагдах товч заавар' : 'Юу хийх, ямар хэлбэрээр илгээх, хэрхэн үнэлэх вэ...' %>"><%= task.instructions %></textarea>
+      <template id="instructions-html"><%- instructionsHtml %></template>
+    <% } %>
 
     <% if (!isQuiz) { %>
       <div class="row">
@@ -79,5 +86,5 @@
   </div>
 </form>
 
-<% const scripts = ['/js/rich-editor.js']; if (isQuiz) { scripts.push('/question-parser.js', '/quiz-builder.js'); if (locals.canUseAI) scripts.push('/preview.js', '/task-form.js'); } %>
+<% const scripts = [lesson.contentFormat === 'markdown' ? '/js/md-editor.js' : '/js/rich-editor.js']; if (isQuiz) { scripts.push('/question-parser.js', '/quiz-builder.js'); if (locals.canUseAI) scripts.push('/preview.js', '/task-form.js'); } %>
 <%- include('../partials/footer', { scripts: scripts }) %>

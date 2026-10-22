@@ -1,0 +1,16 @@
+<%# Засварлагчийн горим солих: lesson, back (буцах хаяг) %>
+<% const isMd = lesson.contentFormat === 'markdown'; %>
+<div class="format-switch" role="group" aria-label="Засварлагч">
+  <span class="small muted">Засварлагч:</span>
+  <form method="post" action="/lessons/<%= lesson._id %>/format" <%= isMd ? '' : 'onsubmit="return false"' %>
+        data-confirm="«Word шиг» засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана. $томьёо$ энгийн текст болж харагдана.">
+    <input type="hidden" name="format" value="rich"><input type="hidden" name="back" value="<%= back %>">
+    <button class="format-btn <%= isMd ? '' : 'is-active' %>" <%= isMd ? '' : 'disabled' %>>✍️ Word шиг</button>
+  </form>
+  <form method="post" action="/lessons/<%= lesson._id %>/format" <%= isMd ? 'onsubmit="return false"' : '' %>
+        data-confirm="Markdown + LaTeX засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана.">
+    <input type="hidden" name="format" value="markdown"><input type="hidden" name="back" value="<%= back %>">
+    <button class="format-btn <%= isMd ? 'is-active' : '' %>" <%= isMd ? 'disabled' : '' %>>Ⓜ️ Markdown + LaTeX</button>
+  </form>
+  <span class="small muted format-hint"><%= isMd ? 'Томьёо: $x^2$, $$\\sum a_i$$' : 'Математикийн томьёотой хичээлд Markdown + LaTeX тохиромжтой' %></span>
+</div>
