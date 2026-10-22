@@ -32,10 +32,16 @@
         <button type="button" class="btn btn-sm btn-ghost" id="clear-text">Цэвэрлэх</button>
       </div>
     </div>
+    <fieldset class="import-format" role="radiogroup" aria-label="Формат">
+      <legend>Формат <span class="muted small">— нэгийг сонгоно, холихгүй</span></legend>
+      <label class="format-btn-radio"><input type="radio" name="format" value="markdown" <%= format === 'markdown' ? 'checked' : '' %>> <strong>Markdown</strong> <span class="muted small">томьёо энгийн текстээр (x², √2)</span></label>
+      <label class="format-btn-radio"><input type="radio" name="format" value="latex" <%= format === 'latex' ? 'checked' : '' %>> <strong>LaTeX</strong> <span class="muted small">бүтэн LaTeX баримт, томьёо $…$ — хичээл «Markdown + LaTeX» горимд шилжинэ</span></label>
+    </fieldset>
     <textarea name="text" id="import-text" rows="24" spellcheck="false"
-              placeholder="=== ОНОЛ ===&#10;## Гарчиг&#10;Онолын агуулга...&#10;&#10;=== ТЕСТ: Бататгах тест ===&#10;1. Асуулт&#10;A) ...&#10;*B) Зөв хариулт&#10;&#10;=== ДААЛГАВАР: Бие даалт ===&#10;Оноо: 10&#10;Даалгаврын заавар..."><%= text %></textarea>
+              data-ph-markdown="=== ОНОЛ ===&#10;## Гарчиг&#10;Онолын агуулга...&#10;&#10;=== ТЕСТ: Бататгах тест ===&#10;1. Асуулт&#10;A) ...&#10;*B) Зөв хариулт&#10;&#10;=== ДААЛГАВАР: Бие даалт ===&#10;Оноо: 10&#10;Даалгаврын заавар..."
+              data-ph-latex="\documentclass{article}&#10;\begin{document}&#10;\section*{=== ОНОЛ ===}&#10;\subsection*{Гарчиг}&#10;Онол... $a^2+b^2=c^2$&#10;&#10;\section*{=== ТЕСТ: Бататгах тест ===}&#10;\begin{enumerate}&#10;  \item Асуулт \\&#10;  A) ... \\&#10;  *B) Зөв хариулт&#10;\end{enumerate}&#10;&#10;\section*{=== ДААЛГАВАР: Бие даалт ===}&#10;Оноо: 10 \\&#10;Заавар...&#10;\end{document}"><%= text %></textarea>
 
-    <details class="format-help">
+    <details class="format-help" data-format-only="markdown">
       <summary>Форматын товч заавар</summary>
       <table class="table small">
         <tr><td><code>=== ОНОЛ ===</code></td><td>Онолын хэсэг. Доор нь Markdown (<code>## гарчиг</code>, жагсаалт, хүснэгт, код).</td></tr>
@@ -74,8 +80,12 @@
     <h2>AI prompt — онол + даалгавар</h2>
     <button type="button" class="btn btn-ghost btn-sm" data-close>✕</button>
   </div>
-  <p class="muted small">Энэ prompt-ыг хуулж ChatGPT, Claude, Gemini зэрэг AI-д буулгана. Доод талын <strong>ДААЛГАВАР</strong> хэсгийг өөрийн хэрэгцээгээр засаарай. AI-ийн хариуг бүтнээр нь хуулж энэ хуудсанд буулгахад онол, тест, даалгавар бүгд зэрэг орно.</p>
-  <textarea id="prompt-text" rows="20" readonly spellcheck="false"><%= prompt %></textarea>
+  <div class="prompt-format-tabs" role="tablist">
+    <button type="button" class="format-btn" data-prompt-tab="markdown">Markdown prompt</button>
+    <button type="button" class="format-btn" data-prompt-tab="latex">LaTeX prompt</button>
+  </div>
+  <p class="muted small">Сонгосон форматын prompt-ыг хуулж ChatGPT, Claude, Gemini зэрэг AI-д буулгана. Доод талын <strong>ДААЛГАВАР</strong> хэсгийг өөрийн хэрэгцээгээр засаарай. AI-ийн хариуг энэ хуудсанд <strong>ижил форматыг сонгоод</strong> буулгана.</p>
+  <textarea id="prompt-text" rows="20" readonly spellcheck="false"><%= prompts[format] %></textarea>
   <div class="btn-group prompt-dialog-actions">
     <button type="button" class="btn btn-primary" data-copy="#prompt-text">Хуулах</button>
     <div class="spacer"></div>
@@ -83,5 +93,6 @@
   </div>
 </dialog>
 
-<script type="application/json" id="import-example"><%- JSON.stringify(example).replace(/</g, '\\u003c') %></script>
+<script type="application/json" id="import-example"><%- JSON.stringify(examples).replace(/</g, '\\u003c') %></script>
+<script type="application/json" id="import-prompts"><%- JSON.stringify(prompts).replace(/</g, '\\u003c') %></script>
 <%- include('../partials/footer', { scripts: ['/question-parser.js', '/latex-convert.js', '/lesson-parser.js', '/preview.js', '/lesson-import.js'] }) %>

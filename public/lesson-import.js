@@ -10,6 +10,34 @@
   var summary = document.getElementById('preview-summary');
   var submit = document.getElementById('import-submit');
   var seq = 0;
+  var examples = JSON.parse(document.getElementById('import-example').textContent);
+  var prompts = JSON.parse(document.getElementById('import-prompts').textContent);
+  var promptText = document.getElementById('prompt-text');
+  /** Сонгосон формат: 'markdown' | 'latex' */
+  function format() {
+    var r = form.querySelector('input[name=format]:checked');
+    return r ? r.value : 'markdown';
+  }
+  function syncFormat() {
+    var f = format();
+    textarea.placeholder = textarea.getAttribute('data-ph-' + f) || '';
+    document.querySelectorAll('[data-format-only]').forEach(function (n) { n.hidden = n.getAttribute('data-format-only') !== f; });
+    showPrompt(f);
+  }
+  function showPrompt(f) {
+    promptText.value = prompts[f];
+    document.querySelectorAll('[data-prompt-tab]').forEach(function (b) { b.classList.toggle('is-active', b.getAttribute('data-prompt-tab') === f); });
+  }
+  document.querySelectorAll('[data-prompt-tab]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.getAttribute('data-prompt-tab');
+      var radio = form.querySelector('input[name=format][value=' + f + ']');
+      if (radio) radio.checked = true;
+      syncFormat();
+      render();
+    });
+  });
+  form.querySelectorAll('input[name=format]').forEach(function (r) { r.addEventListener('change', function () { syncFormat(); render(); }); });
 
   function render() {
     var my = ++seq;
@@ -23,7 +51,7 @@
       return;
     }
 
-    var r = LessonParser.parse(value);
+    var r = LessonParser.parse(value, { format: format() });
     if (r.errors.length) {
       out.appendChild(P.errorBox(r.errors.length + ' алдаа засах шаардлагатай:', r.errors.map(function (e) {
         return (e.section ? e.section + ': ' : '') + (e.line ? '(' + e.line + '-р мөр) ' : '') + e.message;
@@ -31,14 +59,12 @@
     }
     if (r.fromLatex) {
       // LaTeX баримт танигдлаа: хөрвүүлсэн Markdown-ыг харж, засах боломж
-      var note = el('div', 'flash flash-info small latex-note', 'LaTeX баримт танигдлаа — Markdown + LaTeX болгон хөрвүүлж оруулна. Томьёо зурагдахаар хичээл «Markdown + LaTeX» горимд шилжинэ. ');
+      var note = el('div', 'flash flash-info small latex-note', 'LaTeX баримтыг хөрвүүлж оруулна. Томьёо зурагдахаар хичээл «Markdown + LaTeX» горимд шилжинэ. ');
       var edit = el('button', 'btn btn-sm', '✎ Хөрвүүлсэн текстийг засах');
       edit.type = 'button';
       edit.addEventListener('click', function () { textarea.value = r.converted; render(); textarea.focus(); });
       note.appendChild(edit);
       out.appendChild(note);
-    } else if (r.hasMath) {
-      out.appendChild(el('div', 'flash flash-info small', 'Томьёо ($…$) олдлоо — хичээл «Markdown + LaTeX» горимд шилжиж, томьёо зурагдана.'));
     }
     if (r.warnings.length) out.appendChild(el('div', 'flash flash-info small', r.warnings.map(function (w) { return w.message; }).join(' ')));
 
@@ -89,7 +115,7 @@
 
   document.getElementById('fill-example').addEventListener('click', function () {
     if (textarea.value.trim() && !confirm('Одоогийн текстийг жишээгээр солих уу?')) return;
-    textarea.value = JSON.parse(document.getElementById('import-example').textContent);
+    textarea.value = examples[format()];
     render();
   });
   document.getElementById('clear-text').addEventListener('click', function () {
@@ -108,5 +134,6 @@
     submit.textContent = 'Оруулж байна…';
   });
 
+  syncFormat();
   render();
 })();

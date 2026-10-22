@@ -36,15 +36,45 @@
   /** Томьёо ($…$, $$…$$) агуулсан эсэх — хичээлийг Markdown + LaTeX горимд шилжүүлэхэд */
   var MATH_RE = /\$\$[\s\S]+?\$\$|(^|[^\\$])\$(?!\s)[^$\n]*?\\[a-zA-Z]+[^$\n]*?\$|(^|[^\\$])\$(?!\s)[^$\n]*?[\^_][^$\n]*?\$/;
 
-  function parse(text) {
+  // Markdown тэмдэглэгээ (LaTeX горимд хэрэглэхгүй): ## гарчиг, === хэсэг, - жагсаалт, | хүснэгт |, **тод**
+  var MD_RE = /^\s*(#{1,6}\s|={3,}\s*(ОНОЛ|ТЕСТ|ДААЛГАВАР)|[-*]\s+\S|\|.*\|\s*$)|\*\*[^*\n]+\*\*/m;
+
+  /**
+   * opts.format: 'markdown' | 'latex' — сонгосон форматаас өөр (холимог) бол алдаа.
+   * Формат заагаагүй бол автоматаар таньна (хуучин зан төлөв).
+   */
+  function parse(text, opts) {
+    var format = opts && opts.format;
+    var isLatex = !!(LatexConvert && LatexConvert.looksLikeLatex(text));
+    if (format === 'latex') {
+      if (!isLatex) return fail('LaTeX форматыг сонгосон боловч LaTeX баримт олдсонгүй (\\begin{document}, \\section*{=== ОНОЛ ===} …). «Markdown» форматыг сонгох эсвэл LaTeX prompt-оор дахин гаргана уу.');
+      var body = String(text).replace(/\\begin\{(verbatim|lstlisting|minted)\}[\s\S]*?\\end\{\1\}/g, '');
+      var docStart = body.indexOf('\\begin{document}');
+      if (docStart >= 0) body = body.slice(docStart);
+      // Хэсгийн мөр (\section*{… === ОНОЛ ===}), тайлбар (%), томьёог хасаад Markdown хайна
+      var plain = body.replace(/^\s*\\(?:sub)*section\*?.*$/gm, '').replace(/(^|[^\\])%.*$/gm, '$1').replace(/\$[^$]*\$/g, '');
+      if (MD_RE.test(plain)) {
+        return fail('LaTeX баримтад Markdown тэмдэглэгээ (##, **, "- " жагсаалт, | хүснэгт |) холилдсон байна. Зөвхөн LaTeX ашиглана уу.');
+      }
+    } else if (format === 'markdown') {
+      if (isLatex) return fail('Markdown форматыг сонгосон боловч LaTeX баримт (\\documentclass, \\section …) байна. «LaTeX» форматыг сонгоно уу.');
+      var noCode = String(text || '').replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
+      if (MATH_RE.test(noCode) || /\\(frac|sqrt|cdot|alpha|beta|pi|theta|le|ge|times|sum|int)\b/.test(noCode)) {
+        return fail('Markdown горимд LaTeX томьёо ($…$, \\frac …) хэрэглэхгүй — томьёог x², √2, ½ гэх мэт энгийн текстээр бичнэ. Томьёо хэрэгтэй бол «LaTeX» форматыг сонгоно уу.');
+      }
+    }
     // LaTeX баримт (\documentclass, \section …) бол эхлээд хичээлийн формат руу хөрвүүлнэ
-    var fromLatex = !!(LatexConvert && LatexConvert.looksLikeLatex(text));
+    var fromLatex = isLatex && format !== 'markdown';
     if (fromLatex) text = LatexConvert.convert(text);
     var res = parseText(text);
     res.fromLatex = fromLatex;
     res.converted = fromLatex ? text : null;
     res.hasMath = fromLatex || MATH_RE.test(String(text || ''));
     return res;
+  }
+
+  function fail(message) {
+    return { theory: '', tasks: [], errors: [{ line: null, section: null, message: message }], warnings: [], fromLatex: false, converted: null, hasMath: false };
   }
 
   function parseText(text) {

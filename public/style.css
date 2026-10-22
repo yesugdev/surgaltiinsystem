@@ -1090,6 +1090,11 @@ a.podium-name:hover { color: var(--primary); text-decoration: none; }
 .format-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
 .format-btn.is-active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); cursor: default; }
 .format-hint { margin-left: 4px; }
+.import-format { display: flex; flex-direction: column; gap: 6px; margin: 0 0 10px; }
+.format-btn-radio { display: flex; align-items: baseline; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.format-btn-radio:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.format-btn-radio input { margin: 0; }
+.prompt-format-tabs { display: flex; gap: 6px; margin: 0 0 8px; }
 .mde { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .mde-toolbar { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; padding: 6px; border-bottom: 1px solid var(--border); background: #f7f8fa; }
 .mde-toolbar .btn { font-weight: 600; }

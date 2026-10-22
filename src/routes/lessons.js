@@ -3,7 +3,7 @@ const { Subject, Class, User, Lesson, Submission } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate, fmtScore, fmtDate } = require('../helpers');
 const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI } = require('../access');
-const { buildLessonPrompt } = require('../ai-prompt');
+const { buildLessonPrompt, buildLatexLessonPrompt } = require('../ai-prompt');
 const md = require('../markdown');
 const files = require('../files');
 const QuestionParser = require('../../public/question-parser');
@@ -278,7 +278,13 @@ router.post('/:id/attachments/:fileId/delete', loadLesson, async (req, res) => {
 });
 
 // ---------------- AI-аар / текстээр нэг дор оруулах ----------------
-async function renderImport(req, res, { text = '', mode = 'append', errors = [], status = 200 } = {}) {
+/** LaTeX prompt-ын жишээ баримтыг импортын «Жишээ харах»-д ашиглана */
+function latexExample() {
+  const p = buildLatexLessonPrompt({ lessonTitle: 'Квадрат тэгшитгэл' });
+  return p.slice(p.indexOf('\\documentclass'), p.indexOf('\\end{document}') + '\\end{document}'.length) + '\n';
+}
+
+async function renderImport(req, res, { text = '', mode = 'append', format = '', errors = [], status = 200 } = {}) {
   const [subject, classes, hasSubs] = await Promise.all([
     req.lesson.subject ? Subject.findById(req.lesson.subject).lean() : null,
     Class.find({ _id: { $in: req.lesson.classIds } }).select('name').lean(),
@@ -292,12 +298,13 @@ async function renderImport(req, res, { text = '', mode = 'append', errors = [],
     mode,
     errors,
     hasSubmissions: !!hasSubs,
-    prompt: buildLessonPrompt({
-      subjectName: subject?.name,
-      lessonTitle: req.lesson.title,
-      classNames: classes.map((c) => c.name).join(', '),
-    }),
-    example: LessonParser.EXAMPLE,
+    // Формат: Markdown эсвэл LaTeX (холихгүй). Анхдагч — хичээлийн горимоос
+    format: format || (req.lesson.contentFormat === 'markdown' ? 'latex' : 'markdown'),
+    prompts: {
+      markdown: buildLessonPrompt({ format: 'markdown', subjectName: subject?.name, lessonTitle: req.lesson.title, classNames: classes.map((c) => c.name).join(', ') }),
+      latex: buildLessonPrompt({ format: 'latex', subjectName: subject?.name, lessonTitle: req.lesson.title, classNames: classes.map((c) => c.name).join(', ') }),
+    },
+    examples: { markdown: LessonParser.EXAMPLE, latex: latexExample() },
   });
 }
 
@@ -318,7 +325,8 @@ router.get('/:id/import', requireAI, loadLesson, (req, res) => renderImport(req,
 router.post('/:id/import', requireAI, loadLesson, async (req, res) => {
   const text = String(req.body.text ?? '').slice(0, 600000);
   const mode = req.body.mode === 'replace' ? 'replace' : 'append';
-  const parsed = LessonParser.parse(text);
+  const format = req.body.format === 'latex' ? 'latex' : 'markdown';
+  const parsed = LessonParser.parse(text, { format });
   const messages = parsed.errors.map((e) => (e.section ? e.section + ': ' : '') + e.message);
   const l = req.lesson;
 
@@ -328,13 +336,13 @@ router.post('/:id/import', requireAI, loadLesson, async (req, res) => {
   const totalTasks = (mode === 'replace' ? 0 : l.tasks.length) + parsed.tasks.length;
   if (totalTasks > LessonParser.MAX_TASKS) messages.push(`Нэг хичээлд хамгийн ихдээ ${LessonParser.MAX_TASKS} даалгавар байна.`);
   if (!parsed.theory && !parsed.tasks.length && !messages.length) messages.push('Оруулах агуулга олдсонгүй.');
-  if (messages.length) return renderImport(req, res, { text, mode, errors: messages, status: 400 });
+  if (messages.length) return renderImport(req, res, { text, mode, format, errors: messages, status: 400 });
 
   if (parsed.theory) {
     l.theory = mode === 'replace' || !l.theory.trim() ? parsed.theory : l.theory.trimEnd() + '\n\n' + parsed.theory;
   }
-  // LaTeX баримт эсвэл $томьёо$-той агуулга → томьёо зурагдахаар Markdown + LaTeX горим
-  const toMarkdown = parsed.hasMath && l.contentFormat !== 'markdown';
+  // LaTeX баримт → томьёо зурагдахаар хичээлийг «Markdown + LaTeX» горимд шилжүүлнэ
+  const toMarkdown = format === 'latex' && l.contentFormat !== 'markdown';
   if (toMarkdown) l.contentFormat = 'markdown';
   const newTasks = parsed.tasks.map(taskFromParsed);
   if (mode === 'replace' && newTasks.length) l.tasks = newTasks;
