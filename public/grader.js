@@ -91,6 +91,14 @@
       img.src = src;
       img.alt = f.name;
       body.appendChild(img);
+    } else if (f.kind === 'office') {
+      // Word, Excel, PowerPoint → серверт PDF болгосон хувилбар; «Татах» эх файлыг өгнө
+      body = el('div');
+      body.appendChild(el('p', 'muted small pdf-note', 'PDF болгон харуулж байна · «Татах» эх файлыг өгнө'));
+      var frame = el('iframe', 'preview-frame');
+      frame.src = src + '/pdf#view=FitH';
+      frame.title = f.name;
+      body.appendChild(frame);
     } else if (f.kind === 'pdf') {
       body = el('iframe', 'preview-frame');
       body.src = src + '#view=FitH';

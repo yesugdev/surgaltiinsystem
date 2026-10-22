@@ -7,6 +7,7 @@ const { lessonOpenFor } = require('../basics');
 const { requireRole } = require('../middleware/auth');
 const { isId } = require('../helpers');
 const files = require('../files');
+const pdf = require('../pdf-convert');
 const md = require('../markdown');
 
 const router = express.Router();
@@ -55,10 +56,24 @@ router.get('/:id', loadFile, (req, res) => {
   files.streamFile(res, req.fileDoc, { download: req.query.download === '1' });
 });
 
+// Word, Excel, PowerPoint файлыг PDF болгож харуулна (эх файлыг ?download=1-ээр татна)
+router.get('/:id/pdf', loadFile, async (req, res) => {
+  const doc = req.fileDoc;
+  const type = doc.metadata?.contentType;
+  if (type === 'application/pdf') return files.streamFile(res, doc);
+  if (!pdf.canConvert(type)) return res.redirect('/files/' + doc._id + '/view');
+  try {
+    files.streamFile(res, await pdf.toPdf(doc));
+  } catch (err) {
+    console.error('PDF хөрвүүлэлт амжилтгүй:', doc.filename, err.message);
+    res.status(500).render('error', { title: 'PDF болгож чадсангүй', message: '«' + doc.filename + '» файлыг PDF болгож чадсангүй. «Татах» товчоор эх файлыг татаж нээнэ үү.' });
+  }
+});
+
 // Хөтөч дээр харах хуудас (PDF, зураг, видео, текст, Word)
 router.get('/:id/view', loadFile, async (req, res) => {
   const doc = req.fileDoc;
-  const kind = files.viewKind(doc.metadata.contentType);
+  const kind = pdf.previewKind(doc.metadata.contentType);
   let docxHtml = null;
   if (kind === 'docx') {
     try {

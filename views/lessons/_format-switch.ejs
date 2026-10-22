@@ -1,16 +1,17 @@
 <%# Засварлагчийн горим солих: lesson, back (буцах хаяг) %>
-<% const isMd = lesson.contentFormat === 'markdown'; %>
+<% const cur = lesson.contentFormat || 'rich'; %>
+<% const modes = [
+  { key: 'rich', label: '✍️ Word шиг', confirm: '«Word шиг» засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана.' + (cur === 'latex' ? ' LaTeX бичвэр Markdown болж хөрвөнө.' : '') + ' $томьёо$ энгийн текст болж харагдана.' },
+  { key: 'markdown', label: 'Ⓜ️ Markdown + LaTeX', confirm: 'Markdown + LaTeX засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана.' + (cur === 'latex' ? ' LaTeX бичвэр Markdown болж хөрвөнө.' : '') },
+  { key: 'latex', label: '∑ LaTeX', confirm: 'LaTeX засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана. Одоогийн агуулга хэвээр харагдана, цаашид LaTeX-ээр бичнэ.' },
+]; %>
 <div class="format-switch" role="group" aria-label="Засварлагч">
   <span class="small muted">Засварлагч:</span>
-  <form method="post" action="/lessons/<%= lesson._id %>/format" <%= isMd ? '' : 'onsubmit="return false"' %>
-        data-confirm="«Word шиг» засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана. $томьёо$ энгийн текст болж харагдана.">
-    <input type="hidden" name="format" value="rich"><input type="hidden" name="back" value="<%= back %>">
-    <button class="format-btn <%= isMd ? '' : 'is-active' %>" <%= isMd ? '' : 'disabled' %>>✍️ Word шиг</button>
+  <% modes.forEach(function (m) { const on = m.key === cur; %>
+  <form method="post" action="/lessons/<%= lesson._id %>/format" <%= on ? 'onsubmit="return false"' : '' %> data-confirm="<%= m.confirm %>">
+    <input type="hidden" name="format" value="<%= m.key %>"><input type="hidden" name="back" value="<%= back %>">
+    <button class="format-btn <%= on ? 'is-active' : '' %>" <%= on ? 'disabled' : '' %>><%= m.label %></button>
   </form>
-  <form method="post" action="/lessons/<%= lesson._id %>/format" <%= isMd ? 'onsubmit="return false"' : '' %>
-        data-confirm="Markdown + LaTeX засварлагч руу шилжих үү? Хадгалаагүй өөрчлөлт алдагдана.">
-    <input type="hidden" name="format" value="markdown"><input type="hidden" name="back" value="<%= back %>">
-    <button class="format-btn <%= isMd ? 'is-active' : '' %>" <%= isMd ? 'disabled' : '' %>>Ⓜ️ Markdown + LaTeX</button>
-  </form>
-  <span class="small muted format-hint"><%= isMd ? 'Томьёо: $x^2$, $$\\sum a_i$$' : 'Математикийн томьёотой хичээлд Markdown + LaTeX тохиромжтой' %></span>
+  <% }) %>
+  <span class="small muted format-hint"><%= { markdown: 'Томьёо: $x^2$, $$\\sum a_i$$', latex: '\\section*{Гарчиг}, \\textbf{тод}, $x^2$, \\[ \\frac{a}{b} \\]', rich: 'Математикийн томьёотой хичээлд Markdown + LaTeX эсвэл LaTeX тохиромжтой' }[cur] %></span>
 </div>

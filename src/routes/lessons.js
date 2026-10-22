@@ -6,6 +6,7 @@ const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, r
 const { buildLessonPrompt, buildLatexLessonPrompt } = require('../ai-prompt');
 const md = require('../markdown');
 const files = require('../files');
+const pdf = require('../pdf-convert');
 const QuestionParser = require('../../public/question-parser');
 const LessonParser = require('../../public/lesson-parser');
 const { parseQuestionsJson, toQuestionsJson } = require('../questions');
@@ -20,7 +21,7 @@ async function loadLesson(req, res, next) {
   const lesson = await Lesson.findOne({ _id: req.params.id, ...ownerFilter(req.user) });
   if (!lesson) return notFound(res);
   req.lesson = lesson;
-  res.locals.katex = lesson.contentFormat === 'markdown'; // томьёоны загвар (header)
+  res.locals.katex = md.lessonMath(lesson); // томьёоны загвар (header)
   next();
 }
 
@@ -56,7 +57,8 @@ async function removeSubmissions(filter) {
 router.post('/preview-md', (req, res) => {
   // ?math=1 — Markdown + LaTeX засварлагчийн урьдчилан харах
   const text = String(req.body.text ?? '').slice(0, 300000);
-  const html = req.query.math === '1' ? md.renderStatement(text) : md.render(text);
+  // ?latex=1 — LaTeX засварлагч: LaTeX → Markdown хөрвүүлээд томьёотой рендерлэнэ
+  const html = req.query.latex === '1' ? md.renderStatement(md.latexSource(text)) : req.query.math === '1' ? md.renderStatement(text) : md.render(text);
   res.json({ html });
 });
 
@@ -221,9 +223,20 @@ router.get('/:id/theory', loadLesson, (req, res) => {
 
 // Засварлагчийн горим солих (онол + даалгаврын заавар). Агуулга хэвээр — зөвхөн бичих, харуулах арга өөрчлөгдөнө.
 router.post('/:id/format', loadLesson, async (req, res) => {
-  req.lesson.contentFormat = req.body.format === 'markdown' ? 'markdown' : 'rich';
-  await req.lesson.save();
-  flash(req, 'success', req.lesson.contentFormat === 'markdown' ? 'Markdown + LaTeX горимд шилжлээ. $x^2$ гэж томьёо бичнэ.' : '«Word шиг» засварлагчид шилжлээ.');
+  const l = req.lesson;
+  const to = ['markdown', 'latex'].includes(req.body.format) ? req.body.format : 'rich';
+  // LaTeX-аас гарахад онол, заавруудыг Markdown + $томьёо$ болгоно (LaTeX команд харагдахгүй)
+  if (l.contentFormat === 'latex' && to !== 'latex') {
+    l.theory = md.latexSource(l.theory);
+    for (const t of l.tasks) t.instructions = md.latexSource(t.instructions);
+  }
+  l.contentFormat = to;
+  await l.save();
+  flash(req, 'success', {
+    markdown: 'Markdown + LaTeX горимд шилжлээ. $x^2$ гэж томьёо бичнэ.',
+    latex: 'LaTeX горимд шилжлээ. \\textbf{…}, \\section*{…}, $x^2$ гэж бичнэ.',
+    rich: '«Word шиг» засварлагчид шилжлээ.',
+  }[to]);
   res.redirect(String(req.body.back || '').startsWith(base(req.lesson)) ? req.body.back : base(req.lesson) + '/theory');
 });
 
@@ -299,7 +312,7 @@ async function renderImport(req, res, { text = '', mode = 'append', format = '',
     errors,
     hasSubmissions: !!hasSubs,
     // Формат: Markdown эсвэл LaTeX (холихгүй). Анхдагч — хичээлийн горимоос
-    format: format || (req.lesson.contentFormat === 'markdown' ? 'latex' : 'markdown'),
+    format: format || (md.lessonMath(req.lesson) ? 'latex' : 'markdown'),
     prompts: {
       markdown: buildLessonPrompt({ format: 'markdown', subjectName: subject?.name, lessonTitle: req.lesson.title, classNames: classes.map((c) => c.name).join(', ') }),
       latex: buildLessonPrompt({ format: 'latex', subjectName: subject?.name, lessonTitle: req.lesson.title, classNames: classes.map((c) => c.name).join(', ') }),
@@ -342,7 +355,7 @@ router.post('/:id/import', requireAI, loadLesson, async (req, res) => {
     l.theory = mode === 'replace' || !l.theory.trim() ? parsed.theory : l.theory.trimEnd() + '\n\n' + parsed.theory;
   }
   // LaTeX баримт → томьёо зурагдахаар хичээлийг «Markdown + LaTeX» горимд шилжүүлнэ
-  const toMarkdown = format === 'latex' && l.contentFormat !== 'markdown';
+  const toMarkdown = format === 'latex' && !md.lessonMath(l);
   if (toMarkdown) l.contentFormat = 'markdown';
   const newTasks = parsed.tasks.map(taskFromParsed);
   if (mode === 'replace' && newTasks.length) l.tasks = newTasks;
@@ -553,7 +566,7 @@ router.get('/:id/tasks/:tid/grade', loadLesson, findTask, async (req, res) => {
               fileId: String(f.fileId),
               name: f.name,
               size: files.fmtSize(f.size),
-              kind: files.viewKind(f.contentType),
+              kind: pdf.previewKind(f.contentType),
             })),
           }
         : null,

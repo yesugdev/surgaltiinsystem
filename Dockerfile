@@ -2,7 +2,8 @@
 FROM node:22-alpine
 
 # Шалгалтын цагийг Монголын цагаар тооцно (анхдагч UTC бол 8 цагаар зөрнө)
-RUN apk add --no-cache tzdata
+# LibreOffice: сурагчийн Word, Excel, PowerPoint файлыг шалгахад PDF болгож харуулна (кирилл фонттой)
+RUN apk add --no-cache tzdata libreoffice-writer libreoffice-calc libreoffice-impress font-dejavu ttf-liberation font-carlito
 ENV TZ=Asia/Ulaanbaatar \
     NODE_ENV=production \
     PORT=3000

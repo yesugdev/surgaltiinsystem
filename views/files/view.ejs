@@ -18,13 +18,16 @@
   </div>
   <div class="btn-group">
     <% if (['pdf', 'image', 'text', 'video', 'audio'].includes(kind)) { %><a class="btn" href="/files/<%= file._id %>" target="_blank">Шинэ цонхонд нээх</a><% } %>
+    <% if (kind === 'office') { %><a class="btn" href="/files/<%= file._id %>/pdf" target="_blank">PDF-ээр нээх</a><% } %>
     <a class="btn btn-primary" href="/files/<%= file._id %>?download=1">Татах</a>
   </div>
 </div>
 <% } %>
 
 <div class="viewer viewer-<%= kind %>">
-  <% if (kind === 'pdf') { %>
+  <% if (kind === 'office') { %>
+    <iframe src="/files/<%= file._id %>/pdf#view=FitH" class="viewer-pdf" title="<%= file.filename %>"></iframe>
+  <% } else if (kind === 'pdf') { %>
     <iframe src="/files/<%= file._id %>#view=FitH" class="viewer-pdf" title="<%= file.filename %>"></iframe>
   <% } else if (kind === 'image') { %>
     <img src="/files/<%= file._id %>" alt="<%= file.filename %>" class="viewer-img">

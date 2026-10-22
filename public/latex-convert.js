@@ -148,7 +148,7 @@
           var opt = /^\s*\[[^\]]*\]/.exec(s.slice(i));
           var args = [];
           var want = { textbf: 1, textit: 1, emph: 1, texttt: 1, underline: 1, text: 1, textrm: 1, textsf: 1, textnormal: 1, mbox: 1, textsc: 1, textup: 1,
-            section: 1, subsection: 1, subsubsection: 1, paragraph: 1, subparagraph: 1, title: 1, textcolor: 2, colorbox: 2, href: 2, url: 1, footnote: 1, caption: 1 }[name]
+            section: 1, subsection: 1, subsubsection: 1, paragraph: 1, subparagraph: 1, title: 1, textcolor: 2, colorbox: 2, href: 2, url: 1, footnote: 1, caption: 1, includegraphics: 1 }[name]
             || DROP_ARG[name] || 0;
           if (want && opt && name !== 'textcolor') i += opt[0].length;
           for (var k = 0; k < want; k++) {
@@ -172,6 +172,7 @@
             case 'textcolor': case 'colorbox': o += inline(args[1] || ''); break;
             case 'href': o += '[' + inline(args[1] || '') + '](' + a + ')'; break;
             case 'url': o += a; break;
+            case 'includegraphics': o += '\n![](' + a.trim() + ')\n'; break;
             case 'footnote': o += ' (' + inline(a) + ')'; break;
             case 'caption': o += '\n*' + inline(a) + '*\n'; break;
             default:

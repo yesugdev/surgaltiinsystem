@@ -1,6 +1,9 @@
 <%# Нэг файлыг төрлөөр нь хуудсан дотор харуулна. Хэрэглээ: include('file-preview', { f: { fileId, name, contentType } }) %>
-<% const kind = viewKind(f.contentType); const src = '/files/' + f.fileId; %>
-<% if (kind === 'image') { %>
+<% const kind = previewKind(f.contentType); const src = '/files/' + f.fileId; %>
+<% if (kind === 'office') { %>
+  <p class="muted small pdf-note">PDF болгон харуулж байна · «Татах» эх файлыг (<%= f.name %>) өгнө</p>
+  <iframe src="<%= src %>/pdf#view=FitH" class="preview-frame" title="<%= f.name %>" loading="lazy"></iframe>
+<% } else if (kind === 'image') { %>
   <a href="<%= src %>" target="_blank" class="preview-img-link"><img src="<%= src %>" alt="<%= f.name %>" class="preview-img" loading="lazy"></a>
 <% } else if (kind === 'pdf') { %>
   <iframe src="<%= src %>#view=FitH" class="preview-frame" title="<%= f.name %>" loading="lazy"></iframe>

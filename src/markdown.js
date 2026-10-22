@@ -124,7 +124,21 @@ function mathText(text, on = true) {
   return injectMath(escapeHtml(ex.src).replace(/\\\$/g, '$'), ex.math);
 }
 
-/** Хичээлийн онол/заавар: Markdown + LaTeX хичээлд томьёо зурна, Word шиг хичээлд энгийн markdown */
-const renderLesson = (text, lesson) => render(text, { math: lesson?.contentFormat === 'markdown' });
+const LatexConvert = require('../public/latex-convert');
 
-module.exports = { render, renderStatement, renderLesson, mathText, toc, sanitizeDocHtml };
+/** LaTeX бичвэр (\textbf, \section …) эсэх — $томьёо$-оос гадуур команд байвал */
+const hasLatexCommands = (text) => /\\[a-zA-Z]+/.test(String(text || '').replace(/\$\$[\s\S]*?\$\$|\$[^$\n]*\$/g, ''));
+
+/** LaTeX → Markdown + $томьёо$ (LaTeX командгүй бол хэвээр — Markdown-аас оруулсан агуулга) */
+const latexSource = (text) => (hasLatexCommands(text) ? LatexConvert.convert(text) : String(text || ''));
+
+/** Томьёо зурах хичээл: «Markdown + LaTeX» эсвэл «LaTeX» засварлагчтай */
+const lessonMath = (lesson) => lesson?.contentFormat === 'markdown' || lesson?.contentFormat === 'latex';
+
+/** Хичээлийн онол/заавар: засварлагчийн горимоор нь (Word шиг / Markdown + LaTeX / LaTeX) */
+function renderLesson(text, lesson) {
+  if (lesson?.contentFormat === 'latex') return render(latexSource(text), { math: true });
+  return render(text, { math: lessonMath(lesson) });
+}
+
+module.exports = { render, renderStatement, renderLesson, mathText, toc, sanitizeDocHtml, latexSource, lessonMath, hasLatexCommands };

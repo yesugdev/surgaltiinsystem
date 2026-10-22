@@ -136,7 +136,18 @@ async function readBuffer(id) {
   return Buffer.concat(chunks);
 }
 
+/** Эх файлаас үүсгэсэн PDF хувилбар (pdf-convert.js) */
+async function findDerived(id) {
+  const [doc] = await bucket().find({ 'metadata.pdfOf': new mongoose.Types.ObjectId(String(id)) }).limit(1).toArray();
+  return doc || null;
+}
+
 async function deleteFiles(ids) {
+  // Эх файлтай хамт түүний PDF хувилбарыг устгана
+  if (ids.length) {
+    const derived = await bucket().find({ 'metadata.pdfOf': { $in: ids.map((id) => new mongoose.Types.ObjectId(String(id))) } }).project({ _id: 1 }).toArray();
+    ids = [...ids, ...derived.map((d) => d._id)];
+  }
   for (const id of ids) {
     try {
       await bucket().delete(new mongoose.Types.ObjectId(String(id)));
@@ -178,6 +189,7 @@ module.exports = {
   saveFiles,
   findFile,
   readBuffer,
+  findDerived,
   deleteFiles,
   streamFile,
   fmtSize,

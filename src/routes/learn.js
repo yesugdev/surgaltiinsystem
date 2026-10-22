@@ -6,6 +6,7 @@ const { isId, clean } = require('../helpers');
 const { parseAnswers, gradeQuestion } = require('../grading');
 const md = require('../markdown');
 const files = require('../files');
+const pdf = require('../pdf-convert');
 
 const router = express.Router();
 router.use(requireRole('student'));
@@ -18,7 +19,7 @@ async function loadLesson(req, res, next) {
   const lesson = await Lesson.findOne({ _id: req.params.id, published: true, classIds: req.user.classId }).lean();
   if (!lesson) return notFound(res);
   req.lesson = lesson;
-  res.locals.katex = lesson.contentFormat === 'markdown';
+  res.locals.katex = md.lessonMath(lesson);
   next();
 }
 
@@ -175,6 +176,7 @@ router.post('/:id/tasks/:tid/assignment', loadLesson, findTask, files.uploader('
     const saved = await files.saveFiles(req.files, { kind: 'submission', lessonId: lesson._id, taskId: task._id, studentId: req.user._id });
     await files.deleteFiles(fileRefs.map((f) => f.fileId));
     fileRefs = saved;
+    pdf.warm(saved); // багш шалгахад PDF бэлэн байна
   }
   await Submission.findOneAndUpdate(
     { lesson: lesson._id, taskId: task._id, student: req.user._id },

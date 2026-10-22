@@ -15,6 +15,24 @@
     { label: '🖼 Зураг', title: 'Зураг оруулах', upload: true },
   ];
 
+  // LaTeX горим (data-mode="latex")
+  var LATEX_TOOLS = [
+    { label: 'B', title: 'Тод (Ctrl+B)', wrap: ['\\textbf{', '}'], ph: 'тод' },
+    { label: 'I', title: 'Налуу (Ctrl+I)', wrap: ['\\textit{', '}'], ph: 'налуу' },
+    { label: 'H', title: 'Гарчиг', line: '\\subsection*{', ph: 'Гарчиг}' },
+    { label: '• Жагсаалт', title: 'Жагсаалт', insert: '\n\\begin{itemize}\n  \\item зүйл\n  \\item зүйл\n\\end{itemize}\n' },
+    { label: '1. Дугаартай', title: 'Дугаартай жагсаалт', insert: '\n\\begin{enumerate}\n  \\item алхам\n  \\item алхам\n\\end{enumerate}\n' },
+    { label: '</> Код', title: 'Мөр доторх код', wrap: ['\\texttt{', '}'], ph: 'код' },
+    { label: '∑ Томьёо', title: 'Мөр доторх томьёо: $x^2$', wrap: ['$', '$'], ph: 'x^2' },
+    { label: '∑∑ Блок', title: 'Тусдаа мөрийн томьёо: \\[ … \\]', wrap: ['\n\\[ ', ' \\]\n'], ph: '\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}' },
+    { label: '⊞ Хүснэгт', title: 'Хүснэгт', insert: '\n\\begin{tabular}{ll}\n\\toprule\nОролт & Гаралт \\\\\n\\midrule\n1 2 & 3 \\\\\n\\bottomrule\n\\end{tabular}\n' },
+    { label: '🖼 Зураг', title: 'Зураг оруулах', upload: true },
+  ];
+  var LATEX_HELP = [
+    ['\\textbf{тод}', 'тод'], ['\\textit{налуу}', 'налуу'], ['\\subsection*{Гарчиг}', 'гарчиг'], ['\\begin{itemize} \\item …', 'жагсаалт'],
+    ['\\texttt{код}', 'код'], ['$1 \\le n \\le 10^5$', 'томьёо'], ['\\[ \\frac{a}{b} \\]', 'блок томьёо'], ['\\\\', 'мөр таслах'], ['\\%', '% тэмдэгт'],
+  ];
+
   var HELP = [
     ['**тод**', 'тод'], ['*налуу*', 'налуу'], ['## Оролт', 'гарчиг'], ['- зүйл', 'жагсаалт'], ['`код`', 'код'],
     ['$1 \\le n \\le 10^5$', 'томьёо'], ['$$\\frac{a}{b}$$', 'блок томьёо'], ['\\$', '$ тэмдэгт'],
@@ -30,6 +48,7 @@
   function enhance(ta) {
     var previewUrl = ta.dataset.preview;
     var uploadUrl = ta.dataset.upload || '';
+    var latex = ta.dataset.mode === 'latex';
 
     var wrap = el('div', 'mde');
     var bar = el('div', 'mde-toolbar');
@@ -72,7 +91,7 @@
       schedule();
     }
 
-    TOOLS.forEach(function (t) {
+    (latex ? LATEX_TOOLS : TOOLS).forEach(function (t) {
       var b = el('button', 'btn btn-sm btn-ghost', t.label);
       b.type = 'button';
       b.title = t.title;
@@ -92,7 +111,7 @@
 
     var help = el('div', 'mde-help small');
     help.hidden = true;
-    HELP.forEach(function (h) {
+    (latex ? LATEX_HELP : HELP).forEach(function (h) {
       var row = el('span', 'mde-help-row');
       row.appendChild(el('code', '', h[0]));
       row.appendChild(document.createTextNode(' → ' + h[1]));
@@ -104,8 +123,8 @@
     ta.addEventListener('keydown', function (e) {
       if (!(e.ctrlKey || e.metaKey)) return;
       var k = e.key.toLowerCase();
-      if (k === 'b') { e.preventDefault(); replaceSel('**', '**', 'тод'); }
-      if (k === 'i') { e.preventDefault(); replaceSel('*', '*', 'налуу'); }
+      if (k === 'b') { e.preventDefault(); if (latex) replaceSel('\\textbf{', '}', 'тод'); else replaceSel('**', '**', 'тод'); }
+      if (k === 'i') { e.preventDefault(); if (latex) replaceSel('\\textit{', '}', 'налуу'); else replaceSel('*', '*', 'налуу'); }
     });
     ta.addEventListener('keydown', function (e) {
       if (e.key !== 'Tab' || e.ctrlKey || e.altKey) return;
@@ -142,7 +161,9 @@
         .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d.error); }); })
         .then(function (d) {
           status.textContent = '';
-          replaceSel(d.files.map(function (f) { return '\n![' + f.name.replace(/[\[\]]/g, '') + '](' + f.url + ')\n'; }).join(''), '', '');
+          replaceSel(d.files.map(function (f) {
+            return latex ? '\n\\includegraphics{' + f.url + '}\n' : '\n![' + f.name.replace(/[\[\]]/g, '') + '](' + f.url + ')\n';
+          }).join(''), '', '');
         })
         .catch(function (err) { status.textContent = typeof err === 'string' ? err : 'Зураг оруулж чадсангүй'; });
     }

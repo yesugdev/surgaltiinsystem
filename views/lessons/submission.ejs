@@ -86,7 +86,7 @@
             <span class="muted">/ <%= fmtScore(q.points) %></span>
           </label>
         </div>
-        <div class="question-text prewrap"><%- mathText(q.text, lesson.contentFormat === 'markdown') %></div>
+        <div class="question-text prewrap"><%- mathText(q.text, lessonMath(lesson)) %></div>
         <% if (q.type === 'text') { %>
           <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
           <% if (q.acceptedAnswers.length) { %><div class="muted small">Зөв хариулт: <%= q.acceptedAnswers.join(' / ') %></div><% } %>
@@ -94,7 +94,7 @@
           <ul class="options">
             <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); %>
               <li class="<%= o.isCorrect ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && !o.isCorrect ? 'wrong' : '' %>">
-                <span class="opt-mark"><%= picked ? (o.isCorrect ? '✓' : '✗') : (o.isCorrect ? '○' : '') %></span><%- mathText(o.text, lesson.contentFormat === 'markdown') %>
+                <span class="opt-mark"><%= picked ? (o.isCorrect ? '✓' : '✗') : (o.isCorrect ? '○' : '') %></span><%- mathText(o.text, lessonMath(lesson)) %>
                 <% if (picked) { %><span class="muted small">— сурагчийн сонголт</span><% } %>
               </li>
             <% }) %>

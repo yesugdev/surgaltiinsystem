@@ -171,7 +171,7 @@ const lessonSchema = new Schema(
     published: { type: Boolean, default: false },
     theory: { type: String, default: '', maxlength: 300000 }, // markdown
     // Засварлагч: 'rich' = Word шиг; 'markdown' = Markdown + LaTeX ($томьёо$) — онол ба даалгаврын зааварт
-    contentFormat: { type: String, enum: ['rich', 'markdown'], default: 'rich' },
+    contentFormat: { type: String, enum: ['rich', 'markdown', 'latex'], default: 'rich' },
     attachments: { type: [fileRefSchema], default: [] },
     tasks: { type: [taskSchema], default: [] },
   },
