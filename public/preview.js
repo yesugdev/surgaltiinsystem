@@ -10,8 +10,8 @@
   }
 
   // Сервер дээр markdown-ийг аюулгүй HTML болгоно (жинхэнэ харагдацтай яг ижил)
-  function markdown(text) {
-    return fetch('/lessons/preview-md', {
+  function markdown(text, math) {
+    return fetch('/lessons/preview-md' + (math ? '?math=1' : ''), {
       method: 'POST',
       body: new URLSearchParams({ text: text }),
       credentials: 'same-origin',

@@ -284,6 +284,7 @@ async function renderImport(req, res, { text = '', mode = 'append', errors = [],
     Class.find({ _id: { $in: req.lesson.classIds } }).select('name').lean(),
     Submission.exists({ lesson: req.lesson._id }),
   ]);
+  res.locals.katex = true; // урьдчилан харахад томьёо
   res.status(status).render('lessons/import', {
     title: 'Онол, даалгавар оруулах',
     lesson: req.lesson,
@@ -332,6 +333,9 @@ router.post('/:id/import', requireAI, loadLesson, async (req, res) => {
   if (parsed.theory) {
     l.theory = mode === 'replace' || !l.theory.trim() ? parsed.theory : l.theory.trimEnd() + '\n\n' + parsed.theory;
   }
+  // LaTeX баримт эсвэл $томьёо$-той агуулга → томьёо зурагдахаар Markdown + LaTeX горим
+  const toMarkdown = parsed.hasMath && l.contentFormat !== 'markdown';
+  if (toMarkdown) l.contentFormat = 'markdown';
   const newTasks = parsed.tasks.map(taskFromParsed);
   if (mode === 'replace' && newTasks.length) l.tasks = newTasks;
   else l.tasks.push(...newTasks);
@@ -343,7 +347,7 @@ router.post('/:id/import', requireAI, loadLesson, async (req, res) => {
   const na = newTasks.length - nq;
   if (nq) parts.push(`${nq} тест`);
   if (na) parts.push(`${na} даалгавар`);
-  flash(req, 'success', `Амжилттай орлоо: ${parts.join(', ')}.`);
+  flash(req, 'success', `Амжилттай орлоо: ${parts.join(', ')}.${parsed.fromLatex ? ' LaTeX баримтаас хөрвүүллээ.' : ''}${toMarkdown ? ' Томьёо зурагдахаар хичээл «Markdown + LaTeX» горимд шилжлээ.' : ''}`);
   res.redirect(base(l));
 });
 

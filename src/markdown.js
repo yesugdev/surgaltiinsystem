@@ -111,7 +111,20 @@ function sanitizeDocHtml(html) {
 /** Бодлогын өгүүлбэр: Markdown + LaTeX */
 const renderStatement = (md) => render(md, { math: true });
 
+const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+/**
+ * Тестийн асуулт/сонголт: энгийн текст (escape) + $томьёо$. on=false бол зөвхөн escape.
+ * Markdown хөрвүүлэхгүй — асуултын мөр шилжилт, тэмдэгтүүд хэвээр.
+ */
+function mathText(text, on = true) {
+  if (!on) return escapeHtml(text);
+  const ex = extractMath(text);
+  if (!ex.math.length) return escapeHtml(text);
+  return injectMath(escapeHtml(ex.src).replace(/\\\$/g, '$'), ex.math);
+}
+
 /** Хичээлийн онол/заавар: Markdown + LaTeX хичээлд томьёо зурна, Word шиг хичээлд энгийн markdown */
 const renderLesson = (text, lesson) => render(text, { math: lesson?.contentFormat === 'markdown' });
 
-module.exports = { render, renderStatement, renderLesson, toc, sanitizeDocHtml };
+module.exports = { render, renderStatement, renderLesson, mathText, toc, sanitizeDocHtml };

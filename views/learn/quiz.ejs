@@ -14,7 +14,7 @@
             <span class="qnum"><%= i + 1 %></span>
             <span class="muted small"><%= fmtScore(q.points) %> оноо<% if (q.type === 'multiple') { %> · олон зөв хариулттай<% } %></span>
           </div>
-          <div class="question-text prewrap"><%= q.text %></div>
+          <div class="question-text prewrap"><%- mathText(q.text, lesson.contentFormat === 'markdown') %></div>
           <% if (q.type === 'text') { %>
             <textarea name="q_<%= key %>" rows="3" maxlength="5000" placeholder="Хариултаа бичнэ үү"></textarea>
           <% } else { %>
@@ -23,7 +23,7 @@
                 <label class="choice">
                   <input type="<%= q.type === 'single' ? 'radio' : 'checkbox' %>" name="q_<%= key %>" value="<%= o._id %>">
                   <span class="choice-letter"><%= String.fromCharCode(65 + j) %></span>
-                  <span class="choice-text"><%= o.text %></span>
+                  <span class="choice-text"><%- mathText(o.text, lesson.contentFormat === 'markdown') %></span>
                 </label>
               <% }) %>
             </div>
@@ -57,7 +57,7 @@
           <span class="result-state"><%= state === 'ok' ? '✓ Зөв' : state === 'bad' ? '✗ Буруу' : state === 'review' ? 'Шалгагдаж байна' : '' %>
             <span class="muted small"><%= a ? fmtScore(a.points) : 0 %>/<%= fmtScore(q.points) %></span></span>
         </div>
-        <div class="question-text prewrap"><%= q.text %></div>
+        <div class="question-text prewrap"><%- mathText(q.text, lesson.contentFormat === 'markdown') %></div>
         <% if (q.type === 'text') { %>
           <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
           <% if (task.showAnswers && q.acceptedAnswers.length) { %><div class="small">Зөв хариулт: <strong><%= q.acceptedAnswers.join(' / ') %></strong></div><% } %>
@@ -65,7 +65,7 @@
           <ul class="options">
             <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); const correct = task.showAnswers && o.isCorrect; %>
               <li class="<%= correct ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && task.showAnswers && !o.isCorrect ? 'wrong' : '' %>">
-                <span class="opt-mark"><%= correct ? '✓' : (picked && task.showAnswers ? '✗' : (picked ? '•' : '')) %></span><%= o.text %>
+                <span class="opt-mark"><%= correct ? '✓' : (picked && task.showAnswers ? '✗' : (picked ? '•' : '')) %></span><%- mathText(o.text, lesson.contentFormat === 'markdown') %>
                 <% if (picked) { %><span class="muted small">— таны сонголт</span><% } %>
               </li>
             <% }) %>

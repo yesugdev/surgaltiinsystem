@@ -16,9 +16,9 @@
  *   Даалгаврын заавар (markdown)
  */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./question-parser'));
-  else root.LessonParser = factory(root.QuestionParser);
-})(typeof self !== 'undefined' ? self : this, function (QuestionParser) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./question-parser'), require('./latex-convert'));
+  else root.LessonParser = factory(root.QuestionParser, root.LatexConvert);
+})(typeof self !== 'undefined' ? self : this, function (QuestionParser, LatexConvert) {
   var MAX_TASKS = 50;
 
   // === ОНОЛ ===, === ТЕСТ: нэр ===, === ДААЛГАВАР: нэр === (** тод, # гарчиг тэмдэглэгээг тэвчинэ)
@@ -33,7 +33,21 @@
     return lines;
   }
 
+  /** Томьёо ($…$, $$…$$) агуулсан эсэх — хичээлийг Markdown + LaTeX горимд шилжүүлэхэд */
+  var MATH_RE = /\$\$[\s\S]+?\$\$|(^|[^\\$])\$(?!\s)[^$\n]*?\\[a-zA-Z]+[^$\n]*?\$|(^|[^\\$])\$(?!\s)[^$\n]*?[\^_][^$\n]*?\$/;
+
   function parse(text) {
+    // LaTeX баримт (\documentclass, \section …) бол эхлээд хичээлийн формат руу хөрвүүлнэ
+    var fromLatex = !!(LatexConvert && LatexConvert.looksLikeLatex(text));
+    if (fromLatex) text = LatexConvert.convert(text);
+    var res = parseText(text);
+    res.fromLatex = fromLatex;
+    res.converted = fromLatex ? text : null;
+    res.hasMath = fromLatex || MATH_RE.test(String(text || ''));
+    return res;
+  }
+
+  function parseText(text) {
     var lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
     // AI бүх гаралтыг ``` дотор хийсэн бол гадна талын блокыг авна (онол доторх кодыг хөндөхгүй)
     var t = trimBlock(lines.slice());

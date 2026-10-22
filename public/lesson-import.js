@@ -29,6 +29,17 @@
         return (e.section ? e.section + ': ' : '') + (e.line ? '(' + e.line + '-р мөр) ' : '') + e.message;
       })));
     }
+    if (r.fromLatex) {
+      // LaTeX баримт танигдлаа: хөрвүүлсэн Markdown-ыг харж, засах боломж
+      var note = el('div', 'flash flash-info small latex-note', 'LaTeX баримт танигдлаа — Markdown + LaTeX болгон хөрвүүлж оруулна. Томьёо зурагдахаар хичээл «Markdown + LaTeX» горимд шилжинэ. ');
+      var edit = el('button', 'btn btn-sm', '✎ Хөрвүүлсэн текстийг засах');
+      edit.type = 'button';
+      edit.addEventListener('click', function () { textarea.value = r.converted; render(); textarea.focus(); });
+      note.appendChild(edit);
+      out.appendChild(note);
+    } else if (r.hasMath) {
+      out.appendChild(el('div', 'flash flash-info small', 'Томьёо ($…$) олдлоо — хичээл «Markdown + LaTeX» горимд шилжиж, томьёо зурагдана.'));
+    }
     if (r.warnings.length) out.appendChild(el('div', 'flash flash-info small', r.warnings.map(function (w) { return w.message; }).join(' ')));
 
     // Онол
@@ -39,7 +50,7 @@
       body.appendChild(el('p', 'muted small', 'Ачаалж байна…'));
       sec.appendChild(body);
       out.appendChild(sec);
-      P.markdown(r.theory).then(function (html) { if (my === seq) body.innerHTML = html; });
+      P.markdown(r.theory, r.hasMath).then(function (html) { if (my === seq) body.innerHTML = html; });
     }
 
     // Даалгаврууд
@@ -57,7 +68,7 @@
         sec.appendChild(el('div', 'muted small', t.maxPoints + ' оноо · файл илгээх даалгавар'));
         var ib = el('div', 'markdown preview-instr');
         sec.appendChild(ib);
-        P.markdown(t.instructions).then(function (html) { if (my === seq) ib.innerHTML = html; });
+        P.markdown(t.instructions, r.hasMath).then(function (html) { if (my === seq) ib.innerHTML = html; });
       }
       out.appendChild(sec);
     });
