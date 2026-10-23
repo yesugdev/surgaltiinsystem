@@ -45,7 +45,15 @@
     <% } else { %>
       <div class="checks">
         <label class="check"><input type="checkbox" name="allowRetry" <%= task.allowRetry ? 'checked' : '' %>> Дахин өгөхийг зөвшөөрөх (сүүлийн оролдлого тооцогдоно)</label>
-        <label class="check"><input type="checkbox" name="showAnswers" <%= task.showAnswers ? 'checked' : '' %>> Илгээсний дараа зөв хариултыг харуулах</label>
+      </div>
+      <fieldset class="reveal-options">
+        <legend><strong>Илгээсний дараа сурагчид харуулах</strong></legend>
+        <% const rv = task.reveal || (task.showAnswers === false ? 'marks' : 'answers'); %>
+        <label class="check"><input type="radio" name="reveal" value="score" <%= rv === 'score' ? 'checked' : '' %>> <span><strong>Зөвхөн нийт оноо</strong> <small class="muted">— аль асуулт зөв, буруу нь болон зөв хариулт харагдахгүй (хуулахаас хамгаална)</small></span></label>
+        <label class="check"><input type="radio" name="reveal" value="marks" <%= rv === 'marks' ? 'checked' : '' %>> <span><strong>Асуулт бүр зөв/буруу</strong> <small class="muted">— зөв хариулт харагдахгүй</small></span></label>
+        <label class="check"><input type="radio" name="reveal" value="answers" <%= rv === 'answers' ? 'checked' : '' %>> <span><strong>Зөв хариултуудыг харуулах</strong> <small class="muted">— сурагч дахин өгөхдөө хуулж болзошгүй</small></span></label>
+      </fieldset>
+      <div class="checks">
       </div>
     <% } %>
   </section>

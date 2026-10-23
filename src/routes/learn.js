@@ -30,6 +30,9 @@ function findTask(req, res, next) {
   next();
 }
 
+/** Тест илгээсний дараа харуулах хэмжээ (хуучин тестэд showAnswers-аас) */
+const revealOf = (t) => t.reveal || (t.showAnswers === false ? 'marks' : 'answers');
+
 const taskTotal = (t) => (t.type === 'quiz' ? t.questions.reduce((s, q) => s + q.points, 0) : t.maxPoints);
 const lessonUrl = (l) => '/learn/' + l._id;
 const taskUrl = (l, t) => `/learn/${l._id}/tasks/${t._id}`;
@@ -101,17 +104,26 @@ router.get('/:id/tasks/:tid', loadLesson, findTask, async (req, res) => {
   if (task.type === 'quiz') {
     const retry = req.query.retry === '1' && task.allowRetry && sub?.submittedAt;
     const showForm = !sub?.submittedAt || retry;
+    const reveal = revealOf(task);
     return res.render('learn/quiz', {
       ...common,
       showForm,
-      // Зөв хариултыг зөвхөн илгээсний дараа, зөвшөөрсөн үед л дамжуулна
-      questions: showForm || !task.showAnswers
+      reveal,
+      theoryHtml: lesson.theory.trim() ? md.renderLesson(lesson.theory, lesson) : '',
+      // Зөв хариултыг зөвхөн илгээсний дараа, багш зөвшөөрсөн үед л дамжуулна
+      questions: showForm || reveal !== 'answers'
         ? task.questions.map((q) => ({ ...q, acceptedAnswers: [], options: q.options.map((o) => ({ _id: o._id, text: o.text })) }))
         : task.questions,
-      answerMap: new Map((sub?.answers || []).map((a) => [String(a.questionId), a])),
+      // «Зөвхөн нийт оноо» үед асуулт бүрийн зөв/буруу ч дамжуулахгүй
+      answerMap: new Map(reveal === 'score' ? [] : (sub?.answers || []).map((a) => [String(a.questionId), a])),
     });
   }
-  res.render('learn/assignment', { ...common, ACCEPT: files.ACCEPT, MAX_FILE_MB: files.MAX_FILE_MB });
+  res.render('learn/assignment', {
+    ...common,
+    theoryHtml: lesson.theory.trim() ? md.renderLesson(lesson.theory, lesson) : '',
+    ACCEPT: files.ACCEPT,
+    MAX_FILE_MB: files.MAX_FILE_MB,
+  });
 });
 
 router.post('/:id/tasks/:tid/quiz', loadLesson, findTask, async (req, res) => {

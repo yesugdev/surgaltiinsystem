@@ -151,7 +151,9 @@ const taskSchema = new Schema({
   // Тест
   questions: { type: [questionSchema], default: [] },
   allowRetry: { type: Boolean, default: true },
-  showAnswers: { type: Boolean, default: true },
+  showAnswers: { type: Boolean, default: true }, // хуучин талбар (= reveal === 'answers')
+  // Илгээсний дараа сурагчид: 'score' — зөвхөн нийт оноо, 'marks' — асуулт бүр зөв/буруу, 'answers' — зөв хариулттай
+  reveal: { type: String, enum: ['score', 'marks', 'answers'], default: 'score' },
   // Заавартай даалгавар (файл илгээх)
   maxPoints: { type: Number, default: 10, min: 0.5, max: 1000 },
   dueAt: { type: Date, default: null },

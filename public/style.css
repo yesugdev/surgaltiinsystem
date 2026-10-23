@@ -1096,6 +1096,13 @@ a.podium-name:hover { color: var(--primary); text-decoration: none; }
 .format-btn-radio input { margin: 0; }
 .prompt-format-tabs { display: flex; gap: 6px; margin: 0 0 8px; }
 .pdf-note { margin: 0 0 6px; }
+/* Тест/даалгавар: онолын товч ба модал; тестийн дүн харуулах тохиргоо */
+.task-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.task-title-row h1 { margin-right: auto; }
+.theory-dialog { width: min(900px, calc(100vw - 32px)); max-height: calc(100vh - 48px); flex-direction: column; }
+.theory-dialog[open] { display: flex; }
+.theory-dialog-body { overflow-y: auto; flex: 1; padding-right: 6px; margin: 8px 0; }
+.reveal-options { display: grid; gap: 6px; margin-top: 4px; }
 .mde { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .mde-toolbar { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; padding: 6px; border-bottom: 1px solid var(--border); background: #f7f8fa; }
 .mde-toolbar .btn { font-weight: 600; }

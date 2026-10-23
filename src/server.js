@@ -122,6 +122,9 @@ async function main() {
   require('./contests').migrateRankSystem()
     .then(() => require('./placement').seedPlacementContest())
     .catch((e) => console.error('Ranking систем / түвшин тогтоох contest:', e.message));
+  require('./models').Lesson.updateMany({ 'tasks.type': 'quiz' }, { $set: { 'tasks.$[a].reveal': 'answers', 'tasks.$[m].reveal': 'marks' } }, {
+    arrayFilters: [{ 'a.type': 'quiz', 'a.reveal': { $exists: false }, 'a.showAnswers': { $ne: false } }, { 'm.type': 'quiz', 'm.reveal': { $exists: false }, 'm.showAnswers': false }],
+  }).catch((e) => console.error('Тестийн дүн харуулах тохиргоо:', e.message));
   require('./problem-number').backfillNumbers().catch((e) => console.error('Бодлогын дугаар:', e.message));
   require('./cp').seedDefaultTopics()
     .then(() => require('./cp-problems').seedDefaultProblems())

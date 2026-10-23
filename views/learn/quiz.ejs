@@ -2,7 +2,12 @@
 <% const url = '/learn/' + lesson._id + '/tasks/' + task._id; %>
 <div class="narrow">
   <a href="/learn/<%= lesson._id %>#tasks" class="back">← <%= lesson.title %></a>
-  <h1>📝 <%= task.title %></h1>
+  <div class="task-title-row">
+    <h1>📝 <%= task.title %></h1>
+    <% if (theoryHtml) { %>
+    <button type="button" class="btn theory-btn" data-open-dialog="#theory-dialog">📖 Онол</button>
+  <% } %>
+  </div>
   <p class="muted"><%= task.questions.length %> асуулт · <%= fmtScore(total) %> оноо<%= task.allowRetry ? ' · дахин өгч болно' : '' %></p>
   <% if (task.instructions.trim()) { %><div class="card markdown"><%- instructionsHtml %></div><% } %>
 
@@ -43,10 +48,11 @@
       <% } %>
       <p class="muted small">Илгээсэн: <%= fmtDate(sub.submittedAt) %><%= sub.attemptCount > 1 ? ' · ' + sub.attemptCount + ' дахь оролдлого' : '' %></p>
       <% if (sub.feedback) { %><div class="feedback"><strong>Багшийн сэтгэгдэл:</strong> <span class="prewrap"><%= sub.feedback %></span></div><% } %>
+      <% if (reveal === 'score') { %><p class="muted small">Багш зөвхөн нийт оноог харуулахаар тохируулсан.</p><% } %>
       <% if (task.allowRetry) { %><a class="btn" href="<%= url %>?retry=1">Дахин өгөх</a><% } %>
     </div>
 
-    <% questions.forEach(function (q, i) {
+    <% if (reveal !== 'score') questions.forEach(function (q, i) {
          const a = answerMap.get(String(q._id));
          const sel = a ? a.selectedOptions.map(String) : [];
          const state = !a ? 'none' : a.isCorrect === null ? 'review' : a.isCorrect ? 'ok' : 'bad'; %>
@@ -60,12 +66,12 @@
         <div class="question-text prewrap"><%- mathText(q.text, lessonMath(lesson)) %></div>
         <% if (q.type === 'text') { %>
           <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
-          <% if (task.showAnswers && q.acceptedAnswers.length) { %><div class="small">Зөв хариулт: <strong><%= q.acceptedAnswers.join(' / ') %></strong></div><% } %>
+          <% if ((reveal === 'answers') && q.acceptedAnswers.length) { %><div class="small">Зөв хариулт: <strong><%= q.acceptedAnswers.join(' / ') %></strong></div><% } %>
         <% } else { %>
           <ul class="options">
-            <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); const correct = task.showAnswers && o.isCorrect; %>
-              <li class="<%= correct ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && task.showAnswers && !o.isCorrect ? 'wrong' : '' %>">
-                <span class="opt-mark"><%= correct ? '✓' : (picked && task.showAnswers ? '✗' : (picked ? '•' : '')) %></span><%- mathText(o.text, lessonMath(lesson)) %>
+            <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); const correct = (reveal === 'answers') && o.isCorrect; %>
+              <li class="<%= correct ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && (reveal === 'answers') && !o.isCorrect ? 'wrong' : '' %>">
+                <span class="opt-mark"><%= correct ? '✓' : (picked && (reveal === 'answers') ? '✗' : (picked ? '•' : '')) %></span><%- mathText(o.text, lessonMath(lesson)) %>
                 <% if (picked) { %><span class="muted small">— таны сонголт</span><% } %>
               </li>
             <% }) %>
@@ -75,4 +81,14 @@
     <% }) %>
   <% } %>
 </div>
-<%- include('../partials/footer') %>
+<% if (theoryHtml) { %>
+<dialog id="theory-dialog" class="prompt-dialog theory-dialog" aria-label="Онол">
+  <div class="prompt-dialog-head">
+    <h2>📖 Онол · <%= lesson.title %></h2>
+    <button type="button" class="btn btn-ghost btn-sm" data-close aria-label="Хаах">✕</button>
+  </div>
+  <div class="markdown theory-dialog-body"><%- theoryHtml %></div>
+  <div class="btn-group prompt-dialog-actions"><div class="spacer"></div><button type="button" class="btn btn-primary" data-close>Ойлголоо, үргэлжлүүлэх</button></div>
+</dialog>
+<% } %>
+<%- include('../partials/footer', { scripts: ['/preview.js'] }) %>

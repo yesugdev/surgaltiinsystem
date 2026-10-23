@@ -389,7 +389,8 @@ function parseTaskForm(body, type, allowText) {
   let questionsJson = '[]';
   if (type === 'quiz') {
     data.allowRetry = body.allowRetry === 'on';
-    data.showAnswers = body.showAnswers === 'on';
+    data.reveal = ['score', 'marks', 'answers'].includes(body.reveal) ? body.reveal : 'score';
+    data.showAnswers = data.reveal === 'answers';
     if (allowText && body.questionsMode === 'text') {
       questionsText = String(body.questionsText ?? '').slice(0, 300000);
       const r = QuestionParser.parse(questionsText);
@@ -432,7 +433,7 @@ function renderTaskForm(res, { lesson, task, questionsText = '', questionsJson =
 router.get('/:id/tasks/new', loadLesson, (req, res) => {
   const type = req.query.type === 'assignment' ? 'assignment' : 'quiz';
   const task = type === 'quiz'
-    ? { type, title: '', instructions: '', allowRetry: true, showAnswers: true }
+    ? { type, title: '', instructions: '', allowRetry: true, reveal: 'score' }
     : { type, title: '', instructions: '', maxPoints: 10, allowLate: true };
   renderTaskForm(res, { lesson: req.lesson, task });
 });

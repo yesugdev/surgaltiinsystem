@@ -4,7 +4,12 @@
    const canSubmit = !graded && state !== 'closed'; %>
 <div class="narrow">
   <a href="/learn/<%= lesson._id %>#tasks" class="back">← <%= lesson.title %></a>
-  <h1>📎 <%= task.title %></h1>
+  <div class="task-title-row">
+    <h1>📎 <%= task.title %></h1>
+    <% if (theoryHtml) { %>
+    <button type="button" class="btn theory-btn" data-open-dialog="#theory-dialog">📖 Онол</button>
+  <% } %>
+  </div>
   <p class="muted"><%= fmtScore(total) %> оноо
     <% if (task.dueAt) { %> · Хугацаа: <strong><%= fmtDate(task.dueAt) %></strong><% } %>
     <% if (state === 'overdue') { %> <span class="badge badge-red">Хугацаа хэтэрсэн</span><% } %>
@@ -75,4 +80,14 @@
     <div class="flash flash-warn">Даалгаврын хугацаа дууссан тул илгээх боломжгүй.</div>
   <% } %>
 </div>
-<%- include('../partials/footer') %>
+<% if (theoryHtml) { %>
+<dialog id="theory-dialog" class="prompt-dialog theory-dialog" aria-label="Онол">
+  <div class="prompt-dialog-head">
+    <h2>📖 Онол · <%= lesson.title %></h2>
+    <button type="button" class="btn btn-ghost btn-sm" data-close aria-label="Хаах">✕</button>
+  </div>
+  <div class="markdown theory-dialog-body"><%- theoryHtml %></div>
+  <div class="btn-group prompt-dialog-actions"><div class="spacer"></div><button type="button" class="btn btn-primary" data-close>Ойлголоо, үргэлжлүүлэх</button></div>
+</dialog>
+<% } %>
+<%- include('../partials/footer', { scripts: ['/preview.js'] }) %>
