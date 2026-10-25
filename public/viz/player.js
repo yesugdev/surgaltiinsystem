@@ -20,7 +20,7 @@
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   // ---------- C++ кодын өнгө ----------
-  var KW = /\b(int|bool|void|char|return|while|for|if|else|break|true|false|vector|queue|auto|const)\b/g;
+  var KW = /\b(int|bool|void|char|return|while|for|if|else|break|continue|true|false|vector|queue|auto|const)\b/g;
   function highlight(line) {
     var out = '', rest = line, ci = line.indexOf('//');
     var comment = '';
@@ -30,7 +30,7 @@
     parts.forEach(function (p, i) {
       if (i % 2) { out += '<span class="tk-str">' + esc(p) + '</span>'; return; }
       out += esc(p).replace(KW, '<span class="tk-kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="tk-num">$1</span>')
-        .replace(/\b(swap|max|push_back|push|pop|front|empty|cout|merge|mergeSort|quickSort|partition|binarySearch|linearSearch|bubbleSort|selectionSort|insertionSort|pairSum|sum|maxWindow|bfs|dfs|hanoi|fib)\b(?=\s*\()/g, '<span class="tk-fn">$1</span>');
+        .replace(/\b(swap|max|push_back|push|pop|front|empty|cout|merge|mergeSort|quickSort|partition|binarySearch|linearSearch|bubbleSort|selectionSort|insertionSort|pairSum|sum|maxWindow|bfs|dfs|hanoi|fib|fact|f)\b(?=\s*\()/g, '<span class="tk-fn">$1</span>');
     });
     if (comment) out += '<span class="tk-com">' + esc(comment) + '</span>';
     return out || '&nbsp;';
@@ -190,10 +190,90 @@
     return s;
   }
 
+  // ---------- давталт, хувьсагч, гаралт, дуудлагын стек ----------
+  var PHASES = [['init', '①', 'Эхлэл'], ['cond', '②', 'Нөхцөл'], ['body', '③', 'Бие'], ['update', '④', 'Өөрчлөлт']];
+  function renderPhase(ph) {
+    var box = el('div', 'vz-phase' + (ph.inner ? ' is-inner' : ''));
+    var head = el('div', 'vz-phase-head');
+    head.appendChild(el('span', 'vz-phase-title', ph.label || (ph.kind === 'while' ? 'while давталт' : 'for давталт')));
+    if (ph.iter) head.appendChild(el('span', 'vz-phase-iter', 'Давталт #' + ph.iter));
+    box.appendChild(head);
+    var flow = el('div', 'vz-phase-flow');
+    PHASES.forEach(function (p) {
+      if (ph.kind === 'while' && (p[0] === 'init' || p[0] === 'update')) return;
+      var on = ph.step === p[0];
+      var chip = el('div', 'vz-chip' + (on ? ' is-on' : '') + (on && p[0] === 'cond' && ph.ok === false ? ' is-false' : '') + (on && p[0] === 'cond' && ph.ok === true ? ' is-true' : ''));
+      chip.appendChild(el('span', 'vz-chip-no', p[1]));
+      chip.appendChild(el('span', 'vz-chip-name', p[2]));
+      var code = p[0] === 'body' ? '{ … }' : ph.parts[p[0]];
+      if (code) chip.appendChild(el('code', 'vz-chip-code', code));
+      if (on && p[0] === 'cond' && ph.ok != null) chip.appendChild(el('span', 'vz-chip-res', ph.ok ? '✓ үнэн' : '✗ худал'));
+      if (on && ph.jump) chip.appendChild(el('span', 'vz-chip-res is-jump', ph.jump));
+      flow.appendChild(chip);
+      flow.appendChild(el('span', 'vz-arrow', '→'));
+    });
+    flow.appendChild(el('span', 'vz-loopback', ph.kind === 'while' ? '↺ ② руу' : '↺ ② руу'));
+    var exit = el('div', 'vz-chip vz-chip-exit' + (ph.step === 'exit' ? ' is-on' : ''));
+    exit.appendChild(el('span', 'vz-chip-name', '⏏ Гарах'));
+    flow.appendChild(exit);
+    box.appendChild(flow);
+    return box;
+  }
+  function renderVars(vars) {
+    var box = el('div', 'vz-panel vz-vars');
+    box.appendChild(el('div', 'vz-panel-title', '🧠 Санах ой (хувьсагч)'));
+    var grid = el('div', 'vz-vars-grid');
+    if (!vars.length) grid.appendChild(el('span', 'vz-empty', 'хоосон'));
+    vars.forEach(function (v) {
+      var cell = el('div', 'vz-var' + (v.changed ? ' is-changed' : ''));
+      cell.appendChild(el('span', 'vz-var-name', v.name));
+      cell.appendChild(el('span', 'vz-var-val', v.value));
+      grid.appendChild(cell);
+    });
+    box.appendChild(grid);
+    return box;
+  }
+  function renderConsole(out) {
+    var box = el('div', 'vz-panel vz-console');
+    box.appendChild(el('div', 'vz-panel-title', '🖥 Гаралт (console)'));
+    var pre = el('pre', 'vz-console-out', out);
+    pre.appendChild(el('span', 'vz-cursor', '▌'));
+    box.appendChild(pre);
+    return box;
+  }
+  function renderCalls(list, dir) {
+    var box = el('div', 'vz-panel vz-calls');
+    var title = el('div', 'vz-panel-title', '📚 Дуудлагын стек');
+    if (dir) title.appendChild(el('span', 'vz-dir ' + dir, dir === 'down' ? '⬇ дуудаж байна' : '⬆ буцаж байна'));
+    box.appendChild(title);
+    var st = el('div', 'vz-stack');
+    if (!list.length) st.appendChild(el('span', 'vz-empty', 'хоосон — main()'));
+    list.slice().reverse().forEach(function (c, i) {
+      var fr = el('div', 'vz-sframe ' + c.st);
+      var top = el('div', 'vz-sframe-top');
+      top.appendChild(el('b', null, c.label));
+      top.appendChild(el('span', 'vz-sframe-vars', c.vars));
+      if (i === 0) top.appendChild(el('span', 'vz-sframe-tag', 'одоо'));
+      fr.appendChild(top);
+      if (c.note) fr.appendChild(el('div', 'vz-sframe-note', c.note));
+      st.appendChild(fr);
+    });
+    box.appendChild(st);
+    return box;
+  }
+
   function render() {
     var f = frames[idx];
     if (!f) return;
     stage.innerHTML = '';
+    if (f.phase) stage.appendChild(renderPhase(f.phase));
+    if (f.vars || f.calls || f.out != null) {
+      var panels = el('div', 'vz-panels');
+      if (f.calls) panels.appendChild(renderCalls(f.calls, f.dir));
+      if (f.vars) panels.appendChild(renderVars(f.vars));
+      if (f.out != null) panels.appendChild(renderConsole(f.out));
+      stage.appendChild(panels);
+    }
     if (f.graph) stage.appendChild(renderGraph(f.graph));
     if (f.hanoi) stage.appendChild(renderHanoi(f.hanoi));
     if (f.tree) stage.appendChild(renderTree(f.tree));

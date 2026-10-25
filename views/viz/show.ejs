@@ -1,6 +1,6 @@
 <%- include('../partials/header') %>
 <link rel="stylesheet" href="/viz/viz.css">
-<div class="xp-desktop" id="viz" data-key="<%= key %>">
+<div class="xp-desktop viz-wide" id="viz" data-key="<%= key %>">
   <a href="/viz" class="viz-back">← Бүх алгоритм</a>
   <header class="viz-hero">
     <div class="viz-brand">YeSuvd.exe</div>
@@ -14,8 +14,9 @@
     <div class="viz-info-cell"><span class="viz-info-k">Language</span><span class="viz-info-v">C++</span></div>
   </div>
 
-  <section class="xp-win">
-    <div class="xp-titlebar"><span class="xp-title"><span class="xp-ico green"></span>Array Viewer · <%= algo.mn %></span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
+  <div class="viz-main">
+  <section class="xp-win viz-array-win">
+    <div class="xp-titlebar"><span class="xp-title"><span class="xp-ico green"></span><%= algo.group === 'basics' ? 'Memory Viewer' : 'Array Viewer' %> · <%= algo.mn %></span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
     <div class="xp-body">
       <form class="viz-form" id="viz-form" autocomplete="off">
         <% inputs.forEach(function (inp) { %>
@@ -61,6 +62,8 @@
       </div>
     </div>
   </section>
+
+  </div>
 
   <nav class="viz-nav">
     <% if (prev) { %><a class="xp-btn" href="/viz/<%= prev.key %>">← <%= prev.title %></a><% } else { %><span></span><% } %>

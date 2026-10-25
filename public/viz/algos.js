@@ -8,6 +8,7 @@
   'use strict';
 
   var GROUPS = [
+    { key: 'basics', title: '🔁 Давталт ба рекурс — суурь' },
     { key: 'search', title: '🔍 Хайлт' },
     { key: 'sort', title: '📊 Эрэмбэлэлт' },
     { key: 'pointers', title: '👉 Two pointers · Prefix sum' },
@@ -885,7 +886,410 @@
     },
   };
 
+  // =====================================================================
+  // 🔁 ДАВТАЛТ БА РЕКУРС — СУУРЬ (хувьсагч, гаралт, давталтын алхам, дуудлагын стек)
+  // =====================================================================
+  /** Хувьсагчийн самбар: өмнөх кадраас өөрчлөгдсөнийг тэмдэглэнэ (undefined = одоогоор байхгүй) */
+  function varsTracker() {
+    var prev = {};
+    return function (obj) {
+      var out = [];
+      Object.keys(obj).forEach(function (k) {
+        if (obj[k] === undefined) return;
+        out.push({ name: k, value: obj[k], changed: prev[k] !== obj[k] });
+      });
+      prev = Object.assign({}, obj);
+      return out;
+    };
+  }
+  var FOR_PARTS = { init: 'int i = 1', cond: 'i <= n', update: 'i++' };
+
+  var forLoop = {
+    group: 'basics', title: 'for loop', mn: 'for давталт', tagline: 'Эхлэл → нөхцөл → бие → өөрчлөлт → нөхцөл …',
+    time: 'O(n)', space: 'O(1)', hint: 'Дарааллыг анхаар: ① → ② → ③ → ④ → ②',
+    inputs: [{ key: 'n', label: 'n', type: 'int', def: 5 }],
+    random: function () { return { n: rint(2, 7) }; },
+    validate: function (p) { if (!(p.n >= 0 && p.n <= 8)) return 'n нь 0–8.'; },
+    info: function (p) { return [['n', p.n]]; },
+    code: [
+      'int n = 5, s = 0;',
+      'for (int i = 1; i <= n; i++) {',
+      '    s += i;',
+      '    cout << i << " ";',
+      '}',
+      'cout << "\\ns = " << s;',
+    ],
+    run: function (p) {
+      var n = p.n, s, i, out = '', fr = [], iter = 0, conds = 0, V = varsTracker();
+      function f(line, msg, tone, step, o) {
+        o = o || {};
+        fr.push({
+          line: line, msg: msg, tone: tone,
+          phase: step ? { kind: 'for', step: step, iter: iter, parts: FOR_PARTS, ok: o.ok } : null,
+          vars: V({ n: n, s: s, i: i }), out: out,
+          stats: [['Давталт', iter], ['Нөхцөл шалгасан', conds]], balloon: o.balloon || null,
+        });
+      }
+      s = 0;
+      f(1, 'n = ' + n + ', s = 0', 'info');
+      i = 1;
+      f(2, '① Эхлэл: int i = 1 — зөвхөн НЭГ удаа', 'move', 'init');
+      for (;;) {
+        conds++;
+        var ok = i <= n;
+        f(2, '② Нөхцөл: ' + i + ' <= ' + n + '? ' + (ok ? 'тийм → биеийг ажиллуулна' : 'үгүй → давталт дуусна'), ok ? 'check' : 'bad', 'cond', { ok: ok });
+        if (!ok) break;
+        iter++;
+        s += i;
+        f(3, '③ Бие: s += ' + i + ' → s = ' + s, 'move', 'body');
+        out += i + ' ';
+        f(4, '③ Бие: ' + i + '-г хэвлэнэ', 'move', 'body');
+        i++;
+        f(2, '④ Өөрчлөлт: i++ → i = ' + i + ', дараа нь ② руу буцна', 'step', 'update');
+      }
+      var last = i;
+      i = undefined;
+      out += '\ns = ' + s;
+      f(6, 's = ' + s + ' хэвлэлээ', 'ok', 'exit', {
+        balloon: { title: 'Давталт ' + iter + ' удаа ажиллалаа', text: 'Нөхцөлийг ' + conds + ' удаа шалгасан — сүүлд i = ' + last + ' үед худал болсон. i нь for-ийн дотор л амьдардаг тул одоо байхгүй.' },
+      });
+      return fr;
+    },
+  };
+
+  var whileLoop = {
+    group: 'basics', title: 'while loop', mn: 'while давталт', tagline: 'Нөхцөл үнэн л бол давтана.',
+    time: 'O(цифрийн тоо)', space: 'O(1)', hint: 'Хэдэн удаа давтахыг урьдчилан мэдэхгүй',
+    inputs: [{ key: 'n', label: 'n', type: 'int', def: 4721 }],
+    random: function () { return { n: rint(10, 99999) }; },
+    validate: function (p) { if (!(p.n >= 0 && p.n <= 999999999)) return 'n нь 0–999999999.'; },
+    info: function (p) { return [['n', p.n]]; },
+    code: [
+      'int n = 4721, s = 0;',
+      'while (n > 0) {',
+      '    s += n % 10;',
+      '    n /= 10;',
+      '}',
+      'cout << s;',
+    ],
+    run: function (p) {
+      var n = p.n, s = 0, out = '', fr = [], iter = 0, conds = 0, V = varsTracker();
+      function f(line, msg, tone, step, o) {
+        o = o || {};
+        fr.push({
+          line: line, msg: msg, tone: tone,
+          phase: step ? { kind: 'while', step: step, iter: iter, parts: { cond: 'n > 0' }, ok: o.ok } : null,
+          vars: V({ n: n, s: s }), out: out,
+          stats: [['Давталт', iter], ['Нөхцөл шалгасан', conds]], balloon: o.balloon || null,
+        });
+      }
+      f(1, 'n = ' + n + ', s = 0', 'info');
+      for (;;) {
+        conds++;
+        var ok = n > 0;
+        f(2, 'Нөхцөл: ' + n + ' > 0? ' + (ok ? 'тийм' : 'үгүй → давталт дуусна'), ok ? 'check' : 'bad', 'cond', { ok: ok });
+        if (!ok) break;
+        iter++;
+        var d = n % 10;
+        s += d;
+        f(3, 's += ' + n + ' % 10 = ' + d + ' → s = ' + s, 'move', 'body');
+        n = Math.floor(n / 10);
+        f(4, 'n /= 10 → n = ' + n + ' (сүүлийн цифр хасагдлаа)', 'move', 'body');
+      }
+      out = String(s);
+      f(6, 'cout << ' + s, 'ok', 'exit', {
+        balloon: { title: 'Цифрүүдийн нийлбэр = ' + s, text: 'Давталт ' + iter + ' удаа ажилласан. n-ийг өөрчлөхөө мартвал нөхцөл үргэлж үнэн → хязгааргүй давталт!' },
+      });
+      return fr;
+    },
+  };
+
+  var nestedLoops = {
+    group: 'basics', title: 'Nested loops', mn: 'Давхар давталт', tagline: 'Гадаад нэг алхам — дотоод бүтэн тойрог.',
+    time: 'O(n²)', space: 'O(1)', hint: 'j нь i бүрт 1-ээс дахин эхэлнэ',
+    inputs: [{ key: 'n', label: 'n', type: 'int', def: 4 }],
+    random: function () { return { n: rint(2, 5) }; },
+    validate: function (p) { if (!(p.n >= 1 && p.n <= 5)) return 'n нь 1–5.'; },
+    info: function (p) { return [['n', p.n]]; },
+    code: [
+      'for (int i = 1; i <= n; i++) {',
+      '    for (int j = 1; j <= i; j++) {',
+      '        cout << "*";',
+      '    }',
+      '    cout << "\\n";',
+      '}',
+    ],
+    run: function (p) {
+      var n = p.n, i, j, out = '', fr = [], inner = 0, V = varsTracker();
+      var OUT = { label: 'Гадаад давталт (i)', init: 'int i = 1', cond: 'i <= n', update: 'i++' };
+      var IN = { label: 'Дотоод давталт (j)', init: 'int j = 1', cond: 'j <= i', update: 'j++' };
+      function f(line, msg, tone, loop, step, o) {
+        o = o || {};
+        fr.push({
+          line: line, msg: msg, tone: tone,
+          phase: step ? { kind: 'for', step: step, iter: loop === IN ? j : i, parts: loop, label: loop.label, inner: loop === IN, ok: o.ok } : null,
+          vars: V({ n: n, i: i, j: j }), out: out,
+          stats: [['Мөр', i == null ? 0 : Math.min(i, n)], ['Нийт *', inner]], balloon: o.balloon || null,
+        });
+      }
+      i = 1;
+      f(1, 'Гадаад: int i = 1', 'move', OUT, 'init');
+      for (;;) {
+        var ok = i <= n;
+        f(1, 'Гадаад нөхцөл: ' + i + ' <= ' + n + '? ' + (ok ? 'тийм' : 'үгүй → бүгд дууслаа'), ok ? 'check' : 'bad', OUT, 'cond', { ok: ok });
+        if (!ok) break;
+        j = 1;
+        f(2, 'Дотоод: int j = 1 — i бүрт ДАХИН 1-ээс эхэлнэ', 'move', IN, 'init');
+        for (;;) {
+          var ok2 = j <= i;
+          f(2, 'Дотоод нөхцөл: ' + j + ' <= ' + i + '? ' + (ok2 ? 'тийм' : 'үгүй → дотоод давталт дууслаа'), ok2 ? 'check' : 'bad', IN, 'cond', { ok: ok2 });
+          if (!ok2) break;
+          out += '*'; inner++;
+          f(3, '* хэвлэнэ (i = ' + i + ', j = ' + j + ')', 'move', IN, 'body');
+          j++;
+          f(2, 'j++ → j = ' + j, 'step', IN, 'update');
+        }
+        j = undefined;
+        out += '\n';
+        f(5, 'Мөр шилжинэ — ' + i + '-р мөр ' + i + ' одтой', 'move', OUT, 'body');
+        i++;
+        f(1, 'Гадаад: i++ → i = ' + i, 'step', OUT, 'update');
+      }
+      i = undefined;
+      f(6, 'Дууслаа', 'ok', null, null, { balloon: { title: 'Дотоод давталт нийт ' + inner + ' удаа', text: '1 + 2 + … + ' + n + ' = ' + inner + '. Давхар давталт ихэвчлэн O(n²) хугацаа зарцуулна.' } });
+      return fr;
+    },
+  };
+
+  var breakContinue = {
+    group: 'basics', title: 'break & continue', mn: 'break ба continue', tagline: 'continue — алгас, break — бүр гар.',
+    time: 'O(n)', space: 'O(1)', hint: 'continue → i++ руу, break → давталтаас гадна',
+    inputs: [{ key: 'n', label: 'n', type: 'int', def: 10 }, { key: 'k', label: 'k', type: 'int', def: 7 }],
+    random: function () { var n = rint(6, 12); return { n: n, k: rint(2, n) }; },
+    validate: function (p) { if (!(p.n >= 1 && p.n <= 12)) return 'n нь 1–12.'; if (!(p.k >= 0 && p.k <= 20)) return 'k нь 0–20.'; },
+    info: function (p) { return [['n', p.n], ['k', p.k]]; },
+    code: [
+      'for (int i = 1; i <= n; i++) {',
+      '    if (i % 2 == 0) continue;',
+      '    if (i > k) break;',
+      '    cout << i << " ";',
+      '}',
+      'cout << "\\nДууслаа";',
+    ],
+    run: function (p) {
+      var n = p.n, k = p.k, i, out = '', fr = [], nCont = 0, nBreak = 0, iter = 0, V = varsTracker();
+      var PARTS = { init: 'int i = 1', cond: 'i <= n', update: 'i++' };
+      function f(line, msg, tone, step, o) {
+        o = o || {};
+        fr.push({
+          line: line, msg: msg, tone: tone,
+          phase: step ? { kind: 'for', step: step, iter: iter, parts: PARTS, ok: o.ok, jump: o.jump } : null,
+          vars: V({ n: n, k: k, i: i }), out: out,
+          stats: [['continue', nCont], ['break', nBreak]], balloon: o.balloon || null,
+        });
+      }
+      i = 1;
+      f(1, '① Эхлэл: i = 1', 'move', 'init');
+      var broke = false;
+      for (;;) {
+        var ok = i <= n;
+        f(1, '② Нөхцөл: ' + i + ' <= ' + n + '? ' + (ok ? 'тийм' : 'үгүй → давталт дуусна'), ok ? 'check' : 'bad', 'cond', { ok: ok });
+        if (!ok) break;
+        iter++;
+        if (i % 2 === 0) {
+          nCont++;
+          f(2, i + ' тэгш → continue: доорх мөрүүдийг алгасаад ④ i++ руу', 'move', 'body', { jump: 'continue' });
+        } else {
+          f(2, i + ' % 2 == 0? үгүй', 'check', 'body');
+          if (i > k) {
+            nBreak++; broke = true;
+            f(3, i + ' > ' + k + ' → break: давталтаас БҮР гарна (i++ ч хийгдэхгүй)', 'bad', 'body', { jump: 'break' });
+            break;
+          }
+          f(3, i + ' > ' + k + '? үгүй', 'check', 'body');
+          out += i + ' ';
+          f(4, i + '-г хэвлэнэ', 'move', 'body');
+        }
+        i++;
+        f(1, '④ Өөрчлөлт: i++ → i = ' + i, 'step', 'update');
+      }
+      var last = i;
+      i = undefined;
+      out += '\nДууслаа';
+      f(6, 'Давталтын дараах мөр', 'ok', 'exit', {
+        balloon: { title: 'continue ' + nCont + ' удаа · break ' + nBreak + ' удаа', text: broke ? 'i = ' + last + ' үед break хийж эрт гарсан.' : 'break ажиллаагүй — нөхцөл худал болж дууссан.' },
+      });
+      return fr;
+    },
+  };
+
+  /** Дуудлагын стек: [{ label, vars, note, st }] — st: active | wait | ret */
+  var calls = function (stack) { return stack.map(function (e) { return { label: e.label, vars: e.vars, note: e.note || '', st: e.st }; }); };
+  function markTop(stack) { stack.forEach(function (e, i) { e.st = i === stack.length - 1 ? 'active' : 'wait'; }); }
+
+  var factorial = {
+    group: 'basics', title: 'Recursion: factorial', mn: 'Рекурс: факториал', tagline: 'Доош дуудаж, дээш буцна.',
+    time: 'O(n)', space: 'O(n)', hint: 'Дуудлагын стек',
+    inputs: [{ key: 'n', label: 'n', type: 'int', def: 4 }],
+    random: function () { return { n: rint(2, 6) }; },
+    validate: function (p) { if (!(p.n >= 0 && p.n <= 7)) return 'n нь 0–7.'; },
+    info: function (p) { return [['n', p.n]]; },
+    code: [
+      'int fact(int n) {',
+      '    if (n == 0)',
+      '        return 1;',
+      '    return n * fact(n - 1);',
+      '}',
+    ],
+    run: function (p) {
+      var fr = [], stack = [], maxDepth = 0, nCalls = 0;
+      function f(line, msg, tone, o) {
+        o = o || {};
+        fr.push({
+          line: line, msg: msg, tone: tone,
+          calls: calls(stack), dir: o.dir || null,
+          stats: [['Дуудлага', nCalls], ['Стекийн гүн', stack.length]], balloon: o.balloon || null,
+        });
+      }
+      function go(n) {
+        var me = { label: 'fact(' + n + ')', vars: 'n = ' + n, note: '' };
+        stack.push(me); markTop(stack); nCalls++;
+        maxDepth = Math.max(maxDepth, stack.length);
+        f(1, 'fact(' + n + ') дуудагдлаа — стект шинэ давхар нэмэгдлээ', 'step', { dir: 'down' });
+        if (n === 0) {
+          f(2, 'n == 0? тийм — суурь тохиолдол, цааш дуудахгүй', 'check', { dir: 'down' });
+          me.note = 'return 1';
+          f(3, 'return 1 — буцаж эхэлнэ', 'ok', { dir: 'up' });
+          stack.pop(); markTop(stack);
+          return 1;
+        }
+        f(2, 'n == 0? үгүй', 'check', { dir: 'down' });
+        me.note = n + ' × fact(' + (n - 1) + ') = ?';
+        f(4, n + ' × fact(' + (n - 1) + ') — эхлээд fact(' + (n - 1) + ')-г бодох хэрэгтэй, энэ дуудлага ХҮЛЭЭНЭ', 'move', { dir: 'down' });
+        var r = go(n - 1);
+        me.note = n + ' × ' + r + ' = ' + n * r;
+        f(4, 'fact(' + (n - 1) + ') = ' + r + ' буцаж ирлээ → ' + n + ' × ' + r + ' = ' + n * r, 'ok', { dir: 'up' });
+        stack.pop(); markTop(stack);
+        return n * r;
+      }
+      f(1, 'fact(' + p.n + ')-г дуудна', 'info');
+      var res = go(p.n);
+      f(5, 'fact(' + p.n + ') = ' + res, 'ok', {
+        balloon: { title: 'fact(' + p.n + ') = ' + res, text: 'Стек ' + maxDepth + ' давхар хүртэл өсөөд буцаж хоосорлоо. Суурь тохиолдол (n == 0) байхгүй бол хэзээ ч зогсохгүй — stack overflow!' },
+      });
+      return fr;
+    },
+  };
+
+  var recursionOrder = {
+    group: 'basics', title: 'Recursion: print order', mn: 'Рекурс: хэвлэх дараалал', tagline: 'Дуудахаас өмнө ба буцсаны дараа.',
+    time: 'O(n)', space: 'O(n)', hint: 'Өмнөх cout — буурна, дараах cout — өснө',
+    inputs: [{ key: 'n', label: 'n', type: 'int', def: 3 }],
+    random: function () { return { n: rint(2, 5) }; },
+    validate: function (p) { if (!(p.n >= 1 && p.n <= 5)) return 'n нь 1–5.'; },
+    info: function (p) { return [['n', p.n]]; },
+    code: [
+      'void f(int n) {',
+      '    if (n == 0) return;',
+      '    cout << n << " ";   // дуудахаас ӨМНӨ',
+      '    f(n - 1);',
+      '    cout << n << " ";   // буцсаны ДАРАА',
+      '}',
+    ],
+    run: function (p) {
+      var fr = [], stack = [], out = '', nCalls = 0;
+      function f(line, msg, tone, o) {
+        o = o || {};
+        fr.push({ line: line, msg: msg, tone: tone, calls: calls(stack), dir: o.dir || null, out: out, stats: [['Дуудлага', nCalls], ['Стекийн гүн', stack.length]], balloon: o.balloon || null });
+      }
+      function go(n) {
+        var me = { label: 'f(' + n + ')', vars: 'n = ' + n, note: '' };
+        stack.push(me); markTop(stack); nCalls++;
+        f(1, 'f(' + n + ') дуудагдлаа', 'step', { dir: 'down' });
+        if (n === 0) {
+          me.note = 'return';
+          f(2, 'n == 0 → return, буцаж эхэлнэ', 'ok', { dir: 'up' });
+          stack.pop(); markTop(stack);
+          return;
+        }
+        f(2, 'n == 0? үгүй', 'check', { dir: 'down' });
+        out += n + ' ';
+        me.note = 'өмнө: ' + n + ' хэвлэв';
+        f(3, 'ӨМНӨ: ' + n + ' хэвлэнэ (доошоо явах замдаа)', 'move', { dir: 'down' });
+        me.note = 'f(' + (n - 1) + ')-г хүлээж байна';
+        f(4, 'f(' + (n - 1) + ') дуудна — энэ мөрөнд зогсож хүлээнэ', 'move', { dir: 'down' });
+        go(n - 1);
+        out += n + ' ';
+        me.note = 'дараа: ' + n + ' хэвлэв';
+        f(5, 'ДАРАА: ' + n + ' хэвлэнэ (буцах замдаа)', 'move', { dir: 'up' });
+        stack.pop(); markTop(stack);
+      }
+      f(1, 'f(' + p.n + ')-г дуудна', 'info');
+      go(p.n);
+      f(6, 'Гаралт: ' + out.trim(), 'ok', { balloon: { title: 'Гаралт: ' + out.trim(), text: 'Дуудахаас ӨМНӨХ cout буурах дарааллаар, буцсаны ДАРААХ cout өсөх дарааллаар хэвлэгдлээ.' } });
+      return fr;
+    },
+  };
+
+  var recursiveSum = {
+    group: 'basics', title: 'Recursion: array sum', mn: 'Рекурс: массивын нийлбэр', tagline: 'Эхний нь + үлдсэний нийлбэр.',
+    time: 'O(n)', space: 'O(n)', hint: 'sum(i) = a[i] + sum(i + 1)',
+    inputs: [{ key: 'array', label: 'Массив', type: 'list', def: [3, 1, 4, 1, 5] }],
+    random: function () { return { array: randArr(rint(3, 6), 1, 9) }; },
+    validate: function (p) { if (p.array.length > 7) return 'Хамгийн ихдээ 7 элемент.'; },
+    code: [
+      'int sum(int a[], int i, int n) {',
+      '    if (i == n)',
+      '        return 0;',
+      '    return a[i] + sum(a, i + 1, n);',
+      '}',
+    ],
+    run: function (p) {
+      var a = p.array, n = a.length, fr = [], stack = [], nCalls = 0, cur = null;
+      function f(line, msg, tone, o) {
+        o = o || {};
+        var cls = {};
+        for (var k = 0; k < n; k++) if (cur != null && k < cur) cls[k] = 'dim';
+        if (cur != null && cur < n) cls[cur] = o.c || 'mid';
+        fr.push({
+          line: line, msg: msg, tone: tone,
+          rows: [row(a, { cls: cls, bottom: cur != null && cur < n ? { i: cur } : {} })],
+          calls: calls(stack), dir: o.dir || null,
+          stats: [['Дуудлага', nCalls], ['Стекийн гүн', stack.length]], balloon: o.balloon || null,
+        });
+      }
+      function go(i) {
+        var me = { label: 'sum(' + i + ')', vars: 'i = ' + i, note: '' };
+        stack.push(me); markTop(stack); nCalls++; cur = i;
+        f(1, 'sum(a, ' + i + ', ' + n + ') дуудагдлаа', 'step', { dir: 'down' });
+        if (i === n) {
+          f(2, 'i == n → массив дууслаа', 'check', { dir: 'down' });
+          me.note = 'return 0';
+          f(3, 'return 0', 'ok', { dir: 'up' });
+          stack.pop(); markTop(stack);
+          return 0;
+        }
+        f(2, i + ' == ' + n + '? үгүй', 'check', { dir: 'down' });
+        me.note = a[i] + ' + sum(' + (i + 1) + ') = ?';
+        f(4, 'a[' + i + '] = ' + a[i] + ' + sum(' + (i + 1) + ') — үлдсэнийг нь бодуулна', 'move', { dir: 'down' });
+        var r = go(i + 1);
+        cur = i;
+        me.note = a[i] + ' + ' + r + ' = ' + (a[i] + r);
+        f(4, 'sum(' + (i + 1) + ') = ' + r + ' → ' + a[i] + ' + ' + r + ' = ' + (a[i] + r), 'ok', { dir: 'up', c: 'found' });
+        stack.pop(); markTop(stack);
+        return a[i] + r;
+      }
+      f(1, 'sum(a, 0, ' + n + ')', 'info');
+      var res = go(0);
+      cur = null;
+      f(5, 'Нийлбэр = ' + res, 'ok', { balloon: { title: 'Нийлбэр = ' + res, text: n + 1 + ' дуудлага. Давталтгүйгээр «эхний элемент + үлдсэний нийлбэр» гэж бодлоо.' } });
+      return fr;
+    },
+  };
+
   var ALGOS = {
+    'for-loop': forLoop, 'while-loop': whileLoop, 'nested-loops': nestedLoops, 'break-continue': breakContinue,
+    factorial: factorial, 'recursion-order': recursionOrder, 'recursive-sum': recursiveSum,
     'binary-search': binary, 'linear-search': linear,
     'bubble-sort': bubble, 'selection-sort': selection, 'insertion-sort': insertion, 'merge-sort': merge, 'quick-sort': quick,
     'two-pointers': twoPointers, 'prefix-sum': prefix, 'sliding-window': sliding,

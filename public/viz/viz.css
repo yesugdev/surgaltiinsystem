@@ -152,6 +152,57 @@
 .vz-disk.d5 { background: linear-gradient(#d3b6ff, #7a3fd0); }
 .vz-disk.is-moving { transform: translateY(-4px); box-shadow: 0 0 0 3px #ffe58a; }
 
+/* ---- Давталтын алхам ---- */
+.vz-phase { padding: 8px 10px; background: #fff; border: 1px solid #cfcab6; border-radius: 6px; }
+.vz-phase.is-inner { border-color: #8650d8; box-shadow: inset 4px 0 0 #8650d8; }
+.vz-phase-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.85rem; }
+.vz-phase-title { font-weight: 700; color: #0b3aa5; }
+.vz-phase.is-inner .vz-phase-title { color: #6a35c0; }
+.vz-phase-iter { font-weight: 700; color: #c25a00; }
+.vz-phase-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.vz-chip { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 64px; padding: 5px 7px; border: 2px solid #d4d0c0; border-radius: 8px; background: #f6f4ec; color: #777; font-size: 0.78rem; transition: all 0.2s; }
+.vz-chip-no { font-weight: 800; font-size: 0.95rem; }
+.vz-chip-name { font-weight: 700; }
+.vz-chip-code { font-family: Consolas, monospace; font-size: 0.78rem; background: none; padding: 0; color: inherit; }
+.vz-chip.is-on { border-color: #e07400; background: linear-gradient(180deg, #fff3dc, #ffd9a0); color: #5a2d00; transform: translateY(-2px); box-shadow: 0 3px 8px rgba(224, 116, 0, 0.3); }
+.vz-chip.is-true { border-color: #2e9a2e; background: linear-gradient(180deg, #e6f7e3, #bfe8b8); color: #1d5a1d; }
+.vz-chip.is-false { border-color: #d6431f; background: linear-gradient(180deg, #ffe7df, #ffc2ad); color: #8a1d05; }
+.vz-chip-res { font-weight: 800; font-size: 0.75rem; }
+.vz-chip-res.is-jump { color: #c0261b; text-transform: uppercase; }
+.vz-chip-exit { min-width: 56px; }
+.vz-arrow { color: #999; font-weight: 700; }
+.vz-loopback { color: #3c6fd8; font-weight: 700; font-size: 0.78rem; margin-right: 6px; }
+
+/* ---- Хувьсагч, гаралт, стек ---- */
+.vz-panels { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.vz-panel { flex: 1 1 180px; min-width: 0; padding: 8px 10px; background: #fff; border: 1px solid #cfcab6; border-radius: 6px; }
+.vz-panel-title { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: #555; margin-bottom: 6px; }
+.vz-vars-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.vz-var { display: flex; flex-direction: column; align-items: center; min-width: 56px; border: 2px solid #b9b5a2; border-radius: 8px; overflow: hidden; background: #fff; transition: all 0.2s; }
+.vz-var-name { width: 100%; text-align: center; font: 700 0.78rem Consolas, monospace; color: #fff; background: #5a6c8f; padding: 2px 6px; }
+.vz-var-val { font: 800 1.2rem Consolas, monospace; padding: 4px 8px; color: #111; }
+.vz-var.is-changed { border-color: #e07400; animation: vz-flash 0.6s ease-out; }
+.vz-var.is-changed .vz-var-name { background: #e07400; }
+@keyframes vz-flash { from { background: #ffe58a; transform: scale(1.08); } to { background: #fff; transform: none; } }
+.vz-console { background: #0c0c0c; border-color: #333; }
+.vz-console .vz-panel-title { color: #bbb; }
+.vz-console-out { margin: 0; min-height: 44px; max-height: 150px; overflow: auto; color: #e8e8e8; font: 0.95rem/1.35 Consolas, 'Courier New', monospace; white-space: pre-wrap; background: none; border: 0; padding: 0; }
+.vz-cursor { color: #c0c0c0; animation: vz-blink 1s steps(1) infinite; }
+@keyframes vz-blink { 50% { opacity: 0; } }
+.vz-dir { font-size: 0.75rem; padding: 1px 6px; border-radius: 10px; }
+.vz-dir.down { background: #e3edff; color: #0b3aa5; }
+.vz-dir.up { background: #dcf3d8; color: #1d6a1d; }
+.vz-stack { display: flex; flex-direction: column; gap: 4px; }
+.vz-sframe { border: 2px solid #b9b5a2; border-radius: 6px; padding: 4px 8px; background: #f6f4ec; font-size: 0.85rem; }
+.vz-sframe-top { display: flex; align-items: center; gap: 8px; }
+.vz-sframe-top b { font-family: Consolas, monospace; }
+.vz-sframe-vars { color: #666; font-family: Consolas, monospace; font-size: 0.8rem; }
+.vz-sframe-tag { margin-left: auto; font-size: 0.7rem; font-weight: 700; color: #fff; background: #e07400; border-radius: 8px; padding: 0 6px; }
+.vz-sframe-note { font-family: Consolas, monospace; font-size: 0.82rem; color: #0b3aa5; margin-top: 1px; }
+.vz-sframe.active { border-color: #e07400; background: linear-gradient(180deg, #fff3dc, #ffe2b8); animation: vz-push 0.25s ease-out; }
+.vz-sframe.wait { border-color: #8fa9de; background: #eef3ff; opacity: 0.9; }
+@keyframes vz-push { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
 /* ---- Код ---- */
 .viz-code-body { position: relative; padding: 8px; }
 .viz-msg { display: flex; align-items: center; gap: 8px; padding: 7px 10px; margin-bottom: 8px; background: #fff; border: 1px solid #7f9db9; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-weight: 700; font-size: 0.95rem; min-height: 36px; }
@@ -207,6 +258,16 @@
 .viz-card-mn { font-weight: 700; font-size: 0.85rem; }
 .viz-card-tag { color: #6a5a20; font-size: 0.82rem; font-style: italic; }
 .viz-card-meta { color: #555; font-size: 0.8rem; margin-top: 4px; }
+
+/* Компьютер: Array Viewer ба Code Viewer зэрэгцээ */
+@media (min-width: 1000px) {
+  .xp-desktop.viz-wide { max-width: 1280px; }
+  .viz-main { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .viz-main .xp-win { margin-bottom: 14px; }
+  .viz-code-win { position: sticky; top: 12px; }
+  .viz-wide .viz-code { max-height: 520px; }
+  .viz-wide .viz-stage { min-height: 260px; justify-content: center; }
+}
 
 @media (max-width: 560px) {
   .xp-desktop { padding: 14px 10px 0; border-radius: 0; margin: 0 -16px 16px; }
