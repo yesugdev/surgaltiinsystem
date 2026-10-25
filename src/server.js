@@ -104,6 +104,7 @@ async function main() {
   app.use('/files', require('./routes/files'));
   app.use('/cp', require('./routes/cp'));
   app.use('/basics', require('./routes/basics'));
+  app.use('/viz', require('./routes/viz'));
   app.use('/coding/manage', require('./routes/coding-manage'));
   app.use('/coding/contests', require('./routes/contests')); // /coding/:id-ээс өмнө
   app.use('/coding', require('./routes/coding'));

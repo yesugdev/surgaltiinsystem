@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/viz/viz.css">
+<div class="xp-desktop" id="viz" data-key="<%= key %>">
+  <a href="/viz" class="viz-back">← Бүх алгоритм</a>
+  <header class="viz-hero">
+    <div class="viz-brand">YeSuvd.exe</div>
+    <h1 class="viz-title"><%= algo.title %> <sup>C++</sup></h1>
+    <p class="viz-tagline"><%= algo.tagline %></p>
+  </header>
+
+  <div class="viz-info" id="viz-info">
+    <div class="viz-info-cell"><span class="viz-info-k">Time</span><span class="viz-info-v"><%= algo.time %></span></div>
+    <div class="viz-info-cell"><span class="viz-info-k">Space</span><span class="viz-info-v"><%= algo.space %></span></div>
+    <div class="viz-info-cell"><span class="viz-info-k">Language</span><span class="viz-info-v">C++</span></div>
+  </div>
+
+  <section class="xp-win">
+    <div class="xp-titlebar"><span class="xp-title"><span class="xp-ico green"></span>Array Viewer · <%= algo.mn %></span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
+    <div class="xp-body">
+      <form class="viz-form" id="viz-form" autocomplete="off">
+        <% inputs.forEach(function (inp) { %>
+          <label class="viz-field viz-field-<%= inp.type %>"><span><%= inp.label %></span>
+            <% if (inp.type === 'select') { %>
+              <select name="<%= inp.key %>"><% inp.options.forEach(function (o) { %><option value="<%= o[0] %>"><%= o[1] %></option><% }) %></select>
+            <% } else { %>
+              <input name="<%= inp.key %>" <%= inp.type === 'int' ? 'inputmode=numeric' : '' %> spellcheck="false">
+            <% } %>
+          </label>
+        <% }) %>
+        <button class="xp-btn" type="submit">▶ Ажиллуулах</button>
+        <button class="xp-btn" type="button" id="viz-random" title="Санамсаргүй өгөгдөл">🎲</button>
+        <span class="viz-error" id="viz-error" role="alert"></span>
+      </form>
+      <div class="viz-stage" id="viz-stage" aria-live="polite"></div>
+      <div class="viz-controls">
+        <button class="xp-btn" type="button" id="viz-reset" title="Эхнээс (Home)">⏮</button>
+        <button class="xp-btn" type="button" id="viz-prev" title="Өмнөх алхам (←)">◀</button>
+        <button class="xp-btn xp-btn-play" type="button" id="viz-play">▶</button>
+        <button class="xp-btn" type="button" id="viz-next" title="Дараах алхам (→)">▶|</button>
+        <button class="xp-btn" type="button" id="viz-end" title="Төгсгөл (End)">⏭</button>
+        <input type="range" id="viz-progress" min="0" max="0" value="0" aria-label="Алхам">
+        <span class="viz-frame" id="viz-frame">0 / 0</span>
+        <select id="viz-speed" aria-label="Хурд">
+          <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="xp-win viz-code-win">
+    <div class="xp-titlebar"><span class="xp-title"><span class="xp-ico yellow"></span><%= key.replace(/-/g, '_') %>.cpp · Code Viewer</span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
+    <div class="xp-menubar" aria-hidden="true"><span>File</span><span>Edit</span><span>View</span><span>Build</span><span>Help</span></div>
+    <div class="xp-body viz-code-body">
+      <div class="viz-msg tone-info" id="viz-msg"><span class="viz-msg-dot"></span><span class="viz-msg-text"></span></div>
+      <div class="viz-code" id="viz-code"></div>
+      <div class="viz-status" id="viz-status"></div>
+      <div class="viz-balloon" id="viz-balloon" role="status" hidden>
+        <span class="viz-balloon-icon">i</span>
+        <div><strong class="viz-balloon-title"></strong><div class="viz-balloon-text"></div></div>
+        <button type="button" class="viz-balloon-close" aria-label="Хаах">✕</button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="viz-nav">
+    <% if (prev) { %><a class="xp-btn" href="/viz/<%= prev.key %>">← <%= prev.title %></a><% } else { %><span></span><% } %>
+    <% if (next) { %><a class="xp-btn" href="/viz/<%= next.key %>"><%= next.title %> →</a><% } %>
+  </nav>
+
+  <div class="xp-taskbar"><span class="xp-start">▶ <%= key.split('-')[0] %></span><span class="xp-tray"><span class="xp-tray-dot"></span><span id="viz-clock">0:00</span></span></div>
+  <p class="viz-keys small">Товчлуур: <kbd>Space</kbd> тоглуулах/зогсоох · <kbd>←</kbd> <kbd>→</kbd> алхам · <kbd>Home</kbd> эхлэл</p>
+</div>
+<%- include('../partials/footer', { scripts: ['/viz/algos.js', '/viz/player.js'] }) %>

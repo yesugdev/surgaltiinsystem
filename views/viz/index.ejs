@@ -1,0 +1,28 @@
+<%- include('../partials/header', { bodyClass: 'viz-body' }) %>
+<link rel="stylesheet" href="/viz/viz.css">
+<div class="xp-desktop viz-home">
+  <header class="viz-hero">
+    <div class="viz-brand">YeSuvd.exe</div>
+    <h1 class="viz-title">Алгоритм <sup>C++</sup></h1>
+    <p class="viz-tagline">Алхам алхмаар нүдээрээ хар.</p>
+  </header>
+
+  <% groups.forEach(function (g) { %>
+    <section class="xp-win viz-group">
+      <div class="xp-titlebar"><span class="xp-title"><%= g.title %></span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
+      <div class="xp-body viz-cards">
+        <% g.algos.forEach(function (a) { %>
+          <a class="viz-card" href="/viz/<%= a.key %>">
+            <span class="viz-card-title"><%= a.title %></span>
+            <span class="viz-card-mn"><%= a.mn %></span>
+            <span class="viz-card-tag"><%= a.tagline %></span>
+            <span class="viz-card-meta"><b><%= a.time %></b> · <%= a.space %></span>
+          </a>
+        <% }) %>
+      </div>
+    </section>
+  <% }) %>
+
+  <div class="xp-taskbar"><span class="xp-start">▶ algorithms</span><span class="xp-tray"><span class="xp-tray-dot"></span><%= groups.reduce(function (s, g) { return s + g.algos.length; }, 0) %></span></div>
+</div>
+<%- include('../partials/footer') %>
