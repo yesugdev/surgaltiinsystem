@@ -13,6 +13,7 @@
     { key: 'sort', title: '📊 Эрэмбэлэлт' },
     { key: 'pointers', title: '👉 Two pointers · Prefix sum' },
     { key: 'graph', title: '🕸 Граф ба рекурс' },
+    { key: 'tree', title: '🌳 Мод (tree)' },
   ];
 
   // ---------- туслах ----------
@@ -1287,6 +1288,332 @@
     },
   };
 
+  // =====================================================================
+  // 🌳 МОД (binary tree, BST)
+  // =====================================================================
+  /** Тоонуудыг дарааллаар нь BST-д оруулж модыг байгуулна. x = inorder дугаар (давхцахгүй байрлал) */
+  function buildBST(vals) {
+    var nodes = [];
+    vals.forEach(function (v) {
+      var id = nodes.length;
+      nodes.push({ id: id, val: v, left: null, right: null, parent: null, depth: 0 });
+      if (!id) return;
+      var cur = 0;
+      for (;;) {
+        var side = v < nodes[cur].val ? 'left' : 'right';
+        if (nodes[cur][side] == null) { nodes[cur][side] = id; nodes[id].parent = cur; nodes[id].depth = nodes[cur].depth + 1; break; }
+        cur = nodes[cur][side];
+      }
+    });
+    var k = 0;
+    (function walk(id) { if (id == null) return; walk(nodes[id].left); nodes[id].x = k++; walk(nodes[id].right); })(nodes.length ? 0 : null);
+    return nodes;
+  }
+  /** Модны кадр: cls {id: анги}, labels {id: бичиг}, hidden {id: true} */
+  function treeView(nodes, o) {
+    o = o || {};
+    return {
+      nodes: nodes.map(function (x) { return { id: x.id, val: x.val, x: x.x, depth: x.depth, parent: x.parent }; }),
+      count: nodes.length,
+      depth: nodes.reduce(function (m, x) { return Math.max(m, x.depth); }, 0),
+      cls: Object.assign({}, o.cls), labels: Object.assign({}, o.labels), hidden: Object.assign({}, o.hidden), path: Object.assign({}, o.path),
+    };
+  }
+  var TREE_DEF = [50, 30, 70, 20, 40, 60, 80, 35, 65];
+  var treeInput = { key: 'array', label: 'Утгууд (оруулах дарааллаар)', type: 'list', def: TREE_DEF };
+  function treeRandom() {
+    var n = rint(6, 10), s = {};
+    while (Object.keys(s).length < n) s[rint(1, 99)] = 1;
+    var a = Object.keys(s).map(Number);
+    for (var i = a.length - 1; i > 0; i--) { var j = rint(0, i), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return { array: a };
+  }
+  function treeValidate(p) {
+    if (p.array.length < 1) return 'Дор хаяж нэг утга.';
+    if (new Set(p.array).size !== p.array.length) return 'Давхардсан утга байна — BST-д утга бүр нэг удаа.';
+  }
+
+  var TRAV = {
+    pre: { name: 'Preorder', rule: 'Эцэг → зүүн → баруун', visit: 3 },
+    in: { name: 'Inorder', rule: 'Зүүн → эцэг → баруун', visit: 4 },
+    post: { name: 'Postorder', rule: 'Зүүн → баруун → эцэг', visit: 5 },
+  };
+  var traversal = {
+    group: 'tree', title: 'Tree Traversal', mn: 'Мод тойрох', tagline: 'Хэзээ хэвлэх вэ — өмнө, дунд, дараа?',
+    time: 'O(n)', space: 'O(h)', hint: 'Рекурс: зүүн, баруун хүүхэд',
+    inputs: [treeInput, { key: 'order', label: 'Дараалал', type: 'select', def: 'in', options: [['pre', 'Preorder'], ['in', 'Inorder'], ['post', 'Postorder']] }],
+    random: function () { var r = treeRandom(); r.order = pick(['pre', 'in', 'post']); return r; },
+    validate: function (p) { if (!TRAV[p.order]) return 'Дараалал сонгоно уу.'; return treeValidate(p); },
+    info: function (p) { return [['Дараалал', TRAV[p.order].name]]; },
+    code: function (p) {
+      var visit = '    cout << v->val << " ";   // ' + TRAV[p.order].name.toLowerCase();
+      var body = p.order === 'pre' ? [visit, '    dfs(v->left);', '    dfs(v->right);']
+        : p.order === 'in' ? ['    dfs(v->left);', visit, '    dfs(v->right);']
+          : ['    dfs(v->left);', '    dfs(v->right);', visit];
+      return ['void dfs(Node* v) {', '    if (v == nullptr) return;'].concat(body, ['}']);
+    },
+    run: function (p) {
+      var nodes = buildBST(p.array), T = TRAV[p.order], fr = [], stack = [], out = '', done = {}, onStack = {};
+      var lineOf = function (what) {
+        if (what === 'visit') return T.visit;
+        var order = p.order === 'pre' ? ['visit', 'left', 'right'] : p.order === 'in' ? ['left', 'visit', 'right'] : ['left', 'right', 'visit'];
+        return 3 + order.indexOf(what);
+      };
+      function f(line, msg, tone, cur, o) {
+        o = o || {};
+        var cls = {};
+        Object.keys(onStack).forEach(function (id) { cls[id] = 'queued'; });
+        Object.keys(done).forEach(function (id) { cls[id] = 'done'; });
+        if (cur != null) cls[cur] = 'cur';
+        fr.push({ line: line, msg: msg, tone: tone, btree: treeView(nodes, { cls: cls }), calls: calls(stack), dir: o.dir || null, out: out, stats: [['Хэвлэсэн', Object.keys(done).length + ' / ' + nodes.length], ['Стекийн гүн', stack.length]], balloon: o.balloon || null });
+      }
+      function go(id, from) {
+        if (id == null) {
+          stack.push({ label: 'dfs(null)', vars: '', note: 'хоосон — буцна', st: 'active' }); markTop(stack);
+          f(2, 'nullptr → хүүхэдгүй, шууд буцна', 'check', from, { dir: 'up' });
+          stack.pop(); markTop(stack);
+          return;
+        }
+        var v = nodes[id];
+        stack.push({ label: 'dfs(' + v.val + ')', vars: '', note: '' }); markTop(stack); onStack[id] = 1;
+        f(1, 'dfs(' + v.val + ') дуудагдлаа', 'step', id, { dir: 'down' });
+        ['left', 'visit', 'right'].sort(function (a, b) { return lineOf(a) - lineOf(b); }).forEach(function (what) {
+          if (what === 'visit') {
+            out += v.val + ' '; done[id] = 1;
+            stack[stack.length - 1].note = v.val + ' хэвлэв';
+            f(lineOf('visit'), v.val + '-г хэвлэнэ (' + T.rule + ')', 'ok', id);
+          } else {
+            var child = v[what];
+            stack[stack.length - 1].note = (what === 'left' ? 'зүүн' : 'баруун') + ' тал руу';
+            f(lineOf(what), (what === 'left' ? 'Зүүн' : 'Баруун') + ' хүүхэд: ' + (child == null ? 'байхгүй' : nodes[child].val), 'move', id, { dir: 'down' });
+            go(child, id);
+          }
+        });
+        delete onStack[id];
+        f(6, 'dfs(' + v.val + ') дууслаа — эцэг рүүгээ буцна', 'step', id, { dir: 'up' });
+        stack.pop(); markTop(stack);
+      }
+      f(1, T.name + ': ' + T.rule, 'info', null);
+      go(nodes.length ? 0 : null, null);
+      f(6, 'Гаралт: ' + out.trim(), 'ok', null, { balloon: { title: T.name + ': ' + out.trim(), text: p.order === 'in' ? 'BST-ийн inorder үргэлж ӨСӨХ дарааллаар гардаг!' : T.rule + ' — хэвлэх мөрийн байрлал л өөр.' } });
+      return fr;
+    },
+  };
+
+  var bstSearch = {
+    group: 'tree', title: 'BST Search', mn: 'BST-ээс хайх', tagline: 'Бага бол зүүн, их бол баруун.',
+    time: 'O(h)', space: 'O(1)', hint: 'Зүүн < эцэг < баруун',
+    inputs: [treeInput, { key: 'target', label: 'Хайх', type: 'int', def: 65 }],
+    random: function () { var r = treeRandom(); r.target = Math.random() < 0.8 ? pick(r.array) : rint(1, 99); return r; },
+    validate: treeValidate,
+    info: function (p) { return [['Хайх', p.target]]; },
+    code: [
+      'Node* search(Node* v, int x) {',
+      '    while (v != nullptr) {',
+      '        if (x == v->val) return v;',
+      '        if (x < v->val) v = v->left;',
+      '        else v = v->right;',
+      '    }',
+      '    return nullptr;',
+      '}',
+    ],
+    run: function (p) {
+      var nodes = buildBST(p.array), x = p.target, fr = [], path = {}, cut = {}, steps = 0;
+      function subtree(id, into) { if (id == null) return; into[id] = 1; subtree(nodes[id].left, into); subtree(nodes[id].right, into); }
+      function f(line, msg, tone, cur, o) {
+        o = o || {};
+        var cls = {};
+        Object.keys(cut).forEach(function (id) { cls[id] = 'dim'; });
+        Object.keys(path).forEach(function (id) { cls[id] = 'queued'; });
+        if (cur != null) cls[cur] = o.c || 'cur';
+        fr.push({ line: line, msg: msg, tone: tone, btree: treeView(nodes, { cls: cls, path: path }), stats: [['Харьцуулалт', steps], ['Модны өндөр', Math.max.apply(null, nodes.map(function (n) { return n.depth; })) + 1]], balloon: o.balloon || null });
+      }
+      var v = 0;
+      f(1, 'x = ' + x + ', үндэснээс эхэлнэ', 'info', v);
+      while (v != null) {
+        f(2, nodes[v].val + ' — хоосон биш', 'step', v);
+        steps++;
+        if (x === nodes[v].val) {
+          f(3, x + ' == ' + nodes[v].val + ' → олдлоо!', 'ok', v, { c: 'done', balloon: { title: 'Олдлоо!', text: steps + ' харьцуулалт — ' + nodes.length + ' зангилаанаас зөвхөн нэг замаар явлаа.' } });
+          return fr;
+        }
+        path[v] = 1;
+        if (x < nodes[v].val) {
+          f(4, x + ' < ' + nodes[v].val + ' → зүүн тийш (баруун талыг бүхэлд нь хасна)', 'check', v);
+          subtree(nodes[v].right, cut);
+          v = nodes[v].left;
+        } else {
+          f(5, x + ' > ' + nodes[v].val + ' → баруун тийш (зүүн талыг бүхэлд нь хасна)', 'check', v);
+          subtree(nodes[v].left, cut);
+          v = nodes[v].right;
+        }
+      }
+      f(2, 'nullptr — цааш явах зам алга', 'bad', null);
+      f(7, 'return nullptr', 'bad', null, { balloon: { title: 'Олдсонгүй', text: x + ' модонд байхгүй. ' + steps + ' харьцуулалт хийлээ.' } });
+      return fr;
+    },
+  };
+
+  var bstInsert = {
+    group: 'tree', title: 'BST Insert', mn: 'BST-д оруулах', tagline: 'Хайгаад, хоосон байранд нь суулга.',
+    time: 'O(h)', space: 'O(h)', hint: 'Оруулах дараалал модны хэлбэрийг шийднэ',
+    inputs: [treeInput],
+    random: treeRandom, validate: treeValidate,
+    code: [
+      'Node* insert(Node* v, int x) {',
+      '    if (v == nullptr) return new Node(x);',
+      '    if (x < v->val) v->left = insert(v->left, x);',
+      '    else v->right = insert(v->right, x);',
+      '    return v;',
+      '}',
+    ],
+    run: function (p) {
+      var nodes = buildBST(p.array), fr = [], shown = {}, cmp = 0, queue = p.array.slice();
+      function f(line, msg, tone, o) {
+        o = o || {};
+        var hidden = {}, cls = {};
+        nodes.forEach(function (n) { if (!shown[n.id]) hidden[n.id] = 1; });
+        (o.path || []).forEach(function (id) { cls[id] = 'queued'; });
+        if (o.cur != null) cls[o.cur] = o.c || 'cur';
+        fr.push({
+          line: line, msg: msg, tone: tone, btree: treeView(nodes, { cls: cls, hidden: hidden }),
+          rows: [row(queue, { label: 'дараа', cls: { 0: 'mid' }, empty: 'дууслаа' })],
+          stats: [['Зангилаа', Object.keys(shown).length], ['Харьцуулалт', cmp]], balloon: o.balloon || null,
+        });
+      }
+      f(1, 'Хоосон модноос эхэлнэ', 'info');
+      nodes.forEach(function (n) {
+        var x = n.val, path = [], v = 0;
+        if (n.id === 0) {
+          f(2, 'Мод хоосон → ' + x + ' үндэс болно', 'ok');
+          shown[0] = 1; queue.shift();
+          f(2, 'new Node(' + x + ')', 'ok', { cur: 0, c: 'done' });
+          return;
+        }
+        f(1, 'insert(' + x + ')', 'step', { cur: 0 });
+        while (v !== n.id) {
+          cmp++;
+          var left = x < nodes[v].val;
+          f(left ? 3 : 4, x + (left ? ' < ' : ' ≥ ') + nodes[v].val + ' → ' + (left ? 'зүүн' : 'баруун') + ' тийш', 'check', { cur: v, path: path });
+          path.push(v);
+          v = left ? nodes[v].left : nodes[v].right;
+        }
+        shown[n.id] = 1; queue.shift();
+        f(2, 'Хоосон байр олдлоо → new Node(' + x + ')', 'ok', { cur: n.id, c: 'done', path: path });
+      });
+      var h = Math.max.apply(null, nodes.map(function (n) { return n.depth; })) + 1;
+      f(5, 'Бүгдийг орууллаа', 'ok', { balloon: { title: nodes.length + ' зангилаа, өндөр ' + h, text: 'Эрэмбэлэгдсэн дарааллаар оруулбал мод нэг шугам болж (өндөр = n) удаашрана — 🎲 дээр дарж янз бүрийн дараалал туршаарай.' } });
+      return fr;
+    },
+  };
+
+  var treeHeight = {
+    group: 'tree', title: 'Tree Height', mn: 'Модны өндөр', tagline: 'Хүүхдүүдээсээ асуугаад +1.',
+    time: 'O(n)', space: 'O(h)', hint: 'Доороос дээш (postorder)',
+    inputs: [treeInput],
+    random: treeRandom, validate: treeValidate,
+    code: [
+      'int height(Node* v) {',
+      '    if (v == nullptr) return 0;',
+      '    int l = height(v->left);',
+      '    int r = height(v->right);',
+      '    return max(l, r) + 1;',
+      '}',
+    ],
+    run: function (p) {
+      var nodes = buildBST(p.array), fr = [], stack = [], labels = {}, onStack = {}, done = {};
+      function f(line, msg, tone, cur, o) {
+        o = o || {};
+        var cls = {};
+        Object.keys(onStack).forEach(function (id) { cls[id] = 'queued'; });
+        Object.keys(done).forEach(function (id) { cls[id] = 'done'; });
+        if (cur != null) cls[cur] = 'cur';
+        fr.push({ line: line, msg: msg, tone: tone, btree: treeView(nodes, { cls: cls, labels: labels }), calls: calls(stack), dir: o.dir || null, stats: [['Бодсон', Object.keys(done).length + ' / ' + nodes.length], ['Стекийн гүн', stack.length]], balloon: o.balloon || null });
+      }
+      function go(id, from) {
+        if (id == null) {
+          stack.push({ label: 'height(null)', vars: '', note: 'return 0' }); markTop(stack);
+          f(2, 'nullptr → 0', 'check', from, { dir: 'up' });
+          stack.pop(); markTop(stack);
+          return 0;
+        }
+        var v = nodes[id];
+        var me = { label: 'height(' + v.val + ')', vars: '', note: '' };
+        stack.push(me); markTop(stack); onStack[id] = 1;
+        f(1, 'height(' + v.val + ')', 'step', id, { dir: 'down' });
+        me.note = 'l = ?';
+        f(3, 'Зүүн дэд модны өндрийг асууна', 'move', id, { dir: 'down' });
+        var l = go(v.left, id);
+        me.note = 'l = ' + l + ', r = ?';
+        f(4, 'l = ' + l + '. Одоо баруун дэд мод', 'move', id, { dir: 'down' });
+        var r = go(v.right, id);
+        var h = Math.max(l, r) + 1;
+        me.note = 'max(' + l + ', ' + r + ') + 1 = ' + h;
+        labels[id] = 'h=' + h; done[id] = 1; delete onStack[id];
+        f(5, 'max(' + l + ', ' + r + ') + 1 = ' + h, 'ok', id, { dir: 'up' });
+        stack.pop(); markTop(stack);
+        return h;
+      }
+      f(1, 'height(үндэс)', 'info', null);
+      var res = go(0, null);
+      f(6, 'Модны өндөр = ' + res, 'ok', null, { balloon: { title: 'Өндөр = ' + res, text: 'Навч бүр 1, эцэг бүр хүүхдүүдийнхээ ихэнх дээр +1. Хариу доороос дээш тархлаа.' } });
+      return fr;
+    },
+  };
+
+  var levelOrder = {
+    group: 'tree', title: 'Level Order', mn: 'Түвшингээр тойрох', tagline: 'Давхарга давхаргаар — queue-ээр.',
+    time: 'O(n)', space: 'O(n)', hint: 'BFS: дараалал (queue)',
+    inputs: [treeInput],
+    random: treeRandom, validate: treeValidate,
+    code: [
+      'void bfs(Node* root) {',
+      '    queue<Node*> q;',
+      '    q.push(root);',
+      '    while (!q.empty()) {',
+      '        Node* v = q.front(); q.pop();',
+      '        cout << v->val << " ";',
+      '        if (v->left) q.push(v->left);',
+      '        if (v->right) q.push(v->right);',
+      '    }',
+      '}',
+    ],
+    run: function (p) {
+      var nodes = buildBST(p.array), fr = [], q = [], out = '', inQ = {}, done = {}, labels = {};
+      function f(line, msg, tone, cur, o) {
+        o = o || {};
+        var cls = {};
+        Object.keys(inQ).forEach(function (id) { cls[id] = 'queued'; });
+        Object.keys(done).forEach(function (id) { cls[id] = 'done'; });
+        if (cur != null) cls[cur] = 'cur';
+        if (o.look != null) cls[o.look] = 'look';
+        fr.push({
+          line: line, msg: msg, tone: tone, btree: treeView(nodes, { cls: cls, labels: labels }),
+          rows: [row(q.map(function (id) { return nodes[id].val; }), { label: 'queue', cls: { 0: q.length ? 'mid' : '' }, empty: 'хоосон' })],
+          out: out, stats: [['Хэвлэсэн', Object.keys(done).length + ' / ' + nodes.length], ['Queue', q.length]], balloon: o.balloon || null,
+        });
+      }
+      q.push(0); inQ[0] = 1; labels[0] = 'L0';
+      f(3, 'q.push(' + nodes[0].val + ') — үндэс', 'move');
+      while (q.length) {
+        f(4, 'queue хоосон биш', 'step');
+        var id = q.shift(); delete inQ[id];
+        var v = nodes[id];
+        f(5, 'v = ' + v.val + ' (түвшин ' + v.depth + ')', 'move', id);
+        out += v.val + ' '; done[id] = 1;
+        f(6, v.val + '-г хэвлэнэ', 'ok', id);
+        ['left', 'right'].forEach(function (side, k) {
+          var c = v[side];
+          if (c == null) { f(7 + k, (side === 'left' ? 'Зүүн' : 'Баруун') + ' хүүхэд байхгүй', 'check', id); return; }
+          q.push(c); inQ[c] = 1; labels[c] = 'L' + nodes[c].depth;
+          f(7 + k, nodes[c].val + '-г дараалалд нэмнэ', 'move', id, { look: c });
+        });
+      }
+      f(10, 'Дууслаа', 'ok', null, { balloon: { title: 'Түвшингээр: ' + out.trim(), text: 'Queue нь «эхэлж орсон нь эхэлж гарна» тул ойрхон түвшин эхэлж хэвлэгдэнэ.' } });
+      return fr;
+    },
+  };
+
   var ALGOS = {
     'for-loop': forLoop, 'while-loop': whileLoop, 'nested-loops': nestedLoops, 'break-continue': breakContinue,
     factorial: factorial, 'recursion-order': recursionOrder, 'recursive-sum': recursiveSum,
@@ -1294,6 +1621,7 @@
     'bubble-sort': bubble, 'selection-sort': selection, 'insertion-sort': insertion, 'merge-sort': merge, 'quick-sort': quick,
     'two-pointers': twoPointers, 'prefix-sum': prefix, 'sliding-window': sliding,
     bfs: bfs, dfs: dfs, hanoi: hanoi, fibonacci: fib,
+    'tree-traversal': traversal, 'bst-search': bstSearch, 'bst-insert': bstInsert, 'tree-height': treeHeight, 'level-order': levelOrder,
   };
 
   return { GROUPS: GROUPS, ALGOS: ALGOS, GRAPHS: GRAPHS, range: range };

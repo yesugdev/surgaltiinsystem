@@ -114,6 +114,10 @@
 
 /* ---- Граф, мод ---- */
 .vz-graph, .vz-tree { width: 100%; max-height: 260px; }
+.vz-btree { width: 100%; max-height: 420px; }
+.vz-node.dim { opacity: 0.3; }
+.vz-edge.dim { opacity: 0.3; }
+.vz-node text.small { font-size: 12px; }
 .vz-edge { stroke: #b7b2a0; stroke-width: 3; }
 .vz-edge.tree { stroke: #2e9a2e; stroke-width: 4; }
 .vz-edge.scan { stroke: #e3a400; stroke-width: 5; stroke-dasharray: 6 4; }

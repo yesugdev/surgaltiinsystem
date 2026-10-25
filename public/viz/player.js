@@ -20,7 +20,7 @@
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   // ---------- C++ кодын өнгө ----------
-  var KW = /\b(int|bool|void|char|return|while|for|if|else|break|continue|true|false|vector|queue|auto|const)\b/g;
+  var KW = /\b(int|bool|void|char|return|while|for|if|else|break|continue|true|false|nullptr|new|vector|queue|auto|const)\b/g;
   function highlight(line) {
     var out = '', rest = line, ci = line.indexOf('//');
     var comment = '';
@@ -30,17 +30,25 @@
     parts.forEach(function (p, i) {
       if (i % 2) { out += '<span class="tk-str">' + esc(p) + '</span>'; return; }
       out += esc(p).replace(KW, '<span class="tk-kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="tk-num">$1</span>')
-        .replace(/\b(swap|max|push_back|push|pop|front|empty|cout|merge|mergeSort|quickSort|partition|binarySearch|linearSearch|bubbleSort|selectionSort|insertionSort|pairSum|sum|maxWindow|bfs|dfs|hanoi|fib|fact|f)\b(?=\s*\()/g, '<span class="tk-fn">$1</span>');
+        .replace(/\b(swap|max|push_back|push|pop|front|empty|cout|merge|mergeSort|quickSort|partition|binarySearch|linearSearch|bubbleSort|selectionSort|insertionSort|pairSum|sum|maxWindow|bfs|dfs|hanoi|fib|fact|f|search|insert|height|Node)\b(?=\s*\()/g, '<span class="tk-fn">$1</span>');
     });
     if (comment) out += '<span class="tk-com">' + esc(comment) + '</span>';
     return out || '&nbsp;';
   }
-  algo.code.forEach(function (line, i) {
-    var li = el('div', 'code-line');
-    li.innerHTML = '<span class="code-no">' + (i + 1) + '</span><span class="code-src">' + highlight(line) + '</span>';
-    codeEl.appendChild(li);
-  });
-  var codeLines = codeEl.children;
+  // Код нь өгөгдлөөс хамаарч болно (жишээ нь preorder / inorder / postorder)
+  var codeLines = codeEl.children, codeKey = null;
+  function showCode(p) {
+    var lines = typeof algo.code === 'function' ? algo.code(p) : algo.code;
+    var key = lines.join('\n');
+    if (key === codeKey) return;
+    codeKey = key;
+    codeEl.innerHTML = '';
+    lines.forEach(function (line, i) {
+      var li = el('div', 'code-line');
+      li.innerHTML = '<span class="code-no">' + (i + 1) + '</span><span class="code-src">' + highlight(line) + '</span>';
+      codeEl.appendChild(li);
+    });
+  }
 
   // ---------- өгөгдөл ----------
   function readParams(useDefaults) {
@@ -78,6 +86,7 @@
 
   function load(p) {
     params = p;
+    showCode(p);
     frames = algo.run(p);
     idx = 0;
     elapsed = 0;
@@ -262,10 +271,34 @@
     return box;
   }
 
+  // Хоёртын мод: x = inorder дугаар, y = гүн
+  function renderBTree(t) {
+    var W = 410, H = 34 + t.depth * 54 + 30;
+    var s = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'vz-btree', role: 'img', 'aria-label': 'Мод' });
+    var pos = function (n) { return [26 + (t.count > 1 ? n.x / (t.count - 1) : 0.5) * (W - 52), 24 + n.depth * 54]; };
+    t.nodes.forEach(function (n) {
+      if (n.parent == null || t.hidden[n.id] || t.hidden[n.parent]) return;
+      var a = pos(t.nodes[n.parent]), b = pos(n);
+      var hot = t.cls[n.id] && t.cls[n.id] !== 'dim' && t.cls[n.parent] && t.cls[n.parent] !== 'dim';
+      s.appendChild(svg('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'vz-edge' + (hot ? ' tree' : '') + (t.cls[n.id] === 'dim' ? ' dim' : '') }));
+    });
+    t.nodes.forEach(function (n) {
+      if (t.hidden[n.id]) return;
+      var p = pos(n);
+      var g = svg('g', { class: 'vz-node ' + (t.cls[n.id] || '') });
+      g.appendChild(svg('circle', { cx: p[0], cy: p[1], r: 17 }));
+      g.appendChild(svg('text', { x: p[0], y: p[1] + 5, 'text-anchor': 'middle', class: String(n.val).length > 2 ? 'small' : '' }, n.val));
+      if (t.labels[n.id]) g.appendChild(svg('text', { x: p[0] + 20, y: p[1] - 14, class: 'vz-node-dist', 'text-anchor': 'start' }, t.labels[n.id]));
+      s.appendChild(g);
+    });
+    return s;
+  }
+
   function render() {
     var f = frames[idx];
     if (!f) return;
     stage.innerHTML = '';
+    if (f.btree) stage.appendChild(renderBTree(f.btree));
     if (f.phase) stage.appendChild(renderPhase(f.phase));
     if (f.vars || f.calls || f.out != null) {
       var panels = el('div', 'vz-panels');

@@ -16,7 +16,7 @@
 
   <div class="viz-main">
   <section class="xp-win viz-array-win">
-    <div class="xp-titlebar"><span class="xp-title"><span class="xp-ico green"></span><%= algo.group === 'basics' ? 'Memory Viewer' : 'Array Viewer' %> · <%= algo.mn %></span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
+    <div class="xp-titlebar"><span class="xp-title"><span class="xp-ico green"></span><%= { basics: 'Memory Viewer', tree: 'Tree Viewer', graph: 'Graph Viewer' }[algo.group] || 'Array Viewer' %> · <%= algo.mn %></span><span class="xp-btns" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
     <div class="xp-body">
       <form class="viz-form" id="viz-form" autocomplete="off">
         <% inputs.forEach(function (inp) { %>
