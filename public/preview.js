@@ -47,6 +47,7 @@
       (errs || []).forEach(function (m) { card.appendChild(el('div', 'preview-q-error small', m)); });
       container.appendChild(card);
     });
+    if (window.renderMath) window.renderMath(container); // $томьёо$
   }
 
   function errorBox(title, messages) {

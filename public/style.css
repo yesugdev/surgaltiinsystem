@@ -1096,6 +1096,9 @@ a.podium-name:hover { color: var(--primary); text-decoration: none; }
 .format-btn-radio input { margin: 0; }
 .prompt-format-tabs { display: flex; gap: 6px; margin: 0 0 8px; }
 .pdf-note { margin: 0 0 6px; }
+.qb-math { margin-top: 8px; padding: 8px 10px; border: 1px dashed var(--border); border-radius: 8px; background: var(--bg, #fafbfc); }
+.qb-math[hidden] { display: none; }
+.qb-math .options { margin: 6px 0 0; }
 /* Тест/даалгавар: онолын товч ба модал; тестийн дүн харуулах тохиргоо */
 .task-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .task-title-row h1 { margin-right: auto; }

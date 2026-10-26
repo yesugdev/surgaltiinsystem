@@ -99,5 +99,5 @@
   </div>
 </form>
 
-<% const scripts = [lessonMath(lesson) ? '/js/md-editor.js' : '/js/rich-editor.js']; if (isQuiz) { scripts.push('/question-parser.js', '/quiz-builder.js'); if (locals.canUseAI) scripts.push('/preview.js', '/task-form.js'); } %>
+<% const scripts = [lessonMath(lesson) ? '/js/md-editor.js' : '/js/rich-editor.js']; if (isQuiz) { scripts.push('/vendor/katex/katex.min.js', '/js/math-render.js', '/question-parser.js', '/quiz-builder.js'); if (locals.canUseAI) scripts.push('/preview.js', '/task-form.js'); } %>
 <%- include('../partials/footer', { scripts: scripts }) %>

@@ -95,4 +95,4 @@
 
 <script type="application/json" id="import-example"><%- JSON.stringify(examples).replace(/</g, '\\u003c') %></script>
 <script type="application/json" id="import-prompts"><%- JSON.stringify(prompts).replace(/</g, '\\u003c') %></script>
-<%- include('../partials/footer', { scripts: ['/question-parser.js', '/latex-convert.js', '/lesson-parser.js', '/preview.js', '/lesson-import.js'] }) %>
+<%- include('../partials/footer', { scripts: ['/vendor/katex/katex.min.js', '/js/math-render.js', '/question-parser.js', '/latex-convert.js', '/lesson-parser.js', '/preview.js', '/lesson-import.js'] }) %>

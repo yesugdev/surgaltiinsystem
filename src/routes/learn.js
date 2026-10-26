@@ -19,7 +19,7 @@ async function loadLesson(req, res, next) {
   const lesson = await Lesson.findOne({ _id: req.params.id, published: true, classIds: req.user.classId }).lean();
   if (!lesson) return notFound(res);
   req.lesson = lesson;
-  res.locals.katex = md.lessonMath(lesson);
+  res.locals.katex = true; // онол болон тестийн $томьёо$
   next();
 }
 

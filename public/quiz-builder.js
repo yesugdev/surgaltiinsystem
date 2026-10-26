@@ -148,7 +148,7 @@
     text.placeholder = 'Асуултаа бичнэ үү. Жишээ: 7 × 8 = ?';
     text.value = q.text || '';
     text.disabled = locked;
-    text.addEventListener('input', function () { q.text = text.value; autosize(text); sync(); });
+    text.addEventListener('input', function () { q.text = text.value; autosize(text); sync(); mathLater(i); });
     card.appendChild(text);
     setTimeout(function () { autosize(text); }, 0);
 
@@ -157,6 +157,9 @@
     } else {
       card.appendChild(renderOptions(q, i));
     }
+
+    card.appendChild(el('div', 'qb-math'));
+    setTimeout(function () { refreshMath(i); }, 0);
 
     var p = problems(q);
     var warn = el('div', 'qb-problems small');
@@ -190,7 +193,7 @@
       input.value = o.text || '';
       input.placeholder = 'Сонголт ' + LETTERS[j];
       input.disabled = locked;
-      input.addEventListener('input', function () { o.text = input.value; sync(); });
+      input.addEventListener('input', function () { o.text = input.value; sync(); mathLater(qi); });
       input.addEventListener('keydown', function (e) {
         // Сүүлийн сонголт дээр Enter дарвал шинэ сонголт нэмнэ
         if (e.key === 'Enter') {
@@ -209,6 +212,34 @@
     });
     if (q.options.length < 20) wrap.appendChild(btn('btn btn-sm qb-add-option', '+ Сонголт нэмэх', null, function () { q.options.push({ text: '', isCorrect: false }); render(); focusOption(qi, q.options.length - 1); }));
     return wrap;
+  }
+
+  // $томьёо$ байвал асуулт, сонголтыг сурагчид харагдах байдлаар нь зурна
+  var mathTimers = {};
+  function mathLater(i) { clearTimeout(mathTimers[i]); mathTimers[i] = setTimeout(function () { refreshMath(i); }, 250); }
+  function refreshMath(i) {
+    var card = root.querySelectorAll('.qb-card')[i];
+    var box = card && card.querySelector('.qb-math');
+    var q = questions[i];
+    if (!box || !q) return;
+    box.innerHTML = '';
+    var has = String(q.text || '').indexOf('$') >= 0 || (q.options || []).some(function (o) { return String(o.text || '').indexOf('$') >= 0; });
+    box.hidden = !has || !window.renderMath;
+    if (box.hidden) return;
+    box.appendChild(el('div', 'qb-math-label small muted', 'Сурагчид ингэж харагдана:'));
+    box.appendChild(el('div', 'question-text prewrap', q.text || ''));
+    if (q.type !== 'text') {
+      var ul = el('ul', 'options');
+      q.options.forEach(function (o, j) {
+        if (!String(o.text || '').trim()) return;
+        var li = el('li', o.isCorrect ? 'correct' : '');
+        li.appendChild(el('span', 'opt-mark', LETTERS[j]));
+        li.appendChild(document.createTextNode(o.text));
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    window.renderMath(box);
   }
 
   function focusOption(qi, j) {

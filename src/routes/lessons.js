@@ -21,7 +21,7 @@ async function loadLesson(req, res, next) {
   const lesson = await Lesson.findOne({ _id: req.params.id, ...ownerFilter(req.user) });
   if (!lesson) return notFound(res);
   req.lesson = lesson;
-  res.locals.katex = md.lessonMath(lesson); // томьёоны загвар (header)
+  res.locals.katex = true; // томьёоны загвар (header): онол, тестийн $томьёо$
   next();
 }
 

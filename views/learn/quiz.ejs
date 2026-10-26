@@ -19,7 +19,7 @@
             <span class="qnum"><%= i + 1 %></span>
             <span class="muted small"><%= fmtScore(q.points) %> оноо<% if (q.type === 'multiple') { %> · олон зөв хариулттай<% } %></span>
           </div>
-          <div class="question-text prewrap"><%- mathText(q.text, lessonMath(lesson)) %></div>
+          <div class="question-text prewrap"><%- mathText(q.text) %></div>
           <% if (q.type === 'text') { %>
             <textarea name="q_<%= key %>" rows="3" maxlength="5000" placeholder="Хариултаа бичнэ үү"></textarea>
           <% } else { %>
@@ -28,7 +28,7 @@
                 <label class="choice">
                   <input type="<%= q.type === 'single' ? 'radio' : 'checkbox' %>" name="q_<%= key %>" value="<%= o._id %>">
                   <span class="choice-letter"><%= String.fromCharCode(65 + j) %></span>
-                  <span class="choice-text"><%- mathText(o.text, lessonMath(lesson)) %></span>
+                  <span class="choice-text"><%- mathText(o.text) %></span>
                 </label>
               <% }) %>
             </div>
@@ -63,7 +63,7 @@
           <span class="result-state"><%= state === 'ok' ? '✓ Зөв' : state === 'bad' ? '✗ Буруу' : state === 'review' ? 'Шалгагдаж байна' : '' %>
             <span class="muted small"><%= a ? fmtScore(a.points) : 0 %>/<%= fmtScore(q.points) %></span></span>
         </div>
-        <div class="question-text prewrap"><%- mathText(q.text, lessonMath(lesson)) %></div>
+        <div class="question-text prewrap"><%- mathText(q.text) %></div>
         <% if (q.type === 'text') { %>
           <div class="text-answer prewrap"><%= a && a.textAnswer ? a.textAnswer : '— хариулаагүй —' %></div>
           <% if ((reveal === 'answers') && q.acceptedAnswers.length) { %><div class="small">Зөв хариулт: <strong><%= q.acceptedAnswers.join(' / ') %></strong></div><% } %>
@@ -71,7 +71,7 @@
           <ul class="options">
             <% q.options.forEach(function (o) { const picked = sel.includes(String(o._id)); const correct = (reveal === 'answers') && o.isCorrect; %>
               <li class="<%= correct ? 'correct' : '' %> <%= picked ? 'picked' : '' %> <%= picked && (reveal === 'answers') && !o.isCorrect ? 'wrong' : '' %>">
-                <span class="opt-mark"><%= correct ? '✓' : (picked && (reveal === 'answers') ? '✗' : (picked ? '•' : '')) %></span><%- mathText(o.text, lessonMath(lesson)) %>
+                <span class="opt-mark"><%= correct ? '✓' : (picked && (reveal === 'answers') ? '✗' : (picked ? '•' : '')) %></span><%- mathText(o.text) %>
                 <% if (picked) { %><span class="muted small">— таны сонголт</span><% } %>
               </li>
             <% }) %>
