@@ -2,6 +2,7 @@ const express = require('express');
 const { Subject, Class, User, Lesson, Submission } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate, fmtScore, fmtDate } = require('../helpers');
+const { groupSubjects, selectFilter, countBySubject } = require('../subject-groups');
 const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI } = require('../access');
 const { buildLessonPrompt, buildLatexLessonPrompt } = require('../ai-prompt');
 const md = require('../markdown');
@@ -65,13 +66,16 @@ router.post('/preview-md', (req, res) => {
 // ---------------- Жагсаалт ----------------
 router.get('/', async (req, res) => {
   const filter = ownerFilter(req.user);
-  const subjectFilter = isId(req.query.subject) ? req.query.subject : '';
-  if (subjectFilter) filter.subject = subjectFilter;
+  // Шүүлтүүр: хичээлийн төрөл (?group=Газар зүй) → анги (?subject=<id>)
+  const [subjects, allSubj] = await Promise.all([visibleSubjects(req.user), Lesson.find(filter).select('subject').lean()]);
+  const groups = groupSubjects(subjects, countBySubject(allSubj));
+  const sel = selectFilter(groups, req.query);
+  if (sel.ids) filter.subject = sel.ids.length === 1 ? sel.ids[0] : { $in: sel.ids };
+  const subjectFilter = sel.subject;
 
   const lessons = await Lesson.find(filter).select('-theory').sort({ createdAt: -1 }).lean();
-  const [classes, subjects, creators, counts] = await Promise.all([
+  const [classes, creators, counts] = await Promise.all([
     Class.find().select('name').lean(),
-    visibleSubjects(req.user),
     User.find({ _id: { $in: lessons.map((l) => l.createdBy).filter(Boolean) } }).select('fullName').lean(),
     Submission.aggregate([
       { $match: { lesson: { $in: lessons.map((l) => l._id) }, submittedAt: { $ne: null } } },
@@ -96,6 +100,9 @@ router.get('/', async (req, res) => {
     lessons,
     subjects,
     subjectFilter,
+    groups,
+    sel,
+    total: allSubj.length,
     canCreate: subjects.some((s) => s.active),
   });
 });

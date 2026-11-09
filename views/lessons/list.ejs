@@ -15,12 +15,7 @@
 <% } %>
 
 <% if (subjects.length > 1 || subjectFilter) { %>
-  <div class="tabs">
-    <a href="/lessons" class="<%= !subjectFilter ? 'active' : '' %>">Бүгд</a>
-    <% subjects.forEach(function (s) { %>
-      <a href="/lessons?subject=<%= s._id %>" class="<%= subjectFilter === String(s._id) ? 'active' : '' %>"><%= s.name %></a>
-    <% }) %>
-  </div>
+  <%- include('../partials/subject-filter', { base: '/lessons', groups: groups, sel: sel, total: total }) %>
 <% } %>
 
 <% if (!lessons.length) { %>

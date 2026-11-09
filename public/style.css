@@ -809,6 +809,27 @@ a.pager-btn:hover { border-color: var(--primary); color: var(--primary); text-de
 .ai-steps > li { margin-bottom: 16px; }
 .tabs-inline { margin-bottom: 0; border-bottom: 0; }
 
+/* ---------- Хичээлийн шүүлтүүр (төрөл → анги) ---------- */
+.subj-filter { margin-bottom: 18px; }
+.subj-groups { display: flex; gap: 8px; flex-wrap: wrap; }
+.subj-pill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px; background: #fff; color: var(--text); font-weight: 600; white-space: nowrap; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s; }
+.subj-pill:hover { text-decoration: none; border-color: var(--primary); box-shadow: 0 2px 8px rgba(47, 91, 234, 0.12); }
+.subj-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.subj-pill.is-empty:not(.active) { color: var(--muted); font-weight: 500; }
+.subj-count { min-width: 22px; padding: 0 7px; border-radius: 999px; background: #eef0f4; color: var(--muted); font-size: 0.78rem; font-weight: 700; text-align: center; line-height: 1.6; }
+.subj-pill.active .subj-count { background: rgba(255, 255, 255, 0.25); color: #fff; }
+.subj-grades { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding: 8px 10px; background: #fff; border: 1px solid var(--border); border-radius: 12px; }
+.subj-grades-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-right: 4px; }
+.subj-chip { position: relative; display: inline-grid; place-items: center; min-width: 40px; height: 34px; padding: 0 12px; border-radius: 8px; color: var(--text); font-weight: 700; }
+.subj-chip:hover { text-decoration: none; background: var(--primary-soft); color: var(--primary); }
+.subj-chip.active { background: var(--primary); color: #fff; }
+.subj-chip.is-empty:not(.active) { color: #b0b6c3; font-weight: 500; }
+.subj-chip sup { position: absolute; top: 1px; right: 2px; font-size: 0.62rem; font-weight: 700; color: var(--muted); }
+.subj-chip.active sup { color: rgba(255, 255, 255, 0.8); }
+@media (max-width: 640px) {
+  .subj-groups { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+}
+
 /* ---------- Зэрэглэл (rank) ---------- */
 .tier-newbie { --tier: #6b7384; --tier-soft: #eef0f4; }
 .tier-beginner { --tier: #1c8b52; --tier-soft: #e3f5ea; }

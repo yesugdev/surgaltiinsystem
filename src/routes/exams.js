@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { Subject, Class, User, Exam, Attempt } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
 const { clean, isId, toArray, parseInputDate, fmtDate, fmtScore } = require('../helpers');
+const { groupSubjects, selectFilter, countBySubject } = require('../subject-groups');
 const { finalizeExpired } = require('../grading');
 const { buildImportPrompt } = require('../ai-prompt');
 const QuestionParser = require('../../public/question-parser');
@@ -77,18 +78,23 @@ async function parseExamForm(req) {
 // ---------------- Жагсаалт ----------------
 router.get('/', async (req, res) => {
   const filter = ownerFilter(req.user);
-  const subjectFilter = isId(req.query.subject) ? req.query.subject : req.query.subject === 'none' ? 'none' : '';
-  if (subjectFilter) filter.subject = subjectFilter === 'none' ? null : subjectFilter;
+  // Шүүлтүүр: хичээлийн төрөл (?group=Газар зүй) → анги (?subject=<id>), хичээлгүй (?subject=none)
+  const [subjects, allSubj] = await Promise.all([visibleSubjects(req.user), Exam.find(filter).select('subject').lean()]);
+  const groups = groupSubjects(subjects, countBySubject(allSubj));
+  const sel = selectFilter(groups, req.query);
+  const noneActive = req.query.subject === 'none';
+  if (noneActive) filter.subject = null;
+  else if (sel.ids) filter.subject = sel.ids.length === 1 ? sel.ids[0] : { $in: sel.ids };
+  const subjectFilter = noneActive ? 'none' : sel.subject;
 
   const exams = await Exam.find(filter).sort({ createdAt: -1 }).lean();
-  const [classes, counts, creators, subjects] = await Promise.all([
+  const [classes, counts, creators] = await Promise.all([
     Class.find().select('name').lean(),
     Attempt.aggregate([
       { $match: { exam: { $in: exams.map((e) => e._id) }, submittedAt: { $ne: null } } },
       { $group: { _id: '$exam', n: { $sum: 1 } } },
     ]),
     User.find({ _id: { $in: exams.map((e) => e.createdBy).filter(Boolean) } }).select('fullName').lean(),
-    visibleSubjects(req.user),
   ]);
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
   const countMap = new Map(counts.map((c) => [String(c._id), c.n]));
@@ -105,6 +111,10 @@ router.get('/', async (req, res) => {
     exams,
     subjects,
     subjectFilter,
+    groups,
+    sel,
+    total: allSubj.length,
+    none: { count: allSubj.filter((e) => !e.subject).length, active: noneActive },
     canCreate: subjects.some((s) => s.active),
   });
 });

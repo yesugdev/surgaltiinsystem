@@ -1,0 +1,24 @@
+<%# Хичээлийн шүүлтүүр (2 түвшин): base — хуудасны хаяг, groups, sel, total; заавал биш: none { count, active } — «Хичээлгүй» %>
+<% const enc = encodeURIComponent;
+   const activeGroup = groups.find(function (g) { return g.name === sel.group; });
+   const linkFor = function (g) { return g.items.length === 1 ? base + '?subject=' + g.items[0].id : base + '?group=' + enc(g.name); }; %>
+<nav class="subj-filter" aria-label="Хичээлээр шүүх">
+  <div class="subj-groups">
+    <a href="<%= base %>" class="subj-pill <%= !sel.group && !sel.subject && !(locals.none && none.active) ? 'active' : '' %>">Бүгд <span class="subj-count"><%= total %></span></a>
+    <% groups.forEach(function (g) { %>
+      <a href="<%= linkFor(g) %>" class="subj-pill <%= sel.group === g.name ? 'active' : '' %> <%= g.count ? '' : 'is-empty' %>"><%= g.name %> <span class="subj-count"><%= g.count %></span></a>
+    <% }) %>
+    <% if (locals.none && (none.count || none.active)) { %>
+      <a href="<%= base %>?subject=none" class="subj-pill <%= none.active ? 'active' : '' %>">Хичээлгүй <span class="subj-count"><%= none.count %></span></a>
+    <% } %>
+  </div>
+  <% if (activeGroup && activeGroup.items.length > 1) { %>
+    <div class="subj-grades">
+      <span class="subj-grades-label">Анги</span>
+      <a href="<%= base %>?group=<%= enc(activeGroup.name) %>" class="subj-chip <%= !sel.subject ? 'active' : '' %>">Бүгд</a>
+      <% activeGroup.items.forEach(function (i) { %>
+        <a href="<%= base %>?subject=<%= i.id %>" class="subj-chip <%= sel.subject === i.id ? 'active' : '' %> <%= i.count ? '' : 'is-empty' %>" title="<%= i.name %> · <%= i.count %>"><%= i.grade != null ? i.grade : i.name %><% if (i.count) { %><sup><%= i.count %></sup><% } %></a>
+      <% }) %>
+    </div>
+  <% } %>
+</nav>

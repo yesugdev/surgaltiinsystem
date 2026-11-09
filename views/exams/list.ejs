@@ -22,15 +22,7 @@
 <% } %>
 
 <% if (subjects.length > 1 || subjectFilter) { %>
-  <div class="tabs">
-    <a href="/exams" class="<%= !subjectFilter ? 'active' : '' %>">Бүгд</a>
-    <% subjects.forEach(function (s) { %>
-      <a href="/exams?subject=<%= s._id %>" class="<%= subjectFilter === String(s._id) ? 'active' : '' %>"><%= s.name %></a>
-    <% }) %>
-    <% if (subjectFilter === 'none' || exams.some(function (e) { return !e.subject; })) { %>
-      <a href="/exams?subject=none" class="<%= subjectFilter === 'none' ? 'active' : '' %>">Хичээлгүй</a>
-    <% } %>
-  </div>
+  <%- include('../partials/subject-filter', { base: '/exams', groups: groups, sel: sel, total: total, none: none }) %>
 <% } %>
 
 <% if (!exams.length) { %>
