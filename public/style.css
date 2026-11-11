@@ -297,7 +297,8 @@ a.stat:hover { border-color: var(--primary); text-decoration: none; }
 
 .take-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
 .take-head { margin-bottom: 16px; }
-.take-side .sticky { position: sticky; top: 76px; }
+.take-side { align-self: stretch; } /* багана бүтэн өндөртэй — тэгэхгүй бол sticky ажиллахгүй */
+.take-side .sticky { position: sticky; top: calc(var(--topbar-h, 58px) + 16px); }
 .timer { font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; margin-bottom: 6px; }
 .timer.warn { color: var(--amber); }
 .timer.danger { color: var(--red); animation: pulse 1s infinite; }
@@ -1123,6 +1124,8 @@ a.podium-name:hover { color: var(--primary); text-decoration: none; }
 /* Тест/даалгавар: онолын товч ба модал; тестийн дүн харуулах тохиргоо */
 .task-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .task-title-row h1 { margin-right: auto; }
+.task-title-row.is-sticky { position: sticky; top: var(--topbar-h, 58px); z-index: 6; margin: 0 -8px; padding: 8px; background: var(--bg); transition: box-shadow 0.15s; }
+.task-title-row.is-sticky.is-stuck { box-shadow: 0 6px 12px -10px rgba(16, 24, 40, 0.35); border-bottom: 1px solid var(--border); }
 .theory-dialog { width: min(900px, calc(100vw - 32px)); max-height: calc(100vh - 48px); flex-direction: column; }
 .theory-dialog[open] { display: flex; }
 .theory-dialog-body { overflow-y: auto; flex: 1; padding-right: 6px; margin: 8px 0; }
@@ -1362,10 +1365,12 @@ a.roadmap-link:hover { text-decoration: none; }
   .docx-page { padding: 20px; }
   .review-side .sticky { position: static; }
   .import-preview { position: static; max-height: none; }
-  .take-side { order: -1; }
-  .take-side .sticky { top: 58px; z-index: 5; display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; padding: 12px 16px; }
+  .take-side { order: -1; align-self: auto; position: sticky; top: var(--topbar-h, 58px); z-index: 5; }
+  .take-side .sticky { position: static; box-shadow: 0 6px 14px -10px rgba(16, 24, 40, 0.4); display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; padding: 12px 16px; }
   .take-side .qnav, .take-side .save-status { grid-column: 1 / -1; }
-  .take-side .qnav { margin-bottom: 0; }
+  .take-side .qnav { margin-bottom: 0; display: flex; overflow-x: auto; padding-bottom: 2px; }
+  .take-side .qnav a { flex: 0 0 34px; }
+  .take-side .save-status, .take-side .timer-label { display: none; }
   .timer { font-size: 1.6rem; margin: 0; }
   .userbox-name { display: none; }
   .truncate { max-width: 180px; }

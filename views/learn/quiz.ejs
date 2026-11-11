@@ -2,7 +2,7 @@
 <% const url = '/learn/' + lesson._id + '/tasks/' + task._id; %>
 <div class="narrow">
   <a href="/learn/<%= lesson._id %>#tasks" class="back">← <%= lesson.title %></a>
-  <div class="task-title-row">
+  <div class="task-title-row<%= theoryHtml ? ' is-sticky' : '' %>">
     <h1>📝 <%= task.title %></h1>
     <% if (theoryHtml) { %>
     <button type="button" class="btn theory-btn" data-open-dialog="#theory-dialog">📖 Онол</button>
