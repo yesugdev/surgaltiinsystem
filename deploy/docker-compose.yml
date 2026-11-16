@@ -49,6 +49,8 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       JUDGE_URL: http://judge:8000
       JUDGE_TOKEN: ${JUDGE_TOKEN:-}
+      SITE_URL: ${SITE_URL:-https://learn.yesuvd.tech}
+      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     networks:
       - default
       - judge

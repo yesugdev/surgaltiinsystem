@@ -95,6 +95,7 @@ async function main() {
   );
   app.use(loadUser);
 
+  app.use('/', require('./seo').router);
   app.use('/', require('./routes/auth'));
   app.use('/admin', require('./routes/admin'));
   app.use('/exams', require('./routes/exams'));

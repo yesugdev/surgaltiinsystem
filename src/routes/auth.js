@@ -3,17 +3,20 @@ const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const { requireRole, homeFor, flash } = require('../middleware/auth');
 const { clean } = require('../helpers');
+const { homeSeo } = require('../seo');
 
 const router = express.Router();
 
+// Нүүр хуудас: нэвтрээгүй хүнд (мөн Google-д) нэвтрэх хуудсыг шууд харуулна
 router.get('/', (req, res) => {
-  if (!req.user) return res.redirect('/login');
-  res.redirect(homeFor(req.user.role));
+  if (req.user) return res.redirect(homeFor(req.user.role));
+  res.render('login', { title: 'Нэвтрэх', error: null, username: '', seo: homeSeo() });
 });
 
 router.get('/login', (req, res) => {
   if (req.user) return res.redirect(homeFor(req.user.role));
-  res.render('login', { title: 'Нэвтрэх', error: null, username: '' });
+  // Ижил агуулга — Google нүүр хуудсыг (/) үндсэн гэж үзнэ
+  res.render('login', { title: 'Нэвтрэх', error: null, username: '', seo: { ...homeSeo(), index: false } });
 });
 
 // Нууц үг таах оролдлогыг хязгаарлана. Сургуулийн нэг сүлжээнээс (нэг IP) олон сурагч
