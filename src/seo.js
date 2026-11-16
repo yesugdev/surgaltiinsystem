@@ -3,8 +3,9 @@ const express = require('express');
 
 const SITE_URL = (process.env.SITE_URL || 'https://learn.yesuvd.tech').replace(/\/+$/, '');
 const SITE_NAME = 'YeSuvd';
+const SLOGAN = 'Ухаалагаар сурж, ирээдүйгээ гэрэлтүүл';
 const DESCRIPTION =
-  'YeSuvd — багш, сурагчдад зориулсан онлайн сургалтын систем: онлайн шалгалт ба автомат дүгнэлт, хичээл, даалгавар, тест, програмчлалын бодлого, алгоритмын визуализаци, дүнгийн Excel анализ.';
+  'YeSuvd — ' + SLOGAN + '. Programming, Algorithm, Contest, Judge System болон сургалтын хичээлүүд: програмчлалын бодлогыг автоматаар шалгах систем, алгоритмын визуализаци, онлайн шалгалт, хичээл, даалгавар.';
 
 // Индексжүүлэхгүй хэсгүүд (бүгд нэвтрэлт шаарддаг)
 const PRIVATE = ['/admin', '/exams', '/student', '/lessons', '/learn', '/files', '/cp', '/basics', '/viz', '/coding', '/logout'];
@@ -29,18 +30,18 @@ router.get('/sitemap.xml', (req, res) => {
 function homeSeo() {
   return {
     index: true,
-    title: SITE_NAME + ' — Онлайн сургалт, шалгалтын систем',
+    title: SITE_NAME + ' — ' + SLOGAN,
     description: DESCRIPTION,
     canonical: SITE_URL + '/',
     image: SITE_URL + '/img/yesuvd-logo-720.png',
     jsonLd: {
       '@context': 'https://schema.org',
       '@graph': [
-        { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL + '/', inLanguage: 'mn', description: DESCRIPTION },
-        { '@type': 'EducationalOrganization', name: SITE_NAME, url: SITE_URL + '/', logo: SITE_URL + '/img/yesuvd-mark.png' },
+        { '@type': 'WebSite', name: SITE_NAME, alternateName: SITE_NAME + ' — ' + SLOGAN, url: SITE_URL + '/', inLanguage: 'mn', description: DESCRIPTION },
+        { '@type': 'EducationalOrganization', name: SITE_NAME, slogan: SLOGAN, url: SITE_URL + '/', logo: SITE_URL + '/img/yesuvd-mark.png' },
       ],
     },
   };
 }
 
-module.exports = { router, homeSeo, SITE_URL, SITE_NAME };
+module.exports = { router, homeSeo, SITE_URL, SITE_NAME, SLOGAN };
