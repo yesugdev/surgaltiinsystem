@@ -5,7 +5,7 @@ const { Lesson, Problem, CpTopic } = require('../models');
 const { cpAccess } = require('../cp');
 const { lessonOpenFor } = require('../basics');
 const { requireRole } = require('../middleware/auth');
-const { isId } = require('../helpers');
+const { isId, inAnyClass } = require('../helpers');
 const files = require('../files');
 const pdf = require('../pdf-convert');
 const md = require('../markdown');
@@ -43,7 +43,7 @@ async function loadFile(req, res, next) {
     if (!lesson) return deny();
     ok = canManage(u, lesson);
     if (!ok && u.role === 'student') {
-      if (meta.kind === 'lesson') ok = lesson.published && lesson.classIds.some((id) => String(id) === String(u.classId));
+      if (meta.kind === 'lesson') ok = lesson.published && inAnyClass(u, lesson.classIds);
       if (meta.kind === 'submission') ok = String(meta.studentId) === String(u._id);
     }
   }

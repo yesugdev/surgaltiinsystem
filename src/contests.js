@@ -1,5 +1,6 @@
 // 🏁 Contest: самбар, ranking оноо олгох, 🪙 зоос, хуучин системээс шилжүүлэх
 const { Contest, ContestResult, Problem, CodeSubmission, User, Setting } = require('./models');
+const { inAnyClass } = require('./helpers');
 const { solvePoints, problemPoints, scoreFor, contestGain, placementTier } = require('./coding-ranks');
 const { cosmeticsFor, ownedUpToLevel } = require('./coding-cosmetics');
 
@@ -20,7 +21,7 @@ const STATES = {
 };
 
 /** Сурагчийн анги contest-д сонгогдсон эсэх */
-const inContest = (user, c) => !!user.classId && (c.classIds || []).some((id) => String(id) === String(user.classId));
+const inContest = (user, c) => inAnyClass(user, c.classIds);
 
 /** Contest-ийн бодлогууд (A, B, C … дарааллаар) */
 async function contestProblems(contestId, select = 'title difficulty points testCount statement createdAt') {
@@ -36,8 +37,8 @@ const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).m
  */
 async function contestStandings(contest, problems) {
   const ids = problems.map((p) => p._id);
-  const students = await User.find({ role: 'student', classId: { $in: contest.classIds }, active: { $ne: false } })
-    .select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
+  const students = await User.find({ role: 'student', classIds: { $in: contest.classIds }, active: { $ne: false } })
+    .select('fullName username classIds codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
   const createdAt = { $gte: contest.startAt || new Date(8.64e15) };
   if (contest.endAt) createdAt.$lte = contest.endAt;
   const best = ids.length && students.length

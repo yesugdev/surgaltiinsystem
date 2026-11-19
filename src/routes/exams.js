@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { Subject, Class, User, Exam, Attempt } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { clean, isId, toArray, parseInputDate, fmtDate, fmtScore } = require('../helpers');
+const { clean, isId, toArray, parseInputDate, fmtDate, fmtScore, classNamesOf, relevantClassIds, loadClassesLabel } = require('../helpers');
 const { groupSubjects, selectFilter, countBySubject } = require('../subject-groups');
 const { finalizeExpired } = require('../grading');
 const { buildImportPrompt } = require('../ai-prompt');
@@ -449,11 +449,11 @@ async function buildResults(exam) {
 
   const students = await User.find({
     role: 'student',
-    $or: [{ classId: { $in: exam.classIds } }, { _id: { $in: attempts.map((a) => a.student) } }],
+    $or: [{ classIds: { $in: exam.classIds } }, { _id: { $in: attempts.map((a) => a.student) } }],
   })
     .sort({ fullName: 1 })
     .lean();
-  const classes = await Class.find({ _id: { $in: students.map((s) => s.classId).filter(Boolean) } }).lean();
+  const classes = await Class.find({ _id: { $in: students.flatMap((s) => s.classIds || []) } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
 
   const rows = students.map((s) => {
@@ -461,7 +461,7 @@ async function buildResults(exam) {
     let status = 'not_started';
     if (a?.submittedAt) status = a.needsReview ? 'review' : 'submitted';
     else if (a) status = 'in_progress';
-    return { student: s, className: classMap.get(String(s.classId)) || '—', attempt: a, status };
+    return { student: s, className: classNamesOf({ classIds: relevantClassIds(s, exam.classIds) }, classMap) || '—', attempt: a, status };
   });
   rows.sort((x, y) => x.className.localeCompare(y.className, 'mn') || x.student.fullName.localeCompare(y.student.fullName, 'mn'));
 
@@ -538,11 +538,13 @@ async function analysisGroups(exam) {
   await finalizeExpired({ exam: exam._id });
   const attempts = await Attempt.find({ exam: exam._id, submittedAt: { $ne: null } }).lean();
   const byStudent = new Map(attempts.map((a) => [String(a.student), a]));
-  const takers = await User.find({ _id: { $in: attempts.map((a) => a.student) } }).select('fullName classId').lean();
-  const classIds = [...new Set([...exam.classIds.map(String), ...takers.map((t) => String(t.classId || ''))])].filter(isId);
+  const takers = await User.find({ _id: { $in: attempts.map((a) => a.student) } }).select('fullName classIds').lean();
+  // Олон ангитай сурагч: шалгалтын ангиудаас эхнийх нь бүлэгт нэг л удаа орно
+  for (const t of takers) t.groupId = relevantClassIds(t, exam.classIds)[0] || '';
+  const classIds = [...new Set([...exam.classIds.map(String), ...takers.map((t) => t.groupId)])].filter(isId);
   const [classes, expected, creator] = await Promise.all([
     Class.find({ _id: { $in: classIds } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean(),
-    User.aggregate([{ $match: { role: 'student', classId: { $in: classIds.map((id) => new mongoose.Types.ObjectId(id)) } } }, { $group: { _id: '$classId', n: { $sum: 1 } } }]),
+    User.aggregate([{ $match: { role: 'student', classIds: { $in: classIds.map((id) => new mongoose.Types.ObjectId(id)) } } }, { $unwind: '$classIds' }, { $group: { _id: '$classIds', n: { $sum: 1 } } }]),
     exam.createdBy ? User.findById(exam.createdBy).select('fullName').lean() : null,
   ]);
   const expectedMap = new Map(expected.map((e) => [String(e._id), e.n]));
@@ -552,7 +554,7 @@ async function analysisGroups(exam) {
     className: cls.name,
     expectedCount: expectedMap.get(String(cls._id)) || 0,
     students: takers
-      .filter((t) => String(t.classId) === String(cls._id))
+      .filter((t) => t.groupId === String(cls._id))
       .sort((a, b) => a.fullName.localeCompare(b.fullName, 'mn'))
       .map((t) => {
         const a = byStudent.get(String(t._id));
@@ -567,7 +569,7 @@ async function analysisGroups(exam) {
   }));
   // Анги сольсон/ангигүй сурагчид
   const known = new Set(classes.map((c) => String(c._id)));
-  const orphans = takers.filter((t) => !known.has(String(t.classId)));
+  const orphans = takers.filter((t) => !known.has(t.groupId));
   if (orphans.length) {
     groups.push({
       className: 'Бусад',
@@ -610,7 +612,7 @@ router.get('/:id/attempts/:aid', loadExam, loadAttempt, async (req, res) => {
   await finalizeExpired({ _id: req.attempt._id });
   const attempt = await Attempt.findById(req.attempt._id).lean();
   const student = await User.findById(attempt.student).lean();
-  const cls = student?.classId ? await Class.findById(student.classId).lean() : null;
+  const cls = await loadClassesLabel(student);
   const answerMap = new Map(attempt.answers.map((a) => [String(a.questionId), a]));
   const order = attempt.questionOrder.map(String);
   const questions = req.exam.questions

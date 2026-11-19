@@ -223,7 +223,7 @@ router.get('/progress', staffOnly, async (req, res) => {
     ? await CpTopic.find({ ...BASICS_TRACK, classIds: classId }).select('title icon order').sort({ order: 1, createdAt: 1 }).lean()
     : [];
   const students = classId
-    ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username').collation({ locale: 'mn' }).sort({ fullName: 1 }).lean()
+    ? await User.find({ role: 'student', classIds: classId, active: { $ne: false } }).select('fullName username').collation({ locale: 'mn' }).sort({ fullName: 1 }).lean()
     : [];
   const problems = await lessonProblems(lessons.map((l) => l._id), false);
   const [views, solved] = await Promise.all([

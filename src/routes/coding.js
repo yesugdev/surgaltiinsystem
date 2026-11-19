@@ -6,7 +6,7 @@ const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic, Contest, Con
 const { cpAccess, syncCpUnlock } = require('../cp');
 const { lessonOpenFor } = require('../basics');
 const { requireRole, flash } = require('../middleware/auth');
-const { isId, clean } = require('../helpers');
+const { isId, clean, classNamesOf } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
 const judge = require('../judge');
 const md = require('../markdown');
@@ -138,7 +138,7 @@ router.get('/', mainOnly, async (req, res) => {
   const myTier = tierFor(u.ratingPoints);
   const board = await leaderboard();
   const meIdx = board.findIndex((r) => String(r.student._id) === String(u._id));
-  const contests = (await Contest.find({ classIds: u.classId, startAt: { $ne: null }, finalizedAt: null }).select('title kind startAt endAt classIds').sort({ startAt: 1 }).lean())
+  const contests = (await Contest.find({ classIds: { $in: u.classIds || [] }, startAt: { $ne: null }, finalizedAt: null }).select('title kind startAt endAt classIds').sort({ startAt: 1 }).lean())
     .map((c) => ({ ...c, state: contestState(c) })).filter((c) => ['scheduled', 'running'].includes(c.state));
   res.render('coding/index-student', {
     title: 'Өрсөлдөөнт Coding',
@@ -170,12 +170,12 @@ async function leaderboard({ classId = null } = {}) {
   const enabled = await Class.distinct('_id', { codingEnabled: true });
   if (classId && !enabled.some((id) => String(id) === String(classId))) return [];
   // Coding нээгдсэн ангийн БҮХ сурагч — rank-гүй (contest-д ороогүй) нь ч харагдана
-  const filter = { role: 'student', active: { $ne: false }, classId: classId ? classId : { $in: enabled } };
-  const students = await User.find(filter).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
-  const classes = await Class.find({ _id: { $in: students.map((s) => s.classId).filter(Boolean) } }).select('name').lean();
+  const filter = { role: 'student', active: { $ne: false }, classIds: classId ? classId : { $in: enabled } };
+  const students = await User.find(filter).select('fullName username classIds codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean();
+  const classes = await Class.find({ _id: { $in: students.flatMap((s) => s.classIds || []) }, codingEnabled: true }).select('name').collation({ locale: 'mn' }).sort({ name: 1 }).lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
   const rows = students.map((s) => ({
-    student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
+    student: { ...s, className: classNamesOf(s, classMap), initials: initials(s.fullName) },
     ranked: s.ratingPoints > 0 || !!s.placementDone,
     tier: tierFor(s.ratingPoints),
     look: cosmeticsFor(s),
@@ -237,15 +237,15 @@ async function buildStandings(problems, { classId = null } = {}) {
   let students;
   if (classId) {
     students = enabled.some((id) => String(id) === String(classId))
-      ? await User.find({ role: 'student', classId, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints').lean()
+      ? await User.find({ role: 'student', classIds: classId, active: { $ne: false } }).select('fullName username classIds codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints').lean()
       : [];
   } else {
     const participants = await CodeSubmission.distinct('user', { problem: { $in: ids }, isStaff: false, status: 'done' });
-    students = await User.find({ _id: { $in: participants }, role: 'student', classId: { $in: enabled }, active: { $ne: false } }).select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints').lean();
+    students = await User.find({ _id: { $in: participants }, role: 'student', classIds: { $in: enabled }, active: { $ne: false } }).select('fullName username classIds codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints').lean();
   }
   const [best, classes] = await Promise.all([
     bestScores(ids, { user: { $in: students.map((s) => s._id) } }),
-    Class.find({ _id: { $in: students.map((s) => s.classId).filter(Boolean) } }).select('name').lean(),
+    Class.find({ _id: { $in: students.flatMap((s) => s.classIds || []) }, codingEnabled: true }).select('name').collation({ locale: 'mn' }).sort({ name: 1 }).lean(),
   ]);
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
   const map = new Map(best.map((b) => [String(b._id.p) + ':' + String(b._id.u), b]));
@@ -256,7 +256,7 @@ async function buildStandings(problems, { classId = null } = {}) {
     const solved = cells.filter((c) => c && c.best === 100).length;
     const last = cells.reduce((m, c) => (c && c.best > 0 && c.at > m ? c.at : m), new Date(0));
     return {
-      student: { ...s, className: classMap.get(String(s.classId)) || '', initials: initials(s.fullName) },
+      student: { ...s, className: classNamesOf(s, classMap), initials: initials(s.fullName) },
       cells, total, solved, last,
       tier: tierFor(s.ratingPoints), // зэрэглэл — contest-ийн ranking оноогоор
       look: cosmeticsFor(s),
@@ -274,7 +274,7 @@ async function buildStandings(problems, { classId = null } = {}) {
 
 /** Самбарын ангийн шүүлтүүр: Coding нээгдсэн, сурагчтай анги */
 async function standingsClasses() {
-  const ids = await User.distinct('classId', { role: 'student', classId: { $ne: null } });
+  const ids = await User.distinct('classIds', { role: 'student' });
   return Class.find({ _id: { $in: ids }, codingEnabled: true }).collation({ locale: 'mn' }).sort({ name: 1 }).lean();
 }
 
@@ -383,12 +383,12 @@ router.post('/shop/buy', mainOnly, async (req, res) => {
 router.get('/u/:id', mainOnly, async (req, res) => {
   const enabled = await Class.distinct('_id', { codingEnabled: true });
   const s = isId(req.params.id)
-    ? await User.findOne({ _id: req.params.id, role: 'student', active: { $ne: false }, classId: { $in: enabled } })
-      .select('fullName username classId codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean()
+    ? await User.findOne({ _id: req.params.id, role: 'student', active: { $ne: false }, classIds: { $in: enabled } })
+      .select('fullName username classIds codingAvatar codingColor codingFrame codingTitle codingOwned ratingPoints placementDone').lean()
     : null;
   if (!s) return notFound(res, 'Профайл');
   const [cls, results, solvedIds, board] = await Promise.all([
-    Class.findById(s.classId).select('name').lean(),
+    Class.find({ _id: { $in: s.classIds || [] }, codingEnabled: true }).select('name').collation({ locale: 'mn' }).sort({ name: 1 }).lean(),
     ContestResult.find({ user: s._id }).sort({ createdAt: -1 }).limit(20).lean(),
     CodeSubmission.distinct('problem', { user: s._id, isStaff: false, status: 'done', score: 100 }),
     leaderboard(),
@@ -399,7 +399,7 @@ router.get('/u/:id', mainOnly, async (req, res) => {
   const showcase = (kind) => KINDS[kind].list.filter((x) => priceOf(x) > 0 && owns(s, kind, x));
   res.render('coding/public-profile', {
     title: s.fullName,
-    student: { ...s, initials: initials(s.fullName), className: cls?.name || '' },
+    student: { ...s, initials: initials(s.fullName), className: cls.map((c) => c.name).join(', ') },
     isMe: String(s._id) === String(req.user._id),
     look: cosmeticsFor(s),
     tier: tierFor(s.ratingPoints),

@@ -7,10 +7,11 @@ const LessonParser = require('../public/lesson-parser');
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/surgaltiin_system';
 
 async function upsertUser(username, password, fullName, role, classId = null) {
+  const classIds = classId ? [classId] : [];
   const passwordHash = await bcrypt.hash(password, 10);
   return User.findOneAndUpdate(
     { username },
-    { $setOnInsert: { username, passwordHash, fullName, role, classId } },
+    { $setOnInsert: { username, passwordHash, fullName, role, classIds } },
     { upsert: true, new: true }
   );
 }

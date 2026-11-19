@@ -19,7 +19,7 @@ async function loadUser(req, res, next) {
       res.locals.canUseAI = user.role === 'admin' || (user.role === 'teacher' && user.aiEnabled === true);
       // Өрсөлдөөнт Coding: админ ба мэдээлэл зүйн багш удирдана; сурагч — админ ангид нь нээсэн бол оролцоно
       user.codingStaff = await isCodingStaff(user);
-      user.codingPlayer = user.role === 'student' && !!user.classId && !!(await Class.exists({ _id: user.classId, codingEnabled: true }));
+      user.codingPlayer = user.role === 'student' && !!user.classIds?.length && !!(await Class.exists({ _id: { $in: user.classIds }, codingEnabled: true }));
       res.locals.canCoding = user.codingPlayer || user.codingStaff;
       res.locals.canCp = cpAccess(user);
       // Програмчлалын суурь: ангид нь дор хаяж нэг хичээл нээгдсэн сурагч, мэдээлэл зүйн багш

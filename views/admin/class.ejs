@@ -13,7 +13,7 @@
       </button>
     </form>
     <form method="post" action="/admin/classes/<%= cls._id %>/delete"
-          data-confirm="«<%= cls.name %>» ангийг устгах уу? Сурагчид устахгүй, харин ангигүй болно.">
+          data-confirm="«<%= cls.name %>» ангийг устгах уу? Сурагчид устахгүй, бусад ангидаа хэвээр үлдэнэ.">
       <button class="btn btn-danger">Анги устгах</button>
     </form>
   </div>
@@ -68,6 +68,68 @@
   </form>
 </section>
 
+<section class="card" id="members">
+  <h2>Бүртгэлтэй сурагчдаас сонгож нэмэх</h2>
+  <p class="muted small">Өөр анги, бүлэгт бүртгэлтэй сурагчдыг энэ ангид нэмнэ. Сурагчийн өмнөх ангиуд хэвээр үлдэх тул нэг сурагч хэд хэдэн ангид зэрэг байж болно.</p>
+  <% if (!others.length) { %>
+    <p class="muted">Нэмэх боломжтой сурагч алга.</p>
+  <% } else { %>
+    <form method="post" action="/admin/classes/<%= cls._id %>/members" class="form" id="member-picker">
+      <div class="row row-end">
+        <label>Хайх <input type="search" id="mp-q" placeholder="Нэр эсвэл нэвтрэх нэр" autocomplete="off"></label>
+        <label>Ангиар шүүх
+          <select id="mp-class">
+            <option value="">Бүх анги</option>
+            <option value="-">Ангигүй</option>
+            <% otherClasses.forEach(function (c) { %><option value="<%= c.name %>"><%= c.name %></option><% }) %>
+          </select>
+        </label>
+      </div>
+      <div class="mp-tools">
+        <label class="check"><input type="checkbox" id="mp-all"> Харагдаж буй бүгдийг сонгох</label>
+        <span class="muted small"><b id="mp-count">0</b> сонгосон</span>
+      </div>
+      <div class="mp-list">
+        <% others.forEach(function (s) { const cn = s.classNames.join(', '); %>
+          <label class="check mp-item" data-text="<%= (s.fullName + ' ' + s.username).toLowerCase() %>" data-classes="<%= s.classNames.length ? '|' + s.classNames.join('|') + '|' : '-' %>">
+            <input type="checkbox" name="studentIds" value="<%= s._id %>">
+            <span><%= s.fullName %> <code class="small"><%= s.username %></code><% if (cn) { %> <span class="muted small">· <%= cn %></span><% } else { %> <span class="muted small">· ангигүй</span><% } %></span>
+          </label>
+        <% }) %>
+      </div>
+      <button class="btn btn-primary" id="mp-submit" disabled>Сонгосон сурагчдыг нэмэх</button>
+    </form>
+    <script>
+      (function () {
+        var form = document.getElementById('member-picker');
+        var q = document.getElementById('mp-q'), sel = document.getElementById('mp-class'), all = document.getElementById('mp-all');
+        var items = Array.prototype.slice.call(form.querySelectorAll('.mp-item'));
+        var count = document.getElementById('mp-count'), btn = document.getElementById('mp-submit');
+        function visible() { return items.filter(function (el) { return !el.hidden; }); }
+        function update() {
+          var n = form.querySelectorAll('input[name="studentIds"]:checked').length;
+          count.textContent = n; btn.disabled = !n;
+          btn.textContent = n ? n + ' сурагчийг нэмэх' : 'Сонгосон сурагчдыг нэмэх';
+          var vis = visible();
+          all.checked = vis.length > 0 && vis.every(function (el) { return el.querySelector('input').checked; });
+        }
+        function filter() {
+          var t = q.value.trim().toLowerCase(), c = sel.value;
+          items.forEach(function (el) {
+            var okT = !t || el.dataset.text.indexOf(t) >= 0;
+            var okC = !c || (c === '-' ? el.dataset.classes === '-' : el.dataset.classes.indexOf('|' + c + '|') >= 0);
+            el.hidden = !(okT && okC);
+          });
+          update();
+        }
+        q.addEventListener('input', filter); sel.addEventListener('change', filter);
+        all.addEventListener('change', function () { visible().forEach(function (el) { el.querySelector('input').checked = all.checked; }); update(); });
+        form.addEventListener('change', function (e) { if (e.target.name === 'studentIds') update(); });
+      })();
+    </script>
+  <% } %>
+</section>
+
 <section class="card">
   <h2>Сурагчид (<%= students.length %>)</h2>
   <% if (!students.length) { %>
@@ -79,10 +141,15 @@
       <% students.forEach(function (s, i) { %>
         <tr class="<%= s.active ? '' : 'inactive' %>">
           <td class="num muted"><%= i + 1 %></td>
-          <td><a href="/profile/<%= s._id %>" title="Профайл, явц"><%= s.fullName %></a></td>
+          <td><a href="/profile/<%= s._id %>" title="Профайл, явц"><%= s.fullName %></a><% if (s.otherClasses.length) { %><div class="muted small">+ <%= s.otherClasses.join(', ') %></div><% } %></td>
           <td><code><%= s.username %></code></td>
           <td><% if (s.active) { %><span class="badge badge-green">Идэвхтэй</span><% } else { %><span class="badge">Идэвхгүй</span><% } %></td>
-          <td class="actions"><a class="btn btn-sm" href="/admin/users/<%= s._id %>">Засах</a></td>
+          <td class="actions">
+            <a class="btn btn-sm" href="/admin/users/<%= s._id %>">Засах</a>
+            <form method="post" action="/admin/classes/<%= cls._id %>/members/<%= s._id %>/remove" class="inline" data-confirm="<%= s.fullName %>-г «<%= cls.name %>»-аас хасах уу? Хэрэглэгч устахгүй.">
+              <button class="btn btn-sm btn-ghost" title="Энэ ангиас хасах">Хасах</button>
+            </form>
+          </td>
         </tr>
       <% }) %>
       </tbody>

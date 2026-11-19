@@ -1,7 +1,7 @@
 const express = require('express');
 const { Subject, Class, Exam, Attempt } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { isId, shuffle } = require('../helpers');
+const { isId, shuffle, classesLabel } = require('../helpers');
 const { GRACE_MS, parseAnswers, finalizeAttempt, finalizeExpired, examStatus } = require('../grading');
 
 const router = express.Router();
@@ -11,8 +11,8 @@ const notFound = (res) => res.status(404).render('error', { title: 'Олдсон
 
 /** Сурагчийн ангид оноогдсон, нийтлэгдсэн шалгалт */
 function findAssignedExam(user, examId) {
-  if (!user.classId || !isId(String(examId))) return null;
-  return Exam.findOne({ _id: examId, published: true, classIds: user.classId }).lean();
+  if (!user.classIds?.length || !isId(String(examId))) return null;
+  return Exam.findOne({ _id: examId, published: true, classIds: { $in: user.classIds } }).lean();
 }
 
 async function loadOwnAttempt(req, res, next) {
@@ -40,10 +40,10 @@ function answersVisibility(exam, now = new Date()) {
 // ---------------- Миний шалгалтууд ----------------
 router.get('/', async (req, res) => {
   await finalizeExpired({ student: req.user._id });
-  const cls = req.user.classId ? await Class.findById(req.user.classId).lean() : null;
+  const cls = classesLabel(await Class.find({ _id: { $in: req.user.classIds || [] } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean());
   let exams = [];
   if (cls) {
-    exams = await Exam.find({ published: true, classIds: cls._id })
+    exams = await Exam.find({ published: true, classIds: { $in: cls.ids } })
       .select('-questions.options.isCorrect -questions.acceptedAnswers')
       .sort({ startAt: -1, createdAt: -1 })
       .lean();

@@ -21,14 +21,16 @@
           <% }) %>
         </select>
       </label>
-      <label id="class-field">Анги
-        <select name="classId">
-          <option value="">— ангигүй —</option>
+      <fieldset id="class-field">
+        <legend>Анги, бүлэг <span class="muted small">— хэд хэдийг зэрэг сонгож болно</span></legend>
+        <% const myClasses = (target.classIds || []).map(String); %>
+        <% if (!classes.length) { %><p class="muted small">Анги бүртгэгдээгүй байна.</p><% } %>
+        <div class="check-grid">
           <% classes.forEach(function (c) { %>
-            <option value="<%= c._id %>" <%= String(c._id) === String(target.classId) ? 'selected' : '' %>><%= c.name %></option>
+            <label class="check"><input type="checkbox" name="classIds" value="<%= c._id %>" <%= myClasses.includes(String(c._id)) ? 'checked' : '' %>> <%= c.name %></label>
           <% }) %>
-        </select>
-      </label>
+        </div>
+      </fieldset>
       <fieldset id="subjects-field">
         <legend>Заадаг хичээлийн төрөл</legend>
         <% const mine = (target.subjectIds || []).map(String); %>

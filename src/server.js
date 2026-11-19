@@ -40,6 +40,11 @@ async function main() {
   }
 
   await mongoose.connect(MONGODB_URI);
+  // Нэг анги (classId) → олон анги (classIds) руу шилжүүлэх. Шилжсэн бол юу ч хийхгүй.
+  await mongoose.connection.collection('users').updateMany({ classId: { $exists: true } }, [
+    { $set: { classIds: { $cond: [{ $ifNull: ['$classId', false] }, { $setUnion: [{ $ifNull: ['$classIds', []] }, ['$classId']] }, { $ifNull: ['$classIds', []] }] } } },
+    { $unset: 'classId' },
+  ]);
   await mongoose.syncIndexes();
   await ensureAdmin();
 

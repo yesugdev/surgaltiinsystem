@@ -2,7 +2,7 @@
 const express = require('express');
 const { Subject, Class, Lesson, Submission } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { isId, clean } = require('../helpers');
+const { isId, clean, classesLabel } = require('../helpers');
 const { parseAnswers, gradeQuestion } = require('../grading');
 const md = require('../markdown');
 const files = require('../files');
@@ -15,8 +15,8 @@ const notFound = (res, what = 'Хичээл') => res.status(404).render('error',
 
 /** Сурагчийн ангид оноогдсон, нийтлэгдсэн хичээл */
 async function loadLesson(req, res, next) {
-  if (!req.user.classId || !isId(req.params.id)) return notFound(res);
-  const lesson = await Lesson.findOne({ _id: req.params.id, published: true, classIds: req.user.classId }).lean();
+  if (!req.user.classIds?.length || !isId(req.params.id)) return notFound(res);
+  const lesson = await Lesson.findOne({ _id: req.params.id, published: true, classIds: { $in: req.user.classIds } }).lean();
   if (!lesson) return notFound(res);
   req.lesson = lesson;
   res.locals.katex = true; // онол болон тестийн $томьёо$
@@ -45,10 +45,10 @@ function taskState(task, sub, now = new Date()) {
 
 // ---------------- Хичээлийн жагсаалт ----------------
 router.get('/', async (req, res) => {
-  const cls = req.user.classId ? await Class.findById(req.user.classId).lean() : null;
+  const cls = classesLabel(await Class.find({ _id: { $in: req.user.classIds || [] } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean());
   let groups = [];
   if (cls) {
-    const lessons = await Lesson.find({ published: true, classIds: cls._id }).select('-theory').sort({ createdAt: -1 }).lean();
+    const lessons = await Lesson.find({ published: true, classIds: { $in: cls.ids } }).select('-theory').sort({ createdAt: -1 }).lean();
     const [subjects, subs] = await Promise.all([
       Subject.find({ _id: { $in: lessons.map((l) => l.subject).filter(Boolean) } }).lean(),
       Submission.find({ student: req.user._id, lesson: { $in: lessons.map((l) => l._id) } }).select('lesson taskId score submittedAt').lean(),

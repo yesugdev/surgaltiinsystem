@@ -37,7 +37,8 @@ const userSchema = new Schema(
     passwordHash: { type: String, required: true },
     fullName: { type: String, required: true, trim: true, maxlength: 150 },
     role: { type: String, required: true, enum: ['admin', 'teacher', 'student'] },
-    classId: { type: Types.ObjectId, ref: 'Class', default: null, index: true },
+    // Сурагч олон анги/бүлэгт зэрэг харьяалагдаж болно (жишээ: сургуулийн анги + сургалтын бүлэг)
+    classIds: { type: [{ type: Types.ObjectId, ref: 'Class' }], default: [], index: true },
     // Багшийн заадаг хичээлүүд
     subjectIds: { type: [{ type: Types.ObjectId, ref: 'Subject' }], default: [], index: true },
     // Багш AI prompt, текстээр олноор оруулах боломжийг ашиглах эрх (админд үргэлж нээлттэй)

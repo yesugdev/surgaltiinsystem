@@ -4,7 +4,7 @@ const multer = require('multer');
 const JSZip = require('jszip');
 const { Class, User, Problem, ProblemTest, CodeSubmission, CpTopic, Contest } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { clean, isId, toArray, parseInputDate } = require('../helpers');
+const { clean, isId, toArray, parseInputDate, classNamesOf } = require('../helpers');
 const { problemOwnerFilter, canUseAI, requireAI } = require('../access');
 const judge = require('../judge');
 const tests = require('../coding-tests');
@@ -483,10 +483,10 @@ router.get('/:id/submissions', loadProblem, async (req, res) => {
   if (req.query.verdict && judge.VERDICTS[req.query.verdict]) filter.verdict = req.query.verdict;
   if (req.query.staff !== '1') filter.isStaff = false;
   const subs = await CodeSubmission.find(filter).select('-code -results -compileOutput').sort({ createdAt: -1 }).limit(500).lean();
-  const users = await User.find({ _id: { $in: [...new Set(subs.map((s) => String(s.user)))] } }).select('fullName username classId').lean();
-  const classes = await Class.find({ _id: { $in: users.map((u) => u.classId).filter(Boolean) } }).select('name').lean();
+  const users = await User.find({ _id: { $in: [...new Set(subs.map((s) => String(s.user)))] } }).select('fullName username classIds').lean();
+  const classes = await Class.find({ _id: { $in: users.flatMap((u) => u.classIds || []) } }).select('name').lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
-  const userMap = new Map(users.map((u) => [String(u._id), { ...u, className: classMap.get(String(u.classId)) || '' }]));
+  const userMap = new Map(users.map((u) => [String(u._id), { ...u, className: classNamesOf(u, classMap) }]));
   res.render('coding/submissions', {
     title: 'Илгээлтүүд',
     problem: req.problem,

@@ -3,7 +3,7 @@
 const express = require('express');
 const { Class, User, Problem, CodeSubmission, CpTopic, CpNote, Setting } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { isId, clean, escapeRegex } = require('../helpers');
+const { isId, clean, escapeRegex, classNamesOf } = require('../helpers');
 const { problemOwnerFilter } = require('../access');
 const { SECTIONS, sectionOf, cpAccess, CP_UNLOCK_LEVEL, CP_TRACK } = require('../cp');
 const { TIERS, difficultyOf } = require('../coding-ranks');
@@ -335,15 +335,15 @@ router.get('/students', staffOnly, async (req, res) => {
   const classes = await Class.find().collation({ locale: 'mn' }).sort({ name: 1 }).lean();
   const filter = { role: 'student', active: { $ne: false } };
   const classId = isId(req.query.class) ? req.query.class : '';
-  if (classId) filter.classId = classId;
+  if (classId) filter.classIds = classId;
   const q = clean(req.query.q, 100);
   if (q) filter.$or = [{ fullName: new RegExp(escapeRegex(q), 'i') }, { username: new RegExp(escapeRegex(q), 'i') }];
   if (req.query.only === '1') filter.$and = [{ $or: [{ cpSelected: true }, { cpRankUnlocked: true }] }];
-  const students = await User.find(filter).select('fullName username classId cpSelected cpRankUnlocked').collation({ locale: 'mn' }).sort({ fullName: 1 }).limit(500).lean();
+  const students = await User.find(filter).select('fullName username classIds cpSelected cpRankUnlocked').collation({ locale: 'mn' }).sort({ fullName: 1 }).limit(500).lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
   res.render('cp/students', {
     title: 'Гүнзгий бэлтгэлийн сурагчид',
-    students: students.map((s) => ({ ...s, className: classMap.get(String(s.classId)) || '—' })),
+    students: students.map((s) => ({ ...s, className: classNamesOf(s, classMap) || '—' })),
     classes,
     query: { class: classId, q, only: req.query.only === '1' },
     unlockTier: TIERS[CP_UNLOCK_LEVEL - 1],

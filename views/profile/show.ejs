@@ -7,14 +7,14 @@
   const initials = student.fullName.split(/\s+/).filter(Boolean).slice(-1)[0] || '?';
   const chartData = { summary, statusCounts, bySubject, timeline, weeks, exams: exams.map(function (e) { return { title: e.title, pct: e.pct, classAvg: e.classAvg, score: e.score, max: e.max, state: e.state, subject: e.subject, url: e.url }; }) };
 %>
-<% if (isStaff) { %><a href="/profile<%= cls ? '?class=' + cls._id : '' %>" class="back">← Сурагчдын явц</a><% } %>
+<% if (isStaff) { %><a href="/profile<%= cls ? '?class=' + cls.ids[0] : '' %>" class="back">← Сурагчдын явц</a><% } %>
 
 <section class="card pf-hero">
   <div class="pf-avatar" aria-hidden="true"><%= initials.charAt(0).toUpperCase() %></div>
   <div class="pf-id">
     <h1><%= student.fullName %></h1>
     <p class="muted">
-      <% if (cls) { %><span class="badge badge-blue"><%= cls.name %></span><% } %>
+      <% if (cls) { cls.list.forEach(function (c) { %><span class="badge badge-blue"><%= c.name %></span><% }) } %>
       <code><%= student.username %></code>
       <% if (summary.lastActive) { %> · Сүүлд идэвхтэй: <%= fmtDate(summary.lastActive) %><% } %>
     </p>

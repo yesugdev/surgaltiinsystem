@@ -77,7 +77,50 @@ const SHOW_ANSWERS_LABELS = {
 };
 const QUESTION_TYPE_LABELS ={ single: 'Нэг сонголттой', multiple: 'Олон сонголттой', text: 'Нээлттэй хариулт' };
 
+/** Сурагчийн харьяалагдах ангиудын id (string) */
+function classIdsOf(u) {
+  return ((u && u.classIds) || []).map(String);
+}
+/** Сурагч өгөгдсөн ангиудын аль нэгэнд байгаа эсэх */
+function inAnyClass(u, ids) {
+  const mine = new Set(classIdsOf(u));
+  return (ids || []).some((id) => mine.has(String(id)));
+}
+
+/** Ангиудын жагсаалтыг нэг "анги" мэт харуулах: { name: '10а, Олимпиад бүлэг', ids } эсвэл null */
+function classesLabel(classes) {
+  if (!classes || !classes.length) return null;
+  return { name: classes.map((c) => c.name).join(', '), ids: classes.map((c) => c._id), list: classes };
+}
+
+/** Сурагчийн ангиудын нэрийг "10а, Олимпиад" гэж нэгтгэнэ (classMap: id → нэр) */
+function classNamesOf(u, classMap) {
+  return ((u && u.classIds) || []).map((id) => classMap.get(String(id))).filter(Boolean).join(', ');
+}
+
+/** Сурагчийн ангиудаас scope (хичээл/шалгалтын ангиуд)-д хамаарахыг нь сонгоно; нэг ч байхгүй бол бүгд */
+function relevantClassIds(u, scope) {
+  const mine = classIdsOf(u);
+  const set = new Set((scope || []).map(String));
+  const hit = mine.filter((id) => set.has(id));
+  return hit.length ? hit : mine;
+}
+
+/** Сурагчийн ангиудыг нэг объект болгож ачаална ({ name: '10а, Олимпиад' } эсвэл null) */
+async function loadClassesLabel(u) {
+  const ids = classIdsOf(u);
+  if (!ids.length) return null;
+  const { Class } = require('./models');
+  return classesLabel(await Class.find({ _id: { $in: ids } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean());
+}
+
 module.exports = {
+  classIdsOf,
+  relevantClassIds,
+  loadClassesLabel,
+  classNamesOf,
+  classesLabel,
+  inAnyClass,
   fmtDate,
   toInputDate,
   parseInputDate,

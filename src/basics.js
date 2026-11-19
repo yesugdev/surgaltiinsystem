@@ -2,6 +2,7 @@
 // Хичээл бүр CpTopic (track: 'basics') — анги бүрээр нээнэ (classIds). Онол: src/basics-content/<key>.md
 const { CpTopic } = require('./models');
 const { seedTopics } = require('./cp');
+const { inAnyClass } = require('./helpers');
 
 const BASICS_TRACK = { track: 'basics' };
 
@@ -25,12 +26,12 @@ const BASICS_LESSONS = [
 async function basicsAccess(user) {
   if (!user) return false;
   if (user.codingStaff) return true;
-  if (user.role !== 'student' || !user.classId) return false;
-  return !!(await CpTopic.exists({ ...BASICS_TRACK, published: true, classIds: user.classId }));
+  if (user.role !== 'student' || !user.classIds?.length) return false;
+  return !!(await CpTopic.exists({ ...BASICS_TRACK, published: true, classIds: { $in: user.classIds } }));
 }
 
 /** Хичээл тухайн сурагчид нээлттэй эсэх */
-const lessonOpenFor = (user, lesson) => !!user.codingStaff || (lesson.published && !!user.classId && (lesson.classIds || []).some((id) => String(id) === String(user.classId)));
+const lessonOpenFor = (user, lesson) => !!user.codingStaff || (lesson.published && inAnyClass(user, lesson.classIds));
 
 const seedBasics = () => seedTopics({ defs: BASICS_LESSONS, dir: 'basics-content', settingKey: 'basicsDefaultKeys', track: 'basics', label: 'Програмчлалын суурь' });
 

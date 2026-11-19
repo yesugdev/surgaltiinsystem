@@ -3,6 +3,7 @@ const { Types } = require('mongoose');
 const { Lesson, Submission, Exam, Attempt, Subject, Class, User } = require('./models');
 const { ownerFilter } = require('./access');
 const { splitName } = require('./subject-groups');
+const { classIdsOf, inAnyClass, loadClassesLabel } = require('./helpers');
 
 const pct = (score, max) => (max > 0 && score != null ? Math.round((score / max) * 1000) / 10 : null);
 const avg = (xs) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null);
@@ -21,9 +22,8 @@ async function canView(viewer, student) {
   if (!viewer || !student || student.role !== 'student') return false;
   if (viewer.role === 'student') return String(viewer._id) === String(student._id);
   if (viewer.role === 'admin') return true;
-  if (!student.classId) return false;
-  const ids = await staffClassIds(viewer);
-  return ids.includes(String(student.classId));
+  if (!classIdsOf(student).length) return false;
+  return inAnyClass(student, await staffClassIds(viewer));
 }
 
 function taskState(task, sub, now) {
@@ -62,7 +62,8 @@ async function buildProfile(student, viewer) {
     Attempt.find({ student: student._id }).select('exam score maxScore startedAt submittedAt deadlineAt needsReview').lean(),
   ]);
 
-  const classOr = (ids) => (student.classId ? [{ classIds: student.classId }, { _id: { $in: ids } }] : [{ _id: { $in: ids } }]);
+  const mine = student.classIds || [];
+  const classOr = (ids) => (mine.length ? [{ classIds: { $in: mine } }, { _id: { $in: ids } }] : [{ _id: { $in: ids } }]);
   const [lessons, exams, cls] = await Promise.all([
     Lesson.find({ ...scope, published: true, $or: classOr([...new Set(subs.map((s) => String(s.lesson)))]) })
       .select('title subject createdAt tasks._id tasks.type tasks.title tasks.questions.points tasks.maxPoints tasks.dueAt')
@@ -72,7 +73,7 @@ async function buildProfile(student, viewer) {
       .select('title subject startAt endAt showResults durationMinutes questions.points createdAt')
       .sort({ createdAt: 1 })
       .lean(),
-    student.classId ? Class.findById(student.classId).select('name').lean() : null,
+    loadClassesLabel(student),
   ]);
 
   const subjectIds = [...new Set([...lessons, ...exams].map((x) => x.subject).filter(Boolean).map(String))];
@@ -230,7 +231,7 @@ async function classOverview(classId, viewer) {
   const scope = viewer.role === 'teacher' ? ownerFilter(viewer) : {};
   const cid = new Types.ObjectId(String(classId));
   const [students, lessons, exams] = await Promise.all([
-    User.find({ role: 'student', classId: cid }).select('fullName username active').collation({ locale: 'mn' }).sort({ fullName: 1 }).lean(),
+    User.find({ role: 'student', classIds: cid }).select('fullName username active').collation({ locale: 'mn' }).sort({ fullName: 1 }).lean(),
     Lesson.find({ ...scope, published: true, classIds: cid }).select('tasks._id').lean(),
     Exam.find({ ...scope, published: true, classIds: cid }).select('_id').lean(),
   ]);

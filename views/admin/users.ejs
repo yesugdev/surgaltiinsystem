@@ -61,12 +61,12 @@
       <label>Нэвтрэх нэр <input name="username" required maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" autocapitalize="none" title="3–32 тэмдэгт: латин үсэг, тоо, . _ -"></label>
       <label>Нууц үг <input name="password" placeholder="хоосон бол автомат" maxlength="64"></label>
       <% if (role === 'student') { %>
-        <label>Анги
-          <select name="classId">
-            <option value="">— сонгох —</option>
-            <% classes.forEach(function (c) { %><option value="<%= c._id %>"><%= c.name %></option><% }) %>
-          </select>
-        </label>
+        <fieldset>
+          <legend>Анги, бүлэг <span class="muted small">— хэд хэдийг сонгож болно</span></legend>
+          <div class="check-grid">
+            <% classes.forEach(function (c) { %><label class="check"><input type="checkbox" name="classIds" value="<%= c._id %>"> <%= c.name %></label><% }) %>
+          </div>
+        </fieldset>
       <% } %>
       <% if (role === 'teacher') { %>
         <fieldset>

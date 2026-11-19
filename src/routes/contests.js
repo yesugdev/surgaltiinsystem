@@ -31,7 +31,7 @@ const codingClasses = () => Class.find({ codingEnabled: true }).collation({ loca
 router.get('/', async (req, res) => {
   const u = req.user;
   const staff = !!u.codingStaff;
-  const filter = staff ? {} : { classIds: u.classId, startAt: { $ne: null } };
+  const filter = staff ? {} : { classIds: { $in: u.classIds || [] }, startAt: { $ne: null } };
   const contests = await Contest.find(filter).sort({ startAt: -1, createdAt: -1 }).lean();
   const counts = await Problem.aggregate([{ $match: { contest: { $in: contests.map((c) => c._id) } } }, { $group: { _id: '$contest', n: { $sum: 1 } } }]);
   const countMap = new Map(counts.map((c) => [String(c._id), c.n]));

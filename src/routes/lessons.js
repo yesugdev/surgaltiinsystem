@@ -1,7 +1,7 @@
 const express = require('express');
 const { Subject, Class, User, Lesson, Submission } = require('../models');
 const { requireRole, flash } = require('../middleware/auth');
-const { clean, isId, toArray, parseInputDate, fmtScore, fmtDate } = require('../helpers');
+const { clean, isId, toArray, parseInputDate, fmtScore, fmtDate, classNamesOf, relevantClassIds, loadClassesLabel } = require('../helpers');
 const { groupSubjects, selectFilter, countBySubject } = require('../subject-groups');
 const { ownerFilter, allowedSubjects, formSubjects, visibleSubjects, canUseAI, requireAI } = require('../access');
 const { buildLessonPrompt, buildLatexLessonPrompt } = require('../ai-prompt');
@@ -39,11 +39,11 @@ const base = (lesson) => '/lessons/' + lesson._id;
 async function lessonStudents(lesson, extraIds = []) {
   const students = await User.find({
     role: 'student',
-    $or: [{ classId: { $in: lesson.classIds } }, { _id: { $in: extraIds } }],
+    $or: [{ classIds: { $in: lesson.classIds } }, { _id: { $in: extraIds } }],
   }).lean();
-  const classes = await Class.find({ _id: { $in: students.map((s) => s.classId).filter(Boolean) } }).lean();
+  const classes = await Class.find({ _id: { $in: students.flatMap((s) => s.classIds || []) } }).collation({ locale: 'mn' }).sort({ name: 1 }).lean();
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
-  for (const s of students) s.className = classMap.get(String(s.classId)) || '—';
+  for (const s of students) s.className = classNamesOf({ classIds: relevantClassIds(s, lesson.classIds) }, classMap) || '—';
   students.sort((a, b) => a.className.localeCompare(b.className, 'mn') || a.fullName.localeCompare(b.fullName, 'mn'));
   return students;
 }
@@ -601,7 +601,7 @@ async function loadSubmission(req, res, next) {
 
 router.get('/:id/tasks/:tid/submissions/:sid', loadLesson, findTask, loadSubmission, async (req, res) => {
   const student = await User.findById(req.sub.student).lean();
-  const cls = student?.classId ? await Class.findById(student.classId).lean() : null;
+  const cls = await loadClassesLabel(student);
   // Дараагийн дүгнээгүй гүйцэтгэл рүү шилжих товчинд
   const next = await Submission.findOne({
     lesson: req.lesson._id,

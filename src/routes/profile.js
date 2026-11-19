@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   if (!isId(req.params.id)) return notFound(res);
   if (req.user.role === 'student' && req.params.id === String(req.user._id)) return res.redirect('/profile');
-  const student = await User.findById(req.params.id).select('fullName username role classId active createdAt ratingPoints').lean();
+  const student = await User.findById(req.params.id).select('fullName username role classIds active createdAt ratingPoints').lean();
   if (!(await canView(req.user, student))) return notFound(res);
   return renderProfile(req, res, student);
 });

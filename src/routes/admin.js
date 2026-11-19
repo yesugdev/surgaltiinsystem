@@ -36,6 +36,12 @@ async function validSubjectIds(raw) {
   return (await Subject.find({ _id: { $in: ids } }).select('_id').lean()).map((s) => s._id);
 }
 
+async function validClassIds(raw) {
+  const ids = toArray(raw).filter(isId);
+  if (!ids.length) return [];
+  return (await Class.find({ _id: { $in: ids } }).select('_id').lean()).map((c) => c._id);
+}
+
 function isDuplicateKey(err) {
   return err?.code === 11000;
 }
@@ -174,8 +180,9 @@ router.post('/subjects/:id/delete', loadSubject, async (req, res) => {
 router.get('/classes', async (req, res) => {
   const classes = await Class.find().sort({ name: 1 }).lean();
   const counts = await User.aggregate([
-    { $match: { role: 'student', classId: { $ne: null } } },
-    { $group: { _id: '$classId', n: { $sum: 1 } } },
+    { $match: { role: 'student' } },
+    { $unwind: '$classIds' },
+    { $group: { _id: '$classIds', n: { $sum: 1 } } },
   ]);
   const countMap = new Map(counts.map((c) => [String(c._id), c.n]));
   for (const c of classes) c.studentCount = countMap.get(String(c._id)) || 0;
@@ -219,11 +226,23 @@ async function loadClass(req, res, next) {
 }
 
 async function renderClass(req, res, extra = {}) {
-  const students = await User.find({ role: 'student', classId: req.cls._id }).sort({ fullName: 1 }).lean();
+  const [students, others, classes] = await Promise.all([
+    User.find({ role: 'student', classIds: req.cls._id }).collation({ locale: 'mn' }).sort({ fullName: 1 }).lean(),
+    // Өөр анги/бүлгийн сурагчдаас сонгож нэмэх
+    User.find({ role: 'student', classIds: { $ne: req.cls._id }, active: { $ne: false } })
+      .select('fullName username classIds').collation({ locale: 'mn' }).sort({ fullName: 1 }).limit(3000).lean(),
+    Class.find().select('name').collation({ locale: 'mn' }).sort({ name: 1 }).lean(),
+  ]);
+  const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
+  const namesOf = (u) => (u.classIds || []).map((id) => classMap.get(String(id))).filter(Boolean);
+  for (const s of students) s.otherClasses = namesOf(s).filter((n) => n !== req.cls.name);
+  for (const s of others) s.classNames = namesOf(s);
   res.render('admin/class', {
     title: req.cls.name,
     cls: req.cls,
     students,
+    others,
+    otherClasses: classes.filter((c) => String(c._id) !== String(req.cls._id)),
     bulkText: '',
     bulkPrefix: 'st',
     bulkErrors: [],
@@ -262,11 +281,11 @@ router.post('/classes/:id/coding', loadClass, async (req, res) => {
 });
 
 router.post('/classes/:id/delete', loadClass, async (req, res) => {
-  await User.updateMany({ classId: req.cls._id }, { $set: { classId: null } });
+  await User.updateMany({ classIds: req.cls._id }, { $pull: { classIds: req.cls._id } });
   await Exam.updateMany({ classIds: req.cls._id }, { $pull: { classIds: req.cls._id } });
   await Lesson.updateMany({ classIds: req.cls._id }, { $pull: { classIds: req.cls._id } });
   await Class.deleteOne({ _id: req.cls._id });
-  flash(req, 'success', `"${req.cls.name}" анги устгагдлаа. Сурагчид ангигүй болсон.`);
+  flash(req, 'success', `"${req.cls.name}" анги устгагдлаа. Сурагчид устаагүй (бусад ангидаа хэвээр).`);
   res.redirect('/admin/classes');
 });
 
@@ -298,7 +317,7 @@ router.post('/classes/:id/students', loadClass, async (req, res) => {
       passwordHash: await bcrypt.hash(password, 10),
       fullName,
       role: 'student',
-      classId: req.cls._id,
+      classIds: [req.cls._id],
     });
   } catch (err) {
     if (!isDuplicateKey(err)) throw err;
@@ -307,6 +326,23 @@ router.post('/classes/:id/students', loadClass, async (req, res) => {
   }
   flash(req, 'success', `${fullName} нэмэгдлээ → нэвтрэх нэр: ${username}, нууц үг: ${password}`);
   res.redirect(back);
+});
+
+// Бүртгэлтэй сурагчдаас сонгож энэ ангид нэмэх (өмнөх ангиуд нь хэвээр үлдэнэ)
+router.post('/classes/:id/members', loadClass, async (req, res) => {
+  const ids = toArray(req.body.studentIds).filter(isId).slice(0, 3000);
+  const r = ids.length
+    ? await User.updateMany({ _id: { $in: ids }, role: 'student' }, { $addToSet: { classIds: req.cls._id } })
+    : { modifiedCount: 0 };
+  flash(req, r.modifiedCount ? 'success' : 'error', r.modifiedCount ? `${r.modifiedCount} сурагч «${req.cls.name}»-д нэмэгдлээ.` : 'Сурагч сонгоогүй байна.');
+  res.redirect('/admin/classes/' + req.cls._id);
+});
+
+// Сурагчийг энэ ангиас хасах (хэрэглэгч устахгүй, бусад ангидаа үлдэнэ)
+router.post('/classes/:id/members/:sid/remove', loadClass, async (req, res) => {
+  if (isId(req.params.sid)) await User.updateOne({ _id: req.params.sid, role: 'student' }, { $pull: { classIds: req.cls._id } });
+  flash(req, 'success', 'Сурагч ангиас хасагдлаа.');
+  res.redirect('/admin/classes/' + req.cls._id);
 });
 
 // Олон сурагч нэг дор нэмэх. Мөр бүр: "Нэр" | "Нэр, нэвтрэх нэр" | "Нэр, нэвтрэх нэр, нууц үг"
@@ -363,7 +399,7 @@ router.post('/classes/:id/students/bulk', loadClass, async (req, res) => {
       passwordHash: await bcrypt.hash(password, 10),
       fullName: name,
       role: 'student',
-      classId: req.cls._id,
+      classIds: [req.cls._id],
     });
   }
 
@@ -392,8 +428,8 @@ router.get('/users', async (req, res) => {
     const re = new RegExp(escapeRegex(q), 'i');
     filter.$or = [{ fullName: re }, { username: re }];
   }
-  if (role === 'student' && classFilter) filter.classId = classFilter;
-  if (role === 'student' && req.query.classId === 'none') filter.classId = null;
+  if (role === 'student' && classFilter) filter.classIds = classFilter;
+  if (role === 'student' && req.query.classId === 'none') filter['classIds.0'] = { $exists: false };
 
   const [users, classes, subjects] = await Promise.all([
     User.find(filter).sort({ fullName: 1 }).limit(1000).lean(),
@@ -403,7 +439,7 @@ router.get('/users', async (req, res) => {
   const classMap = new Map(classes.map((c) => [String(c._id), c.name]));
   const subjectMap = new Map(subjects.map((s) => [String(s._id), s.name]));
   for (const u of users) {
-    u.className = u.classId ? classMap.get(String(u.classId)) : null;
+    u.className = (u.classIds || []).map((id) => classMap.get(String(id))).filter(Boolean).join(', ') || null;
     u.subjectNames = (u.subjectIds || []).map((id) => subjectMap.get(String(id))).filter(Boolean);
   }
 
@@ -424,7 +460,7 @@ router.post('/users', async (req, res) => {
   const fullName = clean(req.body.fullName, 150);
   const username = clean(req.body.username, 32).toLowerCase();
   let password = String(req.body.password ?? '').trim();
-  const classId = role === 'student' && isId(req.body.classId) ? req.body.classId : null;
+  const classIds = role === 'student' ? await validClassIds(req.body.classIds) : [];
   const subjectIds = role === 'teacher' ? await validSubjectIds(req.body.subjectIds) : [];
   const aiEnabled = role === 'teacher' && req.body.aiEnabled === 'on';
 
@@ -443,7 +479,7 @@ router.post('/users', async (req, res) => {
   if (!password) password = genPassword(8);
 
   try {
-    await User.create({ username, passwordHash: await bcrypt.hash(password, 10), fullName, role, classId, subjectIds, aiEnabled });
+    await User.create({ username, passwordHash: await bcrypt.hash(password, 10), fullName, role, classIds, subjectIds, aiEnabled });
   } catch (err) {
     if (!isDuplicateKey(err)) throw err;
     flash(req, 'error', `"${username}" нэвтрэх нэр аль хэдийн бүртгэлтэй байна.`);
@@ -477,7 +513,7 @@ router.post('/users/:id', loadTargetUser, async (req, res) => {
   const username = clean(req.body.username, 32).toLowerCase();
   const role = isSelf ? target.role : ROLES.includes(req.body.role) ? req.body.role : target.role;
   const active = isSelf ? true : req.body.active === 'on';
-  const classId = role === 'student' && isId(req.body.classId) ? req.body.classId : null;
+  const classIds = role === 'student' ? await validClassIds(req.body.classIds) : [];
   const subjectIds = role === 'teacher' ? await validSubjectIds(req.body.subjectIds) : [];
   const aiEnabled = role === 'teacher' && req.body.aiEnabled === 'on';
 
@@ -486,7 +522,7 @@ router.post('/users/:id', loadTargetUser, async (req, res) => {
     return res.redirect(back);
   }
   try {
-    await User.updateOne({ _id: target._id }, { fullName, username, role, active, classId, subjectIds, aiEnabled });
+    await User.updateOne({ _id: target._id }, { fullName, username, role, active, classIds, subjectIds, aiEnabled });
   } catch (err) {
     if (!isDuplicateKey(err)) throw err;
     flash(req, 'error', `"${username}" нэвтрэх нэр аль хэдийн бүртгэлтэй байна.`);
