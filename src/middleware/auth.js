@@ -53,7 +53,7 @@ function requireRole(...roles) {
 function homeFor(role) {
   if (role === 'admin') return '/admin';
   if (role === 'teacher') return '/exams';
-  return '/student';
+  return '/learn'; // сурагч: хамгийн түрүүнд хичээл
 }
 
 module.exports = { loadUser, flash, requireRole, homeFor };
