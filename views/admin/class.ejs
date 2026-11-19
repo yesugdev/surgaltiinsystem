@@ -79,7 +79,7 @@
       <% students.forEach(function (s, i) { %>
         <tr class="<%= s.active ? '' : 'inactive' %>">
           <td class="num muted"><%= i + 1 %></td>
-          <td><%= s.fullName %></td>
+          <td><a href="/profile/<%= s._id %>" title="Профайл, явц"><%= s.fullName %></a></td>
           <td><code><%= s.username %></code></td>
           <td><% if (s.active) { %><span class="badge badge-green">Идэвхтэй</span><% } else { %><span class="badge">Идэвхгүй</span><% } %></td>
           <td class="actions"><a class="btn btn-sm" href="/admin/users/<%= s._id %>">Засах</a></td>

@@ -42,9 +42,11 @@
         <% if (u.role === 'student') { %>
           <a href="/learn" class="<%= on('/learn') %>">Хичээл</a>
           <a href="/student" class="<%= on('/student') %>">Шалгалт</a>
+          <a href="/profile" class="<%= on('/profile') %>">📊 Профайл</a>
         <% } else { %>
           <a href="/lessons" class="<%= on('/lessons') %>">Хичээл</a>
           <a href="/exams" class="<%= on('/exams') %>">Шалгалт</a>
+          <a href="/profile" class="<%= on('/profile') %>">📊 Сурагчид</a>
         <% } %>
         <% const progLinks = [
              locals.canBasics && ['/basics', '🧱 Програмчлалын суурь'],
@@ -75,7 +77,8 @@
         <% } %>
       </nav>
       <div class="userbox">
-        <span class="userbox-name" title="<%= u.fullName %>"><span class="userbox-full"><%= u.fullName %></span><small class="muted"><%= ROLE_LABELS[u.role] %></small></span>
+        <% if (u.role === 'student') { %><a href="/profile" class="userbox-name userbox-link" title="Миний профайл"><span class="userbox-full"><%= u.fullName %></span><small class="muted"><%= ROLE_LABELS[u.role] %></small></a>
+        <% } else { %><span class="userbox-name" title="<%= u.fullName %>"><span class="userbox-full"><%= u.fullName %></span><small class="muted"><%= ROLE_LABELS[u.role] %></small></span><% } %>
         <a href="/password" class="btn btn-ghost btn-sm">Нууц үг</a>
         <form method="post" action="/logout"><button class="btn btn-ghost btn-sm">Гарах</button></form>
       </div>

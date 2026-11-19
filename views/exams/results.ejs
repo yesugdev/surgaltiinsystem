@@ -33,7 +33,7 @@
     <% rows.forEach(function (r) { const a = r.attempt; %>
       <tr>
         <td><%= r.className %></td>
-        <td><%= r.student.fullName %> <span class="muted small"><%= r.student.username %></span></td>
+        <td><a href="/profile/<%= r.student._id %>"><%= r.student.fullName %></a> <span class="muted small"><%= r.student.username %></span></td>
         <td><span class="badge <%= { submitted: 'badge-green', review: 'badge-amber', in_progress: 'badge-blue', not_started: '' }[r.status] %>"><%= STATUS_LABELS[r.status] %></span></td>
         <td class="num"><%= a && a.submittedAt ? fmtScore(a.score) + ' / ' + fmtScore(a.maxScore) : '' %></td>
         <td class="num"><%= a && a.submittedAt && a.maxScore ? pct(a.score / a.maxScore * 100) : '' %></td>

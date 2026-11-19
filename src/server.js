@@ -73,6 +73,8 @@ async function main() {
   app.get('/vendor/pptx-preview.js', (req, res) =>
     res.sendFile(require.resolve('pptx-preview/dist/pptx-preview.umd.js'), { maxAge: '7d' })
   );
+  // 📊 Профайлын графикууд (ECharts — line, bar, pie)
+  app.get('/vendor/echarts.js', (req, res) => res.sendFile(require.resolve('echarts/dist/echarts.common.min.js'), { maxAge: '7d' }));
   app.get('/vendor/jszip.js', (req, res) => res.sendFile(require.resolve('jszip/dist/jszip.min.js'), { maxAge: '7d' }));
   app.use(express.urlencoded({ extended: false, limit: '10mb' }));
   app.use((req, res, next) => {
@@ -106,6 +108,7 @@ async function main() {
   app.use('/cp', require('./routes/cp'));
   app.use('/basics', require('./routes/basics'));
   app.use('/viz', require('./routes/viz'));
+  app.use('/profile', require('./routes/profile'));
   app.use('/coding/manage', require('./routes/coding-manage'));
   app.use('/coding/contests', require('./routes/contests')); // /coding/:id-ээс өмнө
   app.use('/coding', require('./routes/coding'));

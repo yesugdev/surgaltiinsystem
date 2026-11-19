@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+<% const pctText = function (p) { return p == null ? '—' : (Math.round(p) + '%'); };
+   const tone = function (p) { return p == null ? '' : p >= 80 ? 'good' : p >= 50 ? 'mid' : 'low'; }; %>
+<div class="page-head">
+  <div>
+    <h1>📊 Сурагчдын явц</h1>
+    <p class="muted">Сурагч дээр дарж хичээл, даалгавар, шалгалтын дэлгэрэнгүй профайлыг нь харна.</p>
+  </div>
+</div>
+
+<% if (!classes.length) { %>
+  <div class="card"><p class="muted">Танд оноогдсон анги алга. Хичээл эсвэл шалгалтаа ангид онооход энд гарч ирнэ.</p></div>
+<% } else { %>
+  <nav class="subj-filter" aria-label="Анги сонгох">
+    <div class="subj-groups">
+      <% classes.forEach(function (c) { %>
+        <a href="/profile?class=<%= c._id %>" class="subj-pill <%= classId === String(c._id) ? 'active' : '' %>"><%= c.name %></a>
+      <% }) %>
+    </div>
+  </nav>
+
+  <% if (overview) { %>
+    <p class="muted small"><%= overview.rows.length %> сурагч · <%= overview.taskTotal %> даалгавар · <%= overview.examTotal %> шалгалт</p>
+    <% if (!overview.rows.length) { %>
+      <div class="card"><p class="muted">Энэ ангид сурагч алга.</p></div>
+    <% } else { %>
+      <div class="card table-wrap pf-flush">
+      <table class="table pf-table pf-overview" id="pf-overview">
+        <thead>
+          <tr>
+            <th data-sort="text">Сурагч</th>
+            <th data-sort="num" class="num">Гүйцэтгэл</th>
+            <th data-sort="num" class="num">Даалгаврын дундаж</th>
+            <th data-sort="num" class="num pf-hide-sm">Шалгалт</th>
+            <th data-sort="num" class="num">Шалгалтын дундаж</th>
+            <th data-sort="num" class="pf-hide-sm">Сүүлд идэвхтэй</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% overview.rows.forEach(function (r) { %>
+          <tr class="<%= r.active ? '' : 'inactive' %>">
+            <td data-v="<%= r.fullName %>"><a href="/profile/<%= r.id %>"><strong><%= r.fullName %></strong></a> <code class="small muted pf-hide-sm"><%= r.username %></code></td>
+            <td class="num" data-v="<%= r.completion == null ? -1 : r.completion %>">
+              <div class="pf-inline-bar"><div class="pf-bar"><span style="width: <%= r.completion || 0 %>%"></span></div><span class="small"><%= r.done %>/<%= overview.taskTotal %></span></div>
+            </td>
+            <td class="num" data-v="<%= r.taskAvg == null ? -1 : r.taskAvg %>"><span class="pf-score tone-<%= tone(r.taskAvg) %>"><%= pctText(r.taskAvg) %></span></td>
+            <td class="num pf-hide-sm" data-v="<%= r.examsTaken %>"><%= r.examsTaken %>/<%= overview.examTotal %></td>
+            <td class="num" data-v="<%= r.examAvg == null ? -1 : r.examAvg %>"><span class="pf-score tone-<%= tone(r.examAvg) %>"><%= pctText(r.examAvg) %></span></td>
+            <td class="small muted pf-hide-sm" data-v="<%= r.lastActive ? +new Date(r.lastActive) : 0 %>"><%= r.lastActive ? fmtDate(r.lastActive) : '—' %></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      </div>
+    <% } %>
+  <% } %>
+<% } %>
+<%- include('../partials/footer', { scripts: ['/profile.js'] }) %>

@@ -1,0 +1,166 @@
+<%- include('../partials/header') %>
+<%
+  const TASK_STATE = { graded: ['Дүгнэгдсэн', 'badge-green'], pending: ['Шалгагдаж буй', 'badge-amber'], todo: ['Хийгээгүй', ''], overdue: ['Хугацаа хэтэрсэн', 'badge-red'] };
+  const EXAM_STATE = { graded: ['Дүгнэгдсэн', 'badge-green'], pending: ['Шалгагдаж буй', 'badge-amber'], progress: ['Өгч байна', 'badge-blue'], missed: ['Өгөөгүй', 'badge-red'], upcoming: ['Удахгүй', ''], open: ['Нээлттэй', 'badge-blue'] };
+  const pctText = function (p) { return p == null ? '—' : (Math.round(p) + '%'); };
+  const tone = function (p) { return p == null ? '' : p >= 80 ? 'good' : p >= 50 ? 'mid' : 'low'; };
+  const initials = student.fullName.split(/\s+/).filter(Boolean).slice(-1)[0] || '?';
+  const chartData = { summary, statusCounts, bySubject, timeline, weeks, exams: exams.map(function (e) { return { title: e.title, pct: e.pct, classAvg: e.classAvg, score: e.score, max: e.max, state: e.state, subject: e.subject, url: e.url }; }) };
+%>
+<% if (isStaff) { %><a href="/profile<%= cls ? '?class=' + cls._id : '' %>" class="back">← Сурагчдын явц</a><% } %>
+
+<section class="card pf-hero">
+  <div class="pf-avatar" aria-hidden="true"><%= initials.charAt(0).toUpperCase() %></div>
+  <div class="pf-id">
+    <h1><%= student.fullName %></h1>
+    <p class="muted">
+      <% if (cls) { %><span class="badge badge-blue"><%= cls.name %></span><% } %>
+      <code><%= student.username %></code>
+      <% if (summary.lastActive) { %> · Сүүлд идэвхтэй: <%= fmtDate(summary.lastActive) %><% } %>
+    </p>
+  </div>
+  <% if (isStaff && user.role === 'admin') { %><a class="btn btn-sm" href="/admin/users/<%= student._id %>">Хэрэглэгч засах</a><% } %>
+</section>
+
+<div class="pf-kpis">
+  <div class="card pf-kpi">
+    <div class="pf-ring" style="--p: <%= summary.completion || 0 %>"><span><%= summary.completion == null ? '—' : summary.completion + '%' %></span></div>
+    <div><div class="pf-kpi-label">Даалгавар гүйцэтгэл</div><div class="pf-kpi-sub"><%= summary.tasksDone %> / <%= summary.tasksTotal %> хийсэн</div></div>
+  </div>
+  <div class="card pf-kpi">
+    <div class="pf-kpi-value tone-<%= tone(summary.taskAvg) %>"><%= pctText(summary.taskAvg) %></div>
+    <div><div class="pf-kpi-label">Даалгаврын дундаж</div><div class="pf-kpi-sub">дүгнэгдсэн даалгавраар</div></div>
+  </div>
+  <div class="card pf-kpi">
+    <div class="pf-kpi-value"><%= summary.examsTaken %><small>/<%= summary.examsTotal %></small></div>
+    <div><div class="pf-kpi-label">Шалгалт өгсөн</div><div class="pf-kpi-sub">нийт шалгалтаас</div></div>
+  </div>
+  <div class="card pf-kpi">
+    <div class="pf-kpi-value tone-<%= tone(summary.examAvg) %>"><%= pctText(summary.examAvg) %></div>
+    <div><div class="pf-kpi-label">Шалгалтын дундаж</div><div class="pf-kpi-sub"><%= summary.examsPending ? summary.examsPending + ' шалгалт шалгагдаж буй' : 'дүгнэгдсэн шалгалтаар' %></div></div>
+  </div>
+</div>
+
+<div class="pf-grid">
+  <section class="card pf-chart-card pf-wide">
+    <div class="pf-chart-head">
+      <h2>📈 Дүнгийн явц</h2>
+      <span class="muted small">Цэг дээр дарж дэлгэрэнгүйг нээнэ · доорх гулсуураар хугацааг сонгоно</span>
+    </div>
+    <div class="pf-chart" id="ch-timeline" data-empty="Дүгнэгдсэн даалгавар, шалгалт хараахан алга."></div>
+  </section>
+
+  <section class="card pf-chart-card">
+    <div class="pf-chart-head"><h2>📚 Хичээлээр</h2><span class="muted small">Багана дээр дарж шүүнэ</span></div>
+    <div class="pf-chart" id="ch-subjects" data-empty="Хичээл алга."></div>
+  </section>
+
+  <section class="card pf-chart-card">
+    <div class="pf-chart-head"><h2>✅ Даалгаврын төлөв</h2><span class="muted small">Хэсэг дээр дарж шүүнэ</span></div>
+    <div class="pf-chart" id="ch-status" data-empty="Даалгавар алга."></div>
+  </section>
+
+  <section class="card pf-chart-card">
+    <div class="pf-chart-head"><h2>📝 Шалгалт: дүн ба дундаж</h2></div>
+    <div class="pf-chart" id="ch-exams" data-empty="Дүгнэгдсэн шалгалт алга."></div>
+  </section>
+
+  <section class="card pf-chart-card">
+    <div class="pf-chart-head"><h2>🔥 Долоо хоногийн идэвх</h2><span class="muted small">Сүүлийн 16 долоо хоног</span></div>
+    <div class="pf-chart" id="ch-weeks"></div>
+  </section>
+</div>
+
+<div class="pf-filterbar" id="pf-filterbar" hidden>
+  <span>Шүүлтүүр:</span> <strong id="pf-filter-text"></strong>
+  <button type="button" class="btn btn-sm" id="pf-filter-clear">✕ Арилгах</button>
+</div>
+
+<section class="pf-section">
+  <h2>📚 Хичээл ба даалгавар</h2>
+  <% if (!lessons.length) { %>
+    <p class="muted">Хичээл хараахан оноогдоогүй байна.</p>
+  <% } %>
+  <% lessons.forEach(function (l) { const lp = l.total ? Math.round(l.done / l.total * 100) : 0; %>
+    <details class="card pf-lesson" data-subject="<%= l.subject %>" <%= l.total && l.done < l.total ? 'open' : '' %>>
+      <summary>
+        <div class="pf-lesson-title">
+          <strong><%= l.title %></strong>
+          <span class="muted small"><%= l.subject %></span>
+        </div>
+        <div class="pf-lesson-meta">
+          <div class="pf-bar" title="<%= l.done %> / <%= l.total %> хийсэн"><span style="width: <%= lp %>%"></span></div>
+          <span class="small"><b><%= l.done %></b>/<%= l.total %></span>
+          <span class="pf-score tone-<%= tone(l.pct) %>"><%= l.max ? fmtScore(l.score) + ' / ' + fmtScore(l.max) : '—' %></span>
+        </div>
+      </summary>
+      <% if (!l.tasks.length) { %>
+        <p class="muted small pf-pad">Энэ хичээлд даалгавар алга.</p>
+      <% } else { %>
+        <div class="table-wrap">
+        <table class="table pf-table">
+          <thead><tr><th>Даалгавар</th><th>Төлөв</th><th class="num">Оноо</th><th class="pf-hide-sm">Дундаж</th><th class="pf-hide-sm">Илгээсэн</th></tr></thead>
+          <tbody>
+          <% l.tasks.forEach(function (t) { const st = TASK_STATE[t.state]; %>
+            <tr data-state="<%= t.state %>">
+              <td><a href="<%= t.url %>"><%= t.type === 'quiz' ? '📝' : '📎' %> <%= t.title %></a><% if (t.late) { %> <span class="badge badge-amber">хоцорсон</span><% } %></td>
+              <td><span class="badge <%= st[1] %>"><%= st[0] %></span></td>
+              <td class="num">
+                <% if (t.pct != null) { %>
+                  <span class="pf-score tone-<%= tone(t.pct) %>"><%= fmtScore(t.score) %> / <%= fmtScore(t.max) %></span>
+                <% } else { %><span class="muted">— / <%= fmtScore(t.max) %></span><% } %>
+              </td>
+              <td class="pf-hide-sm">
+                <% if (t.pct != null || t.classAvg != null) { %>
+                  <div class="pf-cmp" title="Сурагч: <%= pctText(t.pct) %> · Дундаж: <%= pctText(t.classAvg) %>">
+                    <span class="pf-cmp-me" style="width: <%= t.pct || 0 %>%"></span>
+                    <% if (t.classAvg != null) { %><span class="pf-cmp-avg" style="left: <%= t.classAvg %>%"></span><% } %>
+                  </div>
+                <% } else { %><span class="muted">—</span><% } %>
+              </td>
+              <td class="pf-hide-sm small muted"><%= t.submittedAt ? fmtDate(t.submittedAt) : (t.dueAt ? 'Хугацаа: ' + fmtDate(t.dueAt) : '—') %></td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+        </div>
+      <% } %>
+    </details>
+  <% }) %>
+</section>
+
+<section class="pf-section">
+  <h2>📝 Шалгалтууд</h2>
+  <% if (!exams.length) { %>
+    <p class="muted">Шалгалт хараахан алга.</p>
+  <% } else { %>
+    <div class="card table-wrap pf-flush">
+    <table class="table pf-table">
+      <thead><tr><th>Шалгалт</th><th class="pf-hide-sm">Хичээл</th><th>Төлөв</th><th class="num">Оноо</th><th class="pf-hide-sm">Дундажтай харьцуулбал</th><th class="pf-hide-sm">Огноо</th></tr></thead>
+      <tbody>
+      <% exams.slice().reverse().forEach(function (e) { const st = EXAM_STATE[e.state]; %>
+        <tr data-subject="<%= e.subject %>" data-state="<%= e.state %>">
+          <td><a href="<%= e.url %>"><%= e.title %></a></td>
+          <td class="pf-hide-sm muted small"><%= e.subject %></td>
+          <td><span class="badge <%= st[1] %>"><%= st[0] %></span></td>
+          <td class="num">
+            <% if (e.hidden) { %><span class="muted small">нуугдсан</span>
+            <% } else if (e.pct != null) { %><span class="pf-score tone-<%= tone(e.pct) %>"><%= fmtScore(e.score) %> / <%= fmtScore(e.max) %></span>
+            <% } else { %><span class="muted">— / <%= fmtScore(e.max) %></span><% } %>
+          </td>
+          <td class="pf-hide-sm">
+            <% if (e.pct != null && e.classAvg != null) { const d = Math.round(e.pct - e.classAvg); %>
+              <span class="pf-delta <%= d >= 0 ? 'up' : 'down' %>"><%= d >= 0 ? '▲ +' + d : '▼ ' + d %>%</span> <span class="muted small">(дундаж <%= Math.round(e.classAvg) %>%)</span>
+            <% } else { %><span class="muted">—</span><% } %>
+          </td>
+          <td class="pf-hide-sm small muted"><%= e.date ? fmtDate(e.date) : (e.startAt ? fmtDate(e.startAt) : '—') %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    </div>
+  <% } %>
+</section>
+
+<script type="application/json" id="profile-data"><%- JSON.stringify(chartData).replace(/</g, '\x5cu003c') %></script>
+<%- include('../partials/footer', { scripts: ['/vendor/echarts.js', '/profile.js'] }) %>

@@ -29,7 +29,7 @@
       <tbody>
       <% rows.forEach(function (r) { %>
         <tr>
-          <td><%= r.student.fullName %> <div class="muted small"><%= r.student.className %></div></td>
+          <td><a href="/profile/<%= r.student._id %>"><%= r.student.fullName %></a> <div class="muted small"><%= r.student.className %></div></td>
           <% r.cells.forEach(function (c) { %>
             <td class="num">
               <% if (c.sub && c.sub.submittedAt) { %>
