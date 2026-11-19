@@ -54,8 +54,8 @@
              locals.canCp && ['/cp', '🎯 Гүнзгий бэлтгэл'],
              ['/viz', '🎬 Визуализаци'],
            ].filter(Boolean); %>
-        <% if (u.codingStaff && progLinks.length > 1) { const progOn = progLinks.some(function (l) { return on(l[0]); }); %>
-          <%# Багш, админ: цэс хэт урт болохоос сэргийлж нэг доош унжих цэсэнд %>
+        <% if (progLinks.length > 1) { const progOn = progLinks.some(function (l) { return on(l[0]); }); %>
+          <%# Цэс хэт урт болж нэртэй давхцахаас сэргийлж нэг доош унжих цэсэнд %>
           <details class="nav-menu">
             <summary class="<%= progOn ? 'active' : '' %>">💻 Програмчлал</summary>
             <div class="nav-menu-list">

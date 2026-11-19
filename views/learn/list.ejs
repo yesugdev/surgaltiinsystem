@@ -1,34 +1,109 @@
 <%- include('../partials/header') %>
-<div class="page-head">
-  <div>
+<%
+  const all = groups.reduce(function (a, g) { return a.concat(g.lessons); }, []);
+  const taskTotal = all.reduce(function (s, l) { return s + l.taskCount; }, 0);
+  const taskDone = all.reduce(function (s, l) { return s + l.doneCount; }, 0);
+  const overall = taskTotal ? Math.round(taskDone / taskTotal * 100) : 0;
+  const stateOf = function (l) { return !l.taskCount ? 'theory' : l.doneCount >= l.taskCount ? 'done' : l.doneCount > 0 ? 'progress' : 'new'; };
+  const counts = { progress: 0, new: 0, done: 0 };
+  all.forEach(function (l) { const s = stateOf(l); if (counts[s] != null) counts[s]++; });
+  const WEEK = 7 * 864e5;
+  const STATE = { done: ['✓ Дууссан', 'ls-done'], progress: ['Үргэлжлүүлэх', 'ls-progress'], new: ['Эхлээгүй', 'ls-new'], theory: ['📖 Онол', 'ls-theory'] };
+  const ICONS = ['💻', '📐', '🔬', '🌍', '📚', '🎨', '🧪', '🎵'];
+  const HUES = [222, 265, 174, 330, 196, 150, 245, 22];
+%>
+<section class="ll-hero">
+  <div class="ll-hero-text">
     <h1>Хичээл</h1>
-    <p class="muted"><%= cls ? cls.name : 'Та ангид бүртгэгдээгүй байна' %></p>
+    <% if (cls) { %>
+      <div class="ll-chips"><% cls.list.forEach(function (c) { %><span class="ll-chip">👥 <%= c.name %></span><% }) %></div>
+    <% } else { %>
+      <p class="muted">Та ангид бүртгэгдээгүй байна</p>
+    <% } %>
   </div>
-</div>
+  <% if (all.length) { %>
+    <div class="ll-stats">
+      <div class="ll-ring" style="--p: <%= overall %>"><span><b><%= overall %>%</b><small>явц</small></span></div>
+      <div class="ll-stat"><b><%= all.length %></b><span>хичээл</span></div>
+      <div class="ll-stat"><b><%= taskDone %><small>/<%= taskTotal %></small></b><span>даалгавар</span></div>
+      <div class="ll-stat"><b><%= counts.done %></b><span>дууссан</span></div>
+    </div>
+  <% } %>
+</section>
 
 <% if (!cls) { %>
   <div class="card empty"><p>Таныг ангид бүртгээгүй тул хичээл харагдахгүй байна. Багш эсвэл админд хандана уу.</p></div>
 <% } else if (!groups.length) { %>
   <div class="card empty"><p class="muted">Одоогоор танд хичээл алга байна.</p></div>
 <% } else { %>
-  <% groups.forEach(function (g) { %>
-    <h2 class="group-title"><%= g.name %></h2>
-    <div class="exam-grid">
-      <% g.lessons.forEach(function (l) { const pct = l.taskCount ? Math.round(l.doneCount / l.taskCount * 100) : null; %>
-        <a class="card lesson-card" href="/learn/<%= l._id %>">
-          <h3><%= l.title %></h3>
-          <% if (l.description) { %><p class="muted small"><%= l.description %></p><% } %>
-          <div class="lesson-card-foot">
-            <% if (l.taskCount) { %>
-              <div class="bar"><span style="width: <%= pct %>%"></span></div>
-              <span class="small muted"><%= l.doneCount %> / <%= l.taskCount %> даалгавар</span>
-            <% } else { %>
-              <span class="small muted">Онол</span>
-            <% } %>
-          </div>
-        </a>
-      <% }) %>
-    </div>
+  <div class="ll-filter" role="tablist" aria-label="Хичээлийг төлөвөөр шүүх">
+    <button type="button" class="ll-tab active" data-f="all">Бүгд <span><%= all.length %></span></button>
+    <% if (counts.progress) { %><button type="button" class="ll-tab" data-f="progress">Үргэлжлүүлэх <span><%= counts.progress %></span></button><% } %>
+    <% if (counts.new) { %><button type="button" class="ll-tab" data-f="new">Эхлээгүй <span><%= counts.new %></span></button><% } %>
+    <% if (counts.done) { %><button type="button" class="ll-tab" data-f="done">Дууссан <span><%= counts.done %></span></button><% } %>
+  </div>
+
+  <% groups.forEach(function (g, gi) {
+       const gt = g.lessons.reduce(function (s, l) { return s + l.taskCount; }, 0);
+       const gd = g.lessons.reduce(function (s, l) { return s + l.doneCount; }, 0);
+       const gp = gt ? Math.round(gd / gt * 100) : 0; %>
+    <section class="ll-group" style="--hue: <%= HUES[gi % HUES.length] %>">
+      <header class="ll-group-head">
+        <span class="ll-group-icon" aria-hidden="true"><%= ICONS[gi % ICONS.length] %></span>
+        <h2><%= g.name %></h2>
+        <span class="ll-group-meta"><%= g.lessons.length %> хичээл<% if (gt) { %> · <%= gp %>%<% } %></span>
+        <% if (gt) { %><span class="ll-group-bar"><span style="width: <%= gp %>%"></span></span><% } %>
+      </header>
+      <div class="ll-grid">
+        <% g.lessons.forEach(function (l) {
+             const st = stateOf(l); const pct = l.taskCount ? Math.round(l.doneCount / l.taskCount * 100) : 0;
+             const fresh = l.createdAt && (Date.now() - new Date(l.createdAt)) < WEEK; %>
+          <a class="ll-card <%= st %>" data-state="<%= st %>" href="/learn/<%= l._id %>">
+            <div class="ll-card-top">
+              <span class="ll-badge <%= STATE[st][1] %>"><%= STATE[st][0] %></span>
+              <% if (fresh) { %><span class="ll-badge ls-fresh">✨ Шинэ</span><% } %>
+            </div>
+            <h3><%= l.title %></h3>
+            <% if (l.description) { %><p class="ll-desc"><%= l.description %></p><% } %>
+            <div class="ll-card-foot">
+              <% if (l.taskCount) { %>
+                <div class="ll-progress">
+                  <div class="ll-bar"><span style="width: <%= pct %>%"></span></div>
+                  <span class="ll-pct"><%= pct %>%</span>
+                </div>
+                <div class="ll-foot-row">
+                  <span>📝 <%= l.doneCount %> / <%= l.taskCount %> даалгавар</span>
+                  <span class="ll-go"><%= st === 'done' ? 'Давтах' : st === 'progress' ? 'Үргэлжлүүлэх' : 'Эхлэх' %> →</span>
+                </div>
+              <% } else { %>
+                <div class="ll-foot-row"><span>Зөвхөн онол</span><span class="ll-go">Унших →</span></div>
+              <% } %>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </section>
   <% }) %>
+  <p class="muted ll-empty" id="ll-empty" hidden>Энэ төлөвтэй хичээл алга.</p>
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.ll-tab');
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          tabs.forEach(function (x) { x.classList.toggle('active', x === t); });
+          var f = t.dataset.f, any = false;
+          document.querySelectorAll('.ll-group').forEach(function (g) {
+            var shown = 0;
+            g.querySelectorAll('.ll-card').forEach(function (c) {
+              var ok = f === 'all' || c.dataset.state === f;
+              c.hidden = !ok; if (ok) shown++;
+            });
+            g.hidden = !shown; if (shown) any = true;
+          });
+          document.getElementById('ll-empty').hidden = any;
+        });
+      });
+    })();
+  </script>
 <% } %>
 <%- include('../partials/footer') %>
